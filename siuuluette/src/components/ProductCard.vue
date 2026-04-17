@@ -42,7 +42,7 @@
             v-for="size in product.sizes"
             :key="size"
             class="product-card__size"
-            :class="{ 'product-card__size--active': selectedSize === size }"
+            :class="{ 'is-selected': selectedSize === size }"
             @click.stop="selectedSize = size"
           >{{ size }}</span>
         </div>
@@ -219,10 +219,11 @@ export default {
 }
 
 .product-card__size:hover,
-.product-card__size--active {
-  background: var(--c-gold);
-  color: var(--c-black);
-  border-color: var(--c-gold);
+.product-card__size.is-selected {
+  background: var(--c-gold) !important;
+  color: var(--c-black) !important;
+  border-color: var(--c-gold) !important;
+  transform: scale(1.1);
 }
 
 /* Info */
