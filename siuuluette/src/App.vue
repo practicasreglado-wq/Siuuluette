@@ -14,10 +14,11 @@
     <!-- Main Content -->
     <main>
       <HeroSection id="inicio" />
-      <CategoryGrid />
+      <CategoryGrid id="explora" @category-select="selectCategory" />
       <FeaturedProducts
         id="colecciones"
         :products="products"
+        :external-filter="activeCategory"
         @add-to-cart="addToCart"
       />
       <LimitedDrop id="drops" @add-to-cart="addToCart" />
@@ -85,6 +86,7 @@ export default {
     const isCartOpen      = ref(false)
     const isScrolled      = ref(false)
     const showAnnouncement = ref(true)
+    const activeCategory  = ref('')
     const toastVisible    = ref(false)
     const toastMessage    = ref('')
     let toastTimer        = null
@@ -96,24 +98,30 @@ export default {
 
     /* ---- Methods ---- */
     function addToCart(product) {
-      const existing = cartItems.value.find(i => i.id === product.id)
+      const existing = cartItems.value.find(i => 
+        i.id === product.id && i.selectedSize === product.selectedSize
+      )
       if (existing) {
         existing.qty++
       } else {
         cartItems.value.push({ ...product, qty: 1 })
       }
-      showToast(`${product.name} añadido al carrito`)
+      showToast(`${product.name} (${product.selectedSize}) añadido`)
     }
 
-    function removeFromCart(productId) {
-      cartItems.value = cartItems.value.filter(i => i.id !== productId)
+    function removeFromCart(productId, size) {
+      cartItems.value = cartItems.value.filter(i => 
+        !(i.id === productId && i.selectedSize === size)
+      )
     }
 
-    function updateQty(productId, delta) {
-      const item = cartItems.value.find(i => i.id === productId)
+    function updateQty(productId, size, delta) {
+      const item = cartItems.value.find(i => 
+        i.id === productId && i.selectedSize === size
+      )
       if (!item) return
       item.qty += delta
-      if (item.qty <= 0) removeFromCart(productId)
+      if (item.qty <= 0) removeFromCart(productId, size)
     }
 
     function showToast(msg) {
@@ -127,15 +135,21 @@ export default {
       isScrolled.value = window.scrollY > 60
     }
 
+    function selectCategory(catName) {
+      activeCategory.value = catName
+      const el = document.getElementById('colecciones')
+      if (el) el.scrollIntoView({ behavior: 'smooth' })
+    }
+
     onMounted(() => window.addEventListener('scroll', handleScroll))
     onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
     return {
       products, cartItems, cartCount,
       isCartOpen, isScrolled,
-      showAnnouncement,
+      showAnnouncement, activeCategory,
       toastVisible, toastMessage,
-      addToCart, removeFromCart, updateQty,
+      addToCart, removeFromCart, updateQty, selectCategory,
     }
   }
 }

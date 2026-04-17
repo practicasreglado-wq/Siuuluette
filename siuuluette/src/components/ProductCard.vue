@@ -32,15 +32,18 @@
       <div class="product-card__overlay">
         <button
           class="product-card__quick-add btn btn-primary"
+          :class="{ 'btn-disabled': !selectedSize && !justAdded }"
           @click.stop="handleAdd"
         >
-          {{ justAdded ? '✓ Añadido' : 'Añadir al carrito' }}
+          {{ justAdded ? '✓ Añadido' : (selectedSize ? 'Añadir al carrito' : 'Elige talla') }}
         </button>
         <div class="product-card__sizes">
           <span
-            v-for="size in product.sizes.slice(0, 5)"
+            v-for="size in product.sizes"
             :key="size"
             class="product-card__size"
+            :class="{ 'product-card__size--active': selectedSize === size }"
+            @click.stop="selectedSize = size"
           >{{ size }}</span>
         </div>
       </div>
@@ -68,13 +71,26 @@ export default {
     product: { type: Object, required: true }
   },
   data() {
-    return { justAdded: false }
+    return { 
+      justAdded: false,
+      selectedSize: null
+    }
   },
   methods: {
     handleAdd() {
-      this.$emit('add-to-cart', this.product)
+      if (!this.selectedSize) return
+      
+      this.$emit('add-to-cart', {
+        ...this.product,
+        selectedSize: this.selectedSize
+      })
       this.justAdded = true
-      setTimeout(() => { this.justAdded = false }, 1800)
+      
+      // Reset after success message
+      setTimeout(() => { 
+        this.justAdded = false 
+        this.selectedSize = null
+      }, 1800)
     }
   }
 }
@@ -202,7 +218,8 @@ export default {
   cursor: pointer;
 }
 
-.product-card__size:hover {
+.product-card__size:hover,
+.product-card__size--active {
   background: var(--c-gold);
   color: var(--c-black);
   border-color: var(--c-gold);

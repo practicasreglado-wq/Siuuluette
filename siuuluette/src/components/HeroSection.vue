@@ -14,7 +14,7 @@
 
     <!-- Isotipo Large Background -->
     <div class="hero__isotipo-bg" aria-hidden="true">
-      <img src="../assets/isotipo.jpeg" alt="" />
+      <img src="/Siu.png" alt="" />
     </div>
 
     <!-- Content -->
@@ -181,7 +181,12 @@ export default { name: 'HeroSection' }
 }
 
 .hero__headline-line--1 { animation-delay: 0.3s; color: var(--c-white); }
-.hero__headline-line--2 { animation-delay: 0.45s; color: rgba(245,243,239,0.4); padding-left: 8vw; }
+.hero__headline-line--2 { 
+  animation-delay: 0.45s; 
+  color: rgba(245,243,239,0.4); 
+  padding-left: 8vw;
+  letter-spacing: 0.05em; /* Add space between L and A */
+}
 .hero__headline-line--3 { animation-delay: 0.6s; color: var(--c-gold); }
 
 @keyframes heroLine {

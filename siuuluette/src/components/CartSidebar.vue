@@ -30,7 +30,7 @@
         </svg>
       </div>
       <p>Tu carrito está vacío</p>
-      <button class="btn btn-primary btn-sm" @click="$emit('close')">Explorar productos</button>
+      <a href="#explora" class="btn btn-primary btn-sm" @click="$emit('close')">Explorar productos</a>
     </div>
 
     <!-- Items -->
@@ -45,13 +45,16 @@
           <div class="cart-item__info">
             <span class="cart-item__cat body-sm">{{ item.category }}</span>
             <h3 class="cart-item__name">{{ item.name }}</h3>
-            <span class="cart-item__price">€{{ item.price }}</span>
+            <div class="cart-item__meta">
+              <span class="cart-item__size label">Talla: {{ item.selectedSize }}</span>
+              <span class="cart-item__price">€{{ item.price }}</span>
+            </div>
           </div>
           <div class="cart-item__controls">
-            <button class="qty-btn" @click="$emit('update-qty', item.id, -1)" aria-label="Quitar uno">−</button>
+            <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, -1)" aria-label="Quitar uno">−</button>
             <span class="cart-item__qty">{{ item.qty }}</span>
-            <button class="qty-btn" @click="$emit('update-qty', item.id, 1)" aria-label="Añadir uno">+</button>
-            <button class="cart-item__remove" @click="$emit('remove-item', item.id)" aria-label="Eliminar">
+            <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, 1)" aria-label="Añadir uno">+</button>
+            <button class="cart-item__remove" @click="$emit('remove-item', item.id, item.selectedSize)" aria-label="Eliminar">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M18 6 6 18M6 6l12 12"/>
               </svg>
@@ -214,6 +217,8 @@ export default {
 
 .cart-item__cat { font-size: 0.65rem; }
 .cart-item__name { font-size: 0.85rem; font-weight: 500; color: var(--c-white); line-height: 1.3; }
+.cart-item__meta { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.2rem; }
+.cart-item__size { font-size: 0.65rem; color: var(--c-gold); background: rgba(201,169,110,0.1); padding: 0.1rem 0.4rem; border-radius: 4px; }
 .cart-item__price { font-size: 0.9rem; font-weight: 600; color: var(--c-off-white); }
 
 .cart-item__controls {
