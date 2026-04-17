@@ -36,15 +36,15 @@
       </p>
 
       <div class="hero__ctas">
-        <button class="btn btn-primary hero__cta">
+        <a href="#colecciones" class="btn btn-primary hero__cta">
           Comprar ahora
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
-        </button>
-        <button class="btn btn-outline hero__cta">
+        </a>
+        <a href="#drops" class="btn btn-outline hero__cta">
           Ver colección
-        </button>
+        </a>
       </div>
 
       <!-- Stats bar -->

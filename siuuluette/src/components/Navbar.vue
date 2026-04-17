@@ -14,12 +14,10 @@
 
       <!-- Primary Navigation (desktop) -->
       <nav class="navbar__nav" aria-label="Navegación principal">
-        <a href="#" class="navbar__link">Inicio</a>
-        <a href="#" class="navbar__link">Hombre</a>
-        <a href="#" class="navbar__link">Mujer</a>
-        <a href="#" class="navbar__link navbar__link--accent">Drops</a>
-        <a href="#" class="navbar__link">Colecciones</a>
-        <a href="#" class="navbar__link">Nosotros</a>
+        <a href="#inicio" class="navbar__link">Inicio</a>
+        <a href="#drops" class="navbar__link navbar__link--accent">Drops</a>
+        <a href="#colecciones" class="navbar__link">Colecciones</a>
+        <a href="#nosotros" class="navbar__link">Nosotros</a>
       </nav>
 
       <!-- Actions -->
@@ -70,12 +68,10 @@
     <Transition name="mobile-menu">
       <div class="navbar__mobile-menu" v-if="menuOpen">
         <nav class="mobile-nav">
-          <a href="#" class="mobile-nav__link" @click="menuOpen = false">Inicio</a>
-          <a href="#" class="mobile-nav__link" @click="menuOpen = false">Hombre</a>
-          <a href="#" class="mobile-nav__link" @click="menuOpen = false">Mujer</a>
-          <a href="#" class="mobile-nav__link mobile-nav__link--accent" @click="menuOpen = false">Drops</a>
-          <a href="#" class="mobile-nav__link" @click="menuOpen = false">Colecciones</a>
-          <a href="#" class="mobile-nav__link" @click="menuOpen = false">Nosotros</a>
+          <a href="#inicio" class="mobile-nav__link" @click="menuOpen = false">Inicio</a>
+          <a href="#drops" class="mobile-nav__link mobile-nav__link--accent" @click="menuOpen = false">Drops</a>
+          <a href="#colecciones" class="mobile-nav__link" @click="menuOpen = false">Colecciones</a>
+          <a href="#nosotros" class="mobile-nav__link" @click="menuOpen = false">Nosotros</a>
           <a href="#" class="mobile-nav__link" @click="menuOpen = false">Mi cuenta</a>
         </nav>
       </div>
@@ -92,7 +88,9 @@ export default {
     isScrolled: { type: Boolean, default: false },
   },
   data() {
-    return { menuOpen: false }
+    return {
+      menuOpen: false
+    }
   },
 }
 </script>
