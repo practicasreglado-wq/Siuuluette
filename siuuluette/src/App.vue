@@ -13,13 +13,14 @@
 
     <!-- Sticky Navbar -->
     <Navbar
+      :style="{ top: showAnnouncement ? '36px' : '0px' }"
       :cart-count="cartCount"
       :is-scrolled="isScrolled"
       @open-cart="isCartOpen = true"
     />
 
     <!-- Main Content -->
-    <main>
+    <main :style="{ paddingTop: showAnnouncement ? '36px' : '0px' }">
       <HeroSection />
       <CategoryGrid />
       <FeaturedProducts
@@ -150,14 +151,21 @@ export default {
 <style scoped>
 /* --- Announcement Bar --- */
 .announcement-bar {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--c-gold);
   color: var(--c-black);
-  text-align: center;
-  padding: 0.6rem 3rem;
+  padding: 0 3rem;
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.12em;
+  z-index: 101;
 }
 
 .announcement-close {
