@@ -8,7 +8,7 @@
 
       <!-- Brand Logo -->
       <a href="#" class="navbar__brand" aria-label="Siuuluette inicio">
-        <img src="../assets/isotipo.jpeg" alt="Siuuluette isotipo" class="navbar__logo-icon" />
+        <img src="/Siu_white.png" alt="Siuuluette isotipo" class="navbar__logo-icon" />
         <span class="navbar__logo-text">Siuuluette</span>
       </a>
 
@@ -152,10 +152,9 @@ export default {
 }
 
 .navbar__logo-icon {
-  width: 32px;
-  height: 32px;
+  width: auto;
+  height: 40px;
   object-fit: contain;
-  filter: invert(1); /* Make black logo white */
 }
 
 .navbar__logo-text {

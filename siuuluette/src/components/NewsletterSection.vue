@@ -9,7 +9,7 @@
       <!-- Left: Copy -->
       <div class="newsletter__copy">
         <span class="newsletter__isotipo" aria-hidden="true">
-          <img src="../assets/isotipo.jpeg" alt="" />
+          <img src="/Siu_white.png" alt="" />
         </span>
         <span class="accent-line"></span>
         <span class="label">Acceso anticipado</span>

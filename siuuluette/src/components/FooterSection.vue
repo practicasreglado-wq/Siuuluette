@@ -21,7 +21,7 @@
         <!-- Brand Column -->
         <div class="footer__brand">
           <div class="footer__logo">
-            <img src="../assets/isotipo.jpeg" alt="Siuuluette" class="footer__logo-icon" />
+            <img src="/Siu_white.png" alt="Siuuluette" class="footer__logo-icon" />
             <span class="footer__logo-text">Siuuluette</span>
           </div>
           <p class="footer__tagline">
@@ -263,7 +263,6 @@ export default {
   width: 28px;
   height: 28px;
   object-fit: contain;
-  filter: invert(1);
   opacity: 0.8;
 }
 

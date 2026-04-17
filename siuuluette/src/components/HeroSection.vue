@@ -14,7 +14,7 @@
 
     <!-- Isotipo Large Background -->
     <div class="hero__isotipo-bg" aria-hidden="true">
-      <img src="../assets/isotipo.jpeg" alt="" />
+      <img src="/Siu_white.png" alt="" />
     </div>
 
     <!-- Content -->
@@ -130,15 +130,14 @@ export default { name: 'HeroSection' }
 /* --- Large Isotipo Background --- */
 .hero__isotipo-bg {
   position: absolute;
-  right: -4%;
+  right: -2%;
   top: 50%;
   transform: translateY(-50%);
-  width: 55%;
-  max-width: 700px;
-  opacity: 0.06;
+  width: 60%;
+  max-width: 800px;
+  opacity: 0.5;
   z-index: 1;
   pointer-events: none;
-  filter: invert(1);
 }
 
 .hero__isotipo-bg img {

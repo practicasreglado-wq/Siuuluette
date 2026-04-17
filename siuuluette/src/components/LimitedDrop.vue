@@ -8,7 +8,7 @@
 
       <!-- Background Isotipo -->
       <div class="drop__bg-isotipo" aria-hidden="true">
-        <img src="../assets/isotipo.jpeg" alt="" />
+        <img src="/Siu_white.png" alt="" />
       </div>
 
       <!-- Content -->
