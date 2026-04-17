@@ -10,7 +10,14 @@
       <img
         :src="product.image"
         :alt="product.name"
-        class="product-card__image"
+        class="product-card__image product-card__image--primary"
+        loading="lazy"
+      />
+      <img
+        v-if="product.imageSecondary"
+        :src="product.imageSecondary"
+        :alt="product.name"
+        class="product-card__image product-card__image--secondary"
         loading="lazy"
       />
 
@@ -102,10 +109,23 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--t-slow) var(--ease-standard);
+  transition: transform var(--t-slow) var(--ease-standard),
+              opacity var(--t-medium) var(--ease-standard);
 }
 
-.product-card:hover .product-card__image {
+.product-card__image--secondary {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.product-card:hover .product-card__image--primary {
+  opacity: 0;
+  transform: scale(1.06);
+}
+
+.product-card:hover .product-card__image--secondary {
+  opacity: 1;
   transform: scale(1.06);
 }
 

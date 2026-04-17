@@ -11,7 +11,6 @@
       <button class="announcement-close" @click="showAnnouncement = false" aria-label="Cerrar">✕</button>
     </div>
 
-    <!-- Sticky Navbar -->
     <Navbar
       :style="{ top: showAnnouncement ? '36px' : '0px' }"
       :cart-count="cartCount"
@@ -21,14 +20,15 @@
 
     <!-- Main Content -->
     <main :style="{ paddingTop: showAnnouncement ? '36px' : '0px' }">
-      <HeroSection />
+      <HeroSection id="inicio" />
       <CategoryGrid />
       <FeaturedProducts
+        id="colecciones"
         :products="products"
         @add-to-cart="addToCart"
       />
-      <LimitedDrop @add-to-cart="addToCart" />
-      <BrandValues />
+      <LimitedDrop id="drops" @add-to-cart="addToCart" />
+      <BrandValues id="nosotros" />
       <NewsletterSection />
     </main>
 
@@ -178,9 +178,12 @@ export default {
   opacity: 0.6;
   cursor: pointer;
   padding: 0.25rem;
+  background: none;
+  border: none;
 }
 
 .announcement-close:hover { opacity: 1; }
+
 
 /* --- Overlay --- */
 .overlay {

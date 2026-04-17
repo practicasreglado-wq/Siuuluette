@@ -64,7 +64,7 @@ export default {
   data() {
     return {
       activeFilter: 'Todo',
-      filters: ['Todo', 'Camisetas', 'Sudaderas', 'Pantalones', 'Chaquetas', 'Accesorios', 'Ediciones Limitadas'],
+      filters: ['Todo', 'Camisetas', 'Sudaderas', 'Pantalones', 'Ediciones Limitadas'],
     }
   },
   computed: {
