@@ -13,12 +13,12 @@
       </div>
 
       <div class="categories__grid">
-        <a
+        <div
           v-for="cat in categories"
           :key="cat.id"
-          href="#"
           class="cat-card"
           :style="{ '--cat-img': `url(${cat.image})` }"
+          @click="$emit('category-select', cat.name)"
         >
           <!-- Hover shimmer line -->
           <div class="cat-card__shimmer" aria-hidden="true"></div>
@@ -32,7 +32,7 @@
               </svg>
             </span>
           </div>
-        </a>
+        </div>
       </div>
     </div>
   </section>
@@ -42,6 +42,7 @@
 import { categories } from '../data/products.js'
 export default {
   name: 'CategoryGrid',
+  emits: ['category-select'],
   setup() { return { categories } }
 }
 </script>

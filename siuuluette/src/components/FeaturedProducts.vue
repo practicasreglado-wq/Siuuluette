@@ -28,9 +28,14 @@
       </div>
 
       <!-- Products Grid -->
-      <TransitionGroup name="product-grid" tag="div" class="featured__grid">
+      <div v-if="allFilteredProducts.length === 0" class="featured__empty">
+        <p>No se han encontrado productos en esta categoría.</p>
+        <button class="btn btn-outline btn-sm" @click="activeFilter = 'Todo'">Ver todo el catálogo</button>
+      </div>
+
+      <TransitionGroup v-else name="product-grid" tag="div" class="featured__grid">
         <ProductCard
-          v-for="product in filteredProducts"
+          v-for="product in displayProducts"
           :key="product.id"
           :product="product"
           @add-to-cart="$emit('add-to-cart', $event)"
@@ -38,8 +43,8 @@
       </TransitionGroup>
 
       <!-- View All CTA -->
-      <div class="featured__footer">
-        <button class="btn btn-outline">
+      <div class="featured__footer" v-if="hasMore">
+        <button class="btn btn-outline" @click="showAll = true">
           Ver todos los productos
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -59,18 +64,36 @@ export default {
   components: { ProductCard },
   emits: ['add-to-cart'],
   props: {
-    products: { type: Array, required: true }
+    products: { type: Array, required: true },
+    externalFilter: { type: String, default: '' }
   },
   data() {
     return {
       activeFilter: 'Todo',
       filters: ['Todo', 'Camisetas', 'Sudaderas', 'Pantalones', 'Ediciones Limitadas'],
+      showAll: false
+    }
+  },
+  watch: {
+    externalFilter(newVal) {
+      if (newVal) this.activeFilter = newVal
+    },
+    activeFilter() {
+      // Reset "show more" when category changes
+      this.showAll = false
     }
   },
   computed: {
-    filteredProducts() {
+    allFilteredProducts() {
       if (this.activeFilter === 'Todo') return this.products
       return this.products.filter(p => p.category === this.activeFilter)
+    },
+    displayProducts() {
+      if (this.showAll) return this.allFilteredProducts
+      return this.allFilteredProducts.slice(0, 4)
+    },
+    hasMore() {
+      return this.allFilteredProducts.length > 4 && !this.showAll
     }
   }
 }
@@ -143,6 +166,25 @@ export default {
   margin-top: 3rem;
   display: flex;
   justify-content: center;
+}
+
+/* Empty state */
+.featured__empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--c-dark-2);
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.featured__empty p {
+  color: var(--c-grey);
+  font-size: 1.1rem;
 }
 
 /* Grid transition */

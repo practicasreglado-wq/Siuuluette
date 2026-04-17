@@ -7,28 +7,23 @@
     <div class="navbar__inner">
 
       <!-- Brand Logo -->
-      <a href="#" class="navbar__brand" aria-label="Siuuluette inicio">
+      <a href="#inicio" class="navbar__brand" aria-label="Siuuluette inicio">
         <img src="/Siu_white.png" alt="Siuuluette isotipo" class="navbar__logo-icon" />
         <span class="navbar__logo-text">Siuuluette</span>
       </a>
 
       <!-- Primary Navigation (desktop) -->
       <nav class="navbar__nav" aria-label="Navegación principal">
-        <a href="#inicio" class="navbar__link">Inicio</a>
-        <a href="#drops" class="navbar__link navbar__link--accent">Drops</a>
-        <a href="#colecciones" class="navbar__link">Colecciones</a>
-        <a href="#nosotros" class="navbar__link">Nosotros</a>
+        <a href="#inicio" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }">Inicio</a>
+        <a href="#colecciones" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'colecciones' }">Colecciones</a>
+        <a href="#drops" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'drops' }">Drops</a>
+        <a href="#nosotros" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }">Nosotros</a>
       </nav>
 
       <!-- Actions -->
       <div class="navbar__actions">
 
-        <!-- Search -->
-        <button class="navbar__icon-btn" aria-label="Buscar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/>
-          </svg>
-        </button>
+
 
         <!-- User Account -->
         <button class="navbar__icon-btn" aria-label="Mi cuenta">
@@ -69,8 +64,8 @@
       <div class="navbar__mobile-menu" v-if="menuOpen">
         <nav class="mobile-nav">
           <a href="#inicio" class="mobile-nav__link" @click="menuOpen = false">Inicio</a>
-          <a href="#drops" class="mobile-nav__link mobile-nav__link--accent" @click="menuOpen = false">Drops</a>
           <a href="#colecciones" class="mobile-nav__link" @click="menuOpen = false">Colecciones</a>
+          <a href="#drops" class="mobile-nav__link mobile-nav__link--accent" @click="menuOpen = false">Drops</a>
           <a href="#nosotros" class="mobile-nav__link" @click="menuOpen = false">Nosotros</a>
           <a href="#" class="mobile-nav__link" @click="menuOpen = false">Mi cuenta</a>
         </nav>
@@ -89,9 +84,36 @@ export default {
   },
   data() {
     return {
-      menuOpen: false
+      menuOpen: false,
+      activeSection: 'inicio'
     }
   },
+  mounted() {
+    this.initScrollSpy()
+  },
+  methods: {
+    initScrollSpy() {
+      const options = {
+        root: null,
+        rootMargin: '-20% 0px -70% 0px', // Detect when section is in top part of screen
+        threshold: 0
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            this.activeSection = entry.target.id
+          }
+        })
+      }, options)
+
+      const sections = ['inicio', 'drops', 'colecciones', 'nosotros']
+      sections.forEach(id => {
+        const el = document.getElementById(id)
+        if (el) observer.observe(el)
+      })
+    }
+  }
 }
 </script>
 
@@ -132,14 +154,13 @@ export default {
 
 /* --- Inner Layout --- */
 .navbar__inner {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 2rem;
-  height: 70px;
+  padding: 0 3rem; /* More padding on the sides */
+  height: 85px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
 }
 
 /* --- Brand --- */
@@ -170,7 +191,7 @@ export default {
 .navbar__nav {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 3.5rem; /* Wider gap between links */
 }
 
 .navbar__link {
@@ -195,8 +216,15 @@ export default {
   transition: width var(--t-medium) var(--ease-standard);
 }
 
-.navbar__link:hover         { color: var(--c-white); }
-.navbar__link:hover::after  { width: 100%; }
+.navbar__link:hover::after,
+.navbar__link--active::after {
+  width: 100%;
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  color: var(--c-white);
+}
 .navbar__link--accent       { color: var(--c-gold); }
 
 /* --- Actions --- */

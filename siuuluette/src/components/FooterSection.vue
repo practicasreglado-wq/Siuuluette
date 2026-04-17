@@ -49,7 +49,7 @@
           <h3 class="footer__col-title">{{ col.title }}</h3>
           <ul class="footer__links">
             <li v-for="link in col.links" :key="link.label">
-              <a href="#" class="footer__link">{{ link.label }}</a>
+              <a :href="link.href" class="footer__link">{{ link.label }}</a>
             </li>
           </ul>
         </div>
@@ -156,33 +156,15 @@ export default {
         {
           title: 'Tienda',
           links: [
-            { label: 'Hombre' },
-            { label: 'Mujer' },
-            { label: 'Drops' },
-            { label: 'Colecciones' },
-            { label: 'Accesorios' },
-            { label: 'Ediciones Limitadas' },
+            { label: 'Inicio', href: '#inicio' },
+            { label: 'Explora', href: '#explora' },
+            { label: 'Drops', href: '#drops' },
           ],
         },
         {
           title: 'Marca',
           links: [
-            { label: 'Nosotros' },
-            { label: 'Manifiesto' },
-            { label: 'Comunidad' },
-            { label: 'Blog' },
-            { label: 'Prensa' },
-            { label: 'Colaboraciones' },
-          ],
-        },
-        {
-          title: 'Ayuda',
-          links: [
-            { label: 'Contacto' },
-            { label: 'Envíos y devoluciones' },
-            { label: 'Guía de tallas' },
-            { label: 'FAQ' },
-            { label: 'Estado del pedido' },
+            { label: 'Nosotros', href: '#nosotros' },
           ],
         },
       ],
@@ -241,7 +223,7 @@ export default {
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
   gap: 4rem;
   align-items: start;
 }

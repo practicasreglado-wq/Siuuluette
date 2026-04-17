@@ -180,7 +180,12 @@ export default { name: 'HeroSection' }
 }
 
 .hero__headline-line--1 { animation-delay: 0.3s; color: var(--c-white); }
-.hero__headline-line--2 { animation-delay: 0.45s; color: rgba(245,243,239,0.4); padding-left: 8vw; }
+.hero__headline-line--2 { 
+  animation-delay: 0.45s; 
+  color: rgba(245,243,239,0.4); 
+  padding-left: 8vw;
+  letter-spacing: 0.05em; /* Add space between L and A */
+}
 .hero__headline-line--3 { animation-delay: 0.6s; color: var(--c-gold); }
 
 @keyframes heroLine {
@@ -286,7 +291,7 @@ export default { name: 'HeroSection' }
     padding: 70px 1.5rem 4rem;
     align-items: flex-end;
   }
-  .hero__isotipo-bg { width: 90%; right: -20%; opacity: 0.04; }
+  .hero__isotipo-bg { width: 110%; right: -10%; opacity: 0.15; }
   .hero__stats { gap: 1.2rem; }
   .hero__scroll-hint { display: none; }
 }
