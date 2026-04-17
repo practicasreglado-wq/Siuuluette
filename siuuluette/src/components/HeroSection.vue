@@ -130,15 +130,15 @@ export default { name: 'HeroSection' }
 /* --- Large Isotipo Background --- */
 .hero__isotipo-bg {
   position: absolute;
-  right: -4%;
+  right: 5%;
   top: 50%;
   transform: translateY(-50%);
-  width: 55%;
-  max-width: 700px;
-  opacity: 0.06;
+  width: 75%;
+  max-width: 850px;
+  opacity: 0.70;
   z-index: 1;
   pointer-events: none;
-  filter: invert(1);
+  filter: invert(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.539));
 }
 
 .hero__isotipo-bg img {
@@ -292,7 +292,7 @@ export default { name: 'HeroSection' }
     padding: 70px 1.5rem 4rem;
     align-items: flex-end;
   }
-  .hero__isotipo-bg { width: 90%; right: -20%; opacity: 0.04; }
+  .hero__isotipo-bg { width: 110%; right: -10%; opacity: 0.15; }
   .hero__stats { gap: 1.2rem; }
   .hero__scroll-hint { display: none; }
 }
