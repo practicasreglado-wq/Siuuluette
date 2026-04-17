@@ -5,14 +5,21 @@
        ========================================== -->
   <div id="siuuluette-app" :class="{ 'cart-open': isCartOpen }">
 
+    <!-- Announcement Banner -->
+    <div class="announcement-bar" v-if="showAnnouncement">
+      <span class="label">Envío gratuito en pedidos superiores a 100€ — Nuevos drops cada mes</span>
+      <button class="announcement-close" @click="showAnnouncement = false" aria-label="Cerrar">✕</button>
+    </div>
+
     <Navbar
+      :style="{ top: showAnnouncement ? '36px' : '0px' }"
       :cart-count="cartCount"
       :is-scrolled="isScrolled"
       @open-cart="isCartOpen = true"
     />
 
     <!-- Main Content -->
-    <main>
+    <main :style="{ paddingTop: showAnnouncement ? '36px' : '0px' }">
       <HeroSection id="inicio" />
       <CategoryGrid id="explora" @category-select="selectCategory" />
       <FeaturedProducts
@@ -156,6 +163,40 @@ export default {
 </script>
 
 <style scoped>
+/* --- Announcement Bar --- */
+.announcement-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-gold);
+  color: var(--c-black);
+  padding: 0 3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  z-index: 101;
+}
+
+.announcement-close {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: var(--c-black);
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+}
+
+.announcement-close:hover { opacity: 1; }
 
 
 /* --- Overlay --- */
