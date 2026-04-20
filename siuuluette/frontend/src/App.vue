@@ -24,7 +24,6 @@
       <CategoryGrid id="explora" @category-select="selectCategory" />
       <LimitedDrop id="drops" @add-to-cart="addToCart" />
       <BrandValues id="nosotros" />
-      <NewsletterSection />
     </main>
 
     <FooterSection />
@@ -77,7 +76,6 @@ import HeroSection      from './components/HeroSection.vue'
 import CategoryGrid     from './components/CategoryGrid.vue'
 import LimitedDrop      from './components/LimitedDrop.vue'
 import BrandValues      from './components/BrandValues.vue'
-import NewsletterSection from './components/NewsletterSection.vue'
 import FooterSection    from './components/FooterSection.vue'
 import CartSidebar      from './components/CartSidebar.vue'
 import CategoryExplore  from './components/CategoryExplore.vue'
@@ -86,7 +84,7 @@ export default {
   name: 'App',
   components: {
     Navbar, HeroSection, CategoryGrid,
-    LimitedDrop, BrandValues, NewsletterSection, FooterSection,
+    LimitedDrop, BrandValues, FooterSection,
     CartSidebar, CategoryExplore
   },
   setup() {

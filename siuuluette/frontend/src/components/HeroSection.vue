@@ -36,7 +36,7 @@
       </p>
 
       <div class="hero__ctas">
-        <a href="#colecciones" class="btn btn-primary hero__cta">
+        <a href="#explora" class="btn btn-primary hero__cta">
           Comprar ahora
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -125,10 +125,10 @@ export default { name: 'HeroSection' }
 .hero__isotipo-bg img {
   width: 100%;
   height: auto;
-  filter: invert(1)
-          drop-shadow(0 0 22px rgba(207, 153, 71, 0.612)) 
-          drop-shadow(0 0 40px rgba(234, 205, 116, 0.523));
-  opacity: 0.36;
+  filter: invert(1) brightness(0.3) sepia(0.8) hue-rotate(-15deg)
+          drop-shadow(0 0 35px rgba(114, 100, 64, 0.616)) 
+          drop-shadow(0 0 80px rgba(108, 94, 59, 0.984));
+  opacity: 0.45;
 }
 
 /* --- Content --- */
