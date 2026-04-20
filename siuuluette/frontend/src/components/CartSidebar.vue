@@ -112,7 +112,7 @@ export default {
   max-width: 100vw;
   background: var(--c-dark);
   border-left: 1px solid rgba(255,255,255,0.06);
-  z-index: 300;
+  z-index: 2000;
   display: flex;
   flex-direction: column;
   overflow: hidden;

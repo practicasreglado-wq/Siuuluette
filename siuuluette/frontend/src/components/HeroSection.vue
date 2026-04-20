@@ -21,7 +21,7 @@
     <div class="hero__content">
       <div class="hero__eyebrow">
         <span class="accent-line"></span>
-        <span class="label">Nueva colección 2025</span>
+        <span class="label">Nueva colección 2026</span>
       </div>
 
       <h1 class="hero__headline">
@@ -43,27 +43,10 @@
           </svg>
         </a>
         <a href="#drops" class="btn btn-outline hero__cta">
-          Ver colección
+          Ver limitados
         </a>
       </div>
 
-      <!-- Stats bar -->
-      <div class="hero__stats">
-        <div class="hero__stat">
-          <span class="hero__stat-num">6</span>
-          <span class="hero__stat-label">Drops anuales</span>
-        </div>
-        <div class="hero__stat-divider"></div>
-        <div class="hero__stat">
-          <span class="hero__stat-num">500</span>
-          <span class="hero__stat-label">Und. por drop</span>
-        </div>
-        <div class="hero__stat-divider"></div>
-        <div class="hero__stat">
-          <span class="hero__stat-num">10+</span>
-          <span class="hero__stat-label">Países</span>
-        </div>
-      </div>
     </div>
 
     <!-- Scroll Indicator -->
@@ -88,7 +71,7 @@ export default { name: 'HeroSection' }
   min-height: 100svh;
   display: flex;
   align-items: flex-end;
-  padding: 0 2rem 6rem;
+  padding: 0 2rem 2rem;
   overflow: hidden;
   background: var(--c-black);
   /* top padding for navbar */
@@ -135,7 +118,6 @@ export default { name: 'HeroSection' }
   transform: translateY(-50%);
   width: 60%;
   max-width: 800px;
-  opacity: 0.5;
   z-index: 1;
   pointer-events: none;
 }
@@ -143,6 +125,9 @@ export default { name: 'HeroSection' }
 .hero__isotipo-bg img {
   width: 100%;
   height: auto;
+  filter: drop-shadow(0 0 30px rgba(201, 169, 110, 0.5)) 
+          drop-shadow(0 0 60px rgba(201, 169, 110, 0.2));
+  opacity: 0.8;
 }
 
 /* --- Content --- */
@@ -211,45 +196,9 @@ export default { name: 'HeroSection' }
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 4rem;
   animation: fadeIn 0.8s 1s both;
 }
 
-/* Stats */
-.hero__stats {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  animation: fadeIn 0.8s 1.2s both;
-}
-
-.hero__stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.hero__stat-num {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  line-height: 1;
-  color: var(--c-white);
-  letter-spacing: 0.02em;
-}
-
-.hero__stat-label {
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--c-grey);
-}
-
-.hero__stat-divider {
-  width: 1px;
-  height: 36px;
-  background: rgba(255,255,255,0.12);
-}
 
 /* Scroll indicator */
 .hero__scroll-hint {
@@ -292,7 +241,6 @@ export default { name: 'HeroSection' }
     align-items: flex-end;
   }
   .hero__isotipo-bg { width: 110%; right: -10%; opacity: 0.15; }
-  .hero__stats { gap: 1.2rem; }
   .hero__scroll-hint { display: none; }
 }
 

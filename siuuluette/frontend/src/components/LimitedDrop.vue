@@ -70,18 +70,20 @@
 
       <!-- Side visual -->
       <div class="drop__visual">
-        <div class="drop__product-card">
-          <img
-            src="https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=800&q=80"
-            alt="Drop 02 — Hoodie Las 4AM"
-            class="drop__product-img"
-          />
+        <div class="drop__product-card drop__product-card--silhouette">
+          <div class="drop__silhouette-wrapper">
+            <img
+              src="/Siu_white.png"
+              alt="Siuuluette Brand Silhouette"
+              class="drop__product-img-silhouette"
+            />
+          </div>
           <div class="drop__product-info">
-            <span class="label">Hoodie premium</span>
-            <p>Heavyweight 420gsm · Bordado isotipo</p>
+            <span class="label">Diseño exclusivo</span>
+            <p>Edición Limitada — Próximamente</p>
             <div class="drop__product-tags">
               <span class="badge badge-gold">Numerado</span>
-              <span class="badge badge-dark">Sin restock</span>
+              <span class="badge badge-dark">Coleccionable</span>
             </div>
           </div>
         </div>
@@ -289,21 +291,51 @@ export default {
   letter-spacing: 0.06em;
 }
 
-/* Visual side */
-.drop__visual { position: relative; }
+.drop__visual { 
+  position: relative; 
+  display: flex;
+  justify-content: center;
+}
 
 .drop__product-card {
+  width: 100%;
+  max-width: 460px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--c-dark-2);
   border: 1px solid rgba(255,255,255,0.06);
   box-shadow: var(--shadow-card);
+  transition: transform 0.4s var(--ease-standard);
+}
+
+.drop__product-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(201, 169, 110, 0.2);
 }
 
 .drop__product-img {
   width: 100%;
-  aspect-ratio: 3/4;
+  aspect-ratio: 1/1;
   object-fit: cover;
+}
+
+.drop__silhouette-wrapper {
+  width: 100%;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(201, 169, 110, 0.1) 0%, transparent 70%);
+  padding: 4rem;
+}
+
+.drop__product-img-silhouette {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(201, 169, 110, 0.4)) 
+          drop-shadow(0 0 40px rgba(201, 169, 110, 0.15));
+  opacity: 0.9;
 }
 
 .drop__product-info {

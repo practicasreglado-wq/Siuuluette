@@ -85,12 +85,12 @@ export default {
         selectedSize: this.selectedSize
       })
       this.justAdded = true
+      this.selectedSize = null
       
-      // Reset after success message
+      // Reset success feedback after a short delay
       setTimeout(() => { 
         this.justAdded = false 
-        this.selectedSize = null
-      }, 1800)
+      }, 1500)
     }
   }
 }

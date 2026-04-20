@@ -6,6 +6,7 @@ export const products = [
   {
     id: 1,
     name: 'Camiseta Victory Blanca',
+    style: 'Urban',
     category: 'Camisetas',
     price: 89,
     originalPrice: null,
@@ -21,6 +22,7 @@ export const products = [
   {
     id: 2,
     name: 'Sudadera Siuuluette Negra',
+    style: 'Urban-Sport',
     category: 'Sudaderas',
     price: 185,
     originalPrice: null,
@@ -36,6 +38,7 @@ export const products = [
   {
     id: 3,
     name: 'Pantalón Elite Azul',
+    style: 'Urban-Sport',
     category: 'Pantalones',
     price: 135,
     originalPrice: null,
@@ -51,6 +54,7 @@ export const products = [
   {
     id: 4,
     name: 'Camiseta Contrast Black/White',
+    style: 'Urban-Sport',
     category: 'Camisetas',
     price: 95,
     originalPrice: null,
@@ -66,6 +70,7 @@ export const products = [
   {
     id: 5,
     name: 'Sudadera Victory Azul',
+    style: 'Urban-Sport',
     category: 'Sudaderas',
     price: 195,
     originalPrice: null,
@@ -81,6 +86,7 @@ export const products = [
   {
     id: 6,
     name: 'Pantalón Cargo Crema',
+    style: 'Urban-Sport',
     category: 'Pantalones',
     price: 145,
     originalPrice: null,
@@ -96,6 +102,7 @@ export const products = [
   {
     id: 7,
     name: 'Camiseta Shadow Grey',
+    style: 'Urban-Sport',
     category: 'Camisetas',
     price: 79,
     originalPrice: null,
@@ -111,6 +118,7 @@ export const products = [
   {
     id: 8,
     name: 'Sudadera Crimson Red',
+    style: 'Urban-Sport',
     category: 'Sudaderas',
     price: 185,
     originalPrice: 220,
@@ -126,6 +134,7 @@ export const products = [
   {
     id: 9,
     name: 'Pantalón Victory Rojo',
+    style: 'Urban-Sport',
     category: 'Pantalones',
     price: 125,
     originalPrice: null,
@@ -141,6 +150,7 @@ export const products = [
   {
     id: 10,
     name: 'Pantalón Stealth Negro',
+    style: 'Urban-Sport',
     category: 'Pantalones',
     price: 135,
     originalPrice: null,
@@ -156,6 +166,7 @@ export const products = [
   {
     id: 11,
     name: 'Camiseta Core Black',
+    style: 'Urban',
     category: 'Camisetas',
     price: 79,
     originalPrice: null,
@@ -171,6 +182,7 @@ export const products = [
   {
     id: 12,
     name: 'Sudadera Cloud Grey',
+    style: 'Urban-Sport',
     category: 'Sudaderas',
     price: 175,
     originalPrice: null,
@@ -186,6 +198,7 @@ export const products = [
   {
     id: 13,
     name: 'Pantalón Sport Grey',
+    style: 'Urban-Sport',
     category: 'Pantalones',
     price: 130,
     originalPrice: null,
@@ -201,6 +214,7 @@ export const products = [
   {
     id: 14,
     name: 'Sudadera Sand Cream',
+    style: 'Urban-Sport',
     category: 'Sudaderas',
     price: 185,
     originalPrice: null,
@@ -216,8 +230,6 @@ export const products = [
 ]
 
 export const categories = [
-  { id: 1, name: 'Camisetas',         count: 12, image: '/img/cam_blanca1.png' },
-  { id: 2, name: 'Sudaderas',         count: 8,  image: '/img/sud_negra1.png' },
-  { id: 3, name: 'Pantalones',        count: 6,  image: '/img/pant_azul1.png' },
-  { id: 4, name: 'Edición Limitada',  count: 3,  image: '/img/cam_blanca_negra_1.png' },
+  { id: 1, name: 'Urban',            count: 2,  image: '/img/cam_negra1.png' },
+  { id: 2, name: 'Urban-Sport',      count: 12, image: '/img/sud_negra1.png' },
 ]

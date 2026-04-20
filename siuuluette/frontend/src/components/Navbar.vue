@@ -14,10 +14,10 @@
 
       <!-- Primary Navigation (desktop) -->
       <nav class="navbar__nav" aria-label="Navegación principal">
-        <a href="#inicio" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }">Inicio</a>
-        <a href="#colecciones" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'colecciones' }">Colecciones</a>
-        <a href="#drops" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'drops' }">Drops</a>
-        <a href="#nosotros" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }">Nosotros</a>
+        <a href="#inicio" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }" @click="$emit('nav-click')">Inicio</a>
+        <a href="#explora" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'explora' }" @click="$emit('nav-click')">Explora</a>
+        <a href="#drops" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'drops' }" @click="$emit('nav-click')">Drops</a>
+        <a href="#nosotros" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }" @click="$emit('nav-click')">Nosotros</a>
       </nav>
 
       <!-- Actions -->
@@ -63,11 +63,11 @@
     <Transition name="mobile-menu">
       <div class="navbar__mobile-menu" v-if="menuOpen">
         <nav class="mobile-nav">
-          <a href="#inicio" class="mobile-nav__link" @click="menuOpen = false">Inicio</a>
-          <a href="#colecciones" class="mobile-nav__link" @click="menuOpen = false">Colecciones</a>
-          <a href="#drops" class="mobile-nav__link mobile-nav__link--accent" @click="menuOpen = false">Drops</a>
-          <a href="#nosotros" class="mobile-nav__link" @click="menuOpen = false">Nosotros</a>
-          <a href="#" class="mobile-nav__link" @click="menuOpen = false">Mi cuenta</a>
+          <a href="#inicio" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Inicio</a>
+          <a href="#explora" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Explora</a>
+          <a href="#drops" class="mobile-nav__link mobile-nav__link--accent" @click="menuOpen = false; $emit('nav-click')">Drops</a>
+          <a href="#nosotros" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Nosotros</a>
+          <a href="#" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Mi cuenta</a>
         </nav>
       </div>
     </Transition>
@@ -77,7 +77,7 @@
 <script>
 export default {
   name: 'Navbar',
-  emits: ['open-cart'],
+  emits: ['open-cart', 'nav-click'],
   props: {
     cartCount: { type: Number, default: 0 },
     isScrolled: { type: Boolean, default: false },
@@ -107,7 +107,7 @@ export default {
         })
       }, options)
 
-      const sections = ['inicio', 'drops', 'colecciones', 'nosotros']
+      const sections = ['inicio', 'drops', 'explora', 'nosotros']
       sections.forEach(id => {
         const el = document.getElementById(id)
         if (el) observer.observe(el)
@@ -124,7 +124,7 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 1100;
   transition: background var(--t-medium) var(--ease-standard),
               box-shadow var(--t-medium) var(--ease-standard),
               backdrop-filter var(--t-medium);

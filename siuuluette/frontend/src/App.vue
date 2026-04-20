@@ -5,35 +5,37 @@
        ========================================== -->
   <div id="siuuluette-app" :class="{ 'cart-open': isCartOpen }">
 
-    <!-- Announcement Banner -->
-    <div class="announcement-bar" v-if="showAnnouncement">
+    <!-- Announcement Banner (Hidden in Explore Mode) -->
+    <div class="announcement-bar" v-if="!selectedStyle">
       <span class="label">Envío gratuito en pedidos superiores a 100€ — Nuevos drops cada mes</span>
-      <button class="announcement-close" @click="showAnnouncement = false" aria-label="Cerrar">✕</button>
     </div>
 
     <Navbar
-      :style="{ top: showAnnouncement ? '36px' : '0px' }"
+      :style="{ top: !selectedStyle ? '36px' : '0px' }"
       :cart-count="cartCount"
       :is-scrolled="isScrolled"
       @open-cart="isCartOpen = true"
+      @nav-click="closeExplore"
     />
 
     <!-- Main Content -->
-    <main :style="{ paddingTop: showAnnouncement ? '36px' : '0px' }">
+    <main :style="{ paddingTop: !selectedStyle ? '36px' : '0px' }">
       <HeroSection id="inicio" />
       <CategoryGrid id="explora" @category-select="selectCategory" />
-      <FeaturedProducts
-        id="colecciones"
-        :products="products"
-        :external-filter="activeCategory"
-        @add-to-cart="addToCart"
-      />
       <LimitedDrop id="drops" @add-to-cart="addToCart" />
       <BrandValues id="nosotros" />
       <NewsletterSection />
     </main>
 
     <FooterSection />
+
+    <!-- Explore Overlay / View -->
+    <CategoryExplore 
+      :style-name="selectedStyle" 
+      :products="products"
+      @close="closeExplore"
+      @add-to-cart="addToCart"
+    />
 
     <!-- Cart Sidebar -->
     <Transition name="slide-right">
@@ -73,27 +75,27 @@ import { products } from './data/products.js'
 import Navbar           from './components/Navbar.vue'
 import HeroSection      from './components/HeroSection.vue'
 import CategoryGrid     from './components/CategoryGrid.vue'
-import FeaturedProducts from './components/FeaturedProducts.vue'
 import LimitedDrop      from './components/LimitedDrop.vue'
 import BrandValues      from './components/BrandValues.vue'
 import NewsletterSection from './components/NewsletterSection.vue'
 import FooterSection    from './components/FooterSection.vue'
 import CartSidebar      from './components/CartSidebar.vue'
+import CategoryExplore  from './components/CategoryExplore.vue'
 
 export default {
   name: 'App',
   components: {
-    Navbar, HeroSection, CategoryGrid, FeaturedProducts,
+    Navbar, HeroSection, CategoryGrid,
     LimitedDrop, BrandValues, NewsletterSection, FooterSection,
-    CartSidebar,
+    CartSidebar, CategoryExplore
   },
   setup() {
     /* ---- Refs ---- */
     const cartItems       = ref([])
     const isCartOpen      = ref(false)
     const isScrolled      = ref(false)
-    const showAnnouncement = ref(true)
     const activeCategory  = ref('')
+    const selectedStyle   = ref('')
     const toastVisible    = ref(false)
     const toastMessage    = ref('')
     let toastTimer        = null
@@ -142,7 +144,17 @@ export default {
       isScrolled.value = window.scrollY > 60
     }
 
-    function selectCategory(catName) {
+    function selectCategory(styleName) {
+      selectedStyle.value = styleName
+      document.body.style.overflow = 'hidden'
+    }
+
+    function closeExplore() {
+      selectedStyle.value = ''
+      document.body.style.overflow = ''
+    }
+
+    function selectGlobalFilter(catName) {
       activeCategory.value = catName
       const el = document.getElementById('colecciones')
       if (el) el.scrollIntoView({ behavior: 'smooth' })
@@ -154,9 +166,10 @@ export default {
     return {
       products, cartItems, cartCount,
       isCartOpen, isScrolled,
-      showAnnouncement, activeCategory,
+      activeCategory, selectedStyle,
       toastVisible, toastMessage,
-      addToCart, removeFromCart, updateQty, selectCategory,
+      addToCart, removeFromCart, updateQty, 
+      selectCategory, closeExplore, selectGlobalFilter
     }
   }
 }
@@ -179,25 +192,8 @@ export default {
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.12em;
-  z-index: 101;
+  z-index: 1200; /* Above Navbar */
 }
-
-.announcement-close {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.7rem;
-  color: var(--c-black);
-  opacity: 0.6;
-  cursor: pointer;
-  padding: 0.25rem;
-  background: none;
-  border: none;
-}
-
-.announcement-close:hover { opacity: 1; }
-
 
 /* --- Overlay --- */
 .overlay {
@@ -205,7 +201,7 @@ export default {
   inset: 0;
   background: rgba(0,0,0,0.75);
   backdrop-filter: blur(2px);
-  z-index: 200;
+  z-index: 1900;
 }
 
 /* --- Toast --- */
@@ -224,7 +220,7 @@ export default {
   gap: 0.6rem;
   font-size: 0.875rem;
   font-weight: 500;
-  z-index: 1000;
+  z-index: 3000;
   white-space: nowrap;
   box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
