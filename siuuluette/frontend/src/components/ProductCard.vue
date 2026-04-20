@@ -110,7 +110,7 @@ export default {
 .product-card:hover {
   transform: translateY(-6px);
   box-shadow: var(--shadow-hover);
-  border-color: rgba(255,255,255,0.06);
+  border-color: rgba(92, 82, 72, 0.12);
 }
 
 /* Image */
@@ -157,7 +157,7 @@ export default {
 .product-card__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(8,8,8,0.55);
+  background: rgba(92, 82, 72, 0.6);
   backdrop-filter: blur(3px);
   display: flex;
   flex-direction: column;
@@ -210,10 +210,10 @@ export default {
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.05em;
-  background: rgba(245,243,239,0.12);
-  color: var(--c-white);
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   transition: background var(--t-fast), border-color var(--t-fast);
   cursor: pointer;
 }

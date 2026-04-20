@@ -171,8 +171,8 @@ export default {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(201,169,110,0.4); }
-  50%       { opacity: 0.8; transform: scale(1.1); box-shadow: 0 0 0 8px rgba(201,169,110,0); }
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(92, 82, 72, 0.4); }
+  50%       { opacity: 0.8; transform: scale(1.1); box-shadow: 0 0 0 8px rgba(92, 82, 72, 0); }
 }
 
 /* Edition */
@@ -232,7 +232,7 @@ export default {
 
 .drop__stock-bar {
   height: 3px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(92, 82, 72, 0.1);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -303,14 +303,14 @@ export default {
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--c-dark-2);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(92, 82, 72, 0.12);
   box-shadow: var(--shadow-card);
   transition: transform 0.4s var(--ease-standard);
 }
 
 .drop__product-card:hover {
   transform: translateY(-5px);
-  border-color: rgba(201, 169, 110, 0.2);
+  border-color: rgba(92, 82, 72, 0.3);
 }
 
 .drop__product-img {
@@ -325,7 +325,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(201, 169, 110, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(92, 82, 72, 0.15) 0%, transparent 70%);
   padding: 4rem;
 }
 
@@ -333,8 +333,9 @@ export default {
   max-width: 80%;
   max-height: 80%;
   object-fit: contain;
-  filter: drop-shadow(0 0 20px rgba(201, 169, 110, 0.4)) 
-          drop-shadow(0 0 40px rgba(201, 169, 110, 0.15));
+  filter: invert(1)
+          drop-shadow(0 0 20px rgba(92, 82, 72, 0.25)) 
+          drop-shadow(0 0 40px rgba(92, 82, 72, 0.12));
   opacity: 0.9;
 }
 

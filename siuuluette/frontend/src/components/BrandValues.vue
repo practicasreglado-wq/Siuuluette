@@ -81,8 +81,8 @@ export default {
 <style scoped>
 .values {
   background: var(--c-dark);
-  border-top: 1px solid rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(92, 82, 72, 0.1);
+  border-bottom: 1px solid rgba(92, 82, 72, 0.1);
 }
 
 .values__header {
@@ -114,7 +114,7 @@ export default {
   flex-direction: column;
   gap: 1.25rem;
   transition: background var(--t-medium);
-  border-right: 1px solid rgba(255,255,255,0.04);
+  border-right: 1px solid rgba(92, 82, 72, 0.1);
 }
 
 .value-card:last-child { border-right: none; }
@@ -146,15 +146,15 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-md);
-  background: rgba(201,169,110,0.1);
+  background: rgba(92, 82, 72, 0.08);
   color: var(--c-gold);
-  border: 1px solid rgba(201,169,110,0.2);
+  border: 1px solid rgba(92, 82, 72, 0.15);
   flex-shrink: 0;
   transition: background var(--t-medium), transform var(--t-medium) var(--ease-spring);
 }
 
 .value-card:hover .value-card__icon {
-  background: rgba(201,169,110,0.18);
+  background: rgba(92, 82, 72, 0.15);
   transform: scale(1.08);
 }
 
@@ -180,7 +180,7 @@ export default {
   right: 1.5rem;
   font-family: var(--font-display);
   font-size: 3.5rem;
-  color: rgba(255,255,255,0.04);
+  color: rgba(255, 255, 255, 0.269);
   line-height: 1;
   pointer-events: none;
   user-select: none;
@@ -188,7 +188,7 @@ export default {
 }
 
 .value-card:hover .value-card__number {
-  color: rgba(201,169,110,0.06);
+  color: rgba(92, 82, 72, 0.475);
 }
 
 /* Responsive */

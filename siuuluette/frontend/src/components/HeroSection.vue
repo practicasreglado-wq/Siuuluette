@@ -84,8 +84,8 @@ export default { name: 'HeroSection' }
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 120% 80% at 60% 40%, rgba(201,169,110,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 80% 60% at 10% 80%, rgba(255,255,255,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 120% 80% at 60% 40%, rgba(92, 82, 72, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 10% 80%, rgba(92, 82, 72, 0.02) 0%, transparent 50%),
     var(--c-black);
 }
 
@@ -94,9 +94,9 @@ export default { name: 'HeroSection' }
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(8,8,8,0.2) 0%,
-    rgba(8,8,8,0.1) 40%,
-    rgba(8,8,8,0.85) 80%,
+    rgba(229, 224, 216, 0) 0%,
+    rgba(229, 224, 216, 0.2) 40%,
+    rgba(229, 224, 216, 0.8) 80%,
     var(--c-black) 100%
   );
 }
@@ -105,7 +105,7 @@ export default { name: 'HeroSection' }
 .hero__grain {
   position: absolute;
   inset: 0;
-  opacity: 0.035;
+  opacity: 0.06;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 200px;
 }
@@ -113,11 +113,11 @@ export default { name: 'HeroSection' }
 /* --- Large Isotipo Background --- */
 .hero__isotipo-bg {
   position: absolute;
-  right: -2%;
+  right: 2%;
   top: 50%;
-  transform: translateY(-50%);
-  width: 60%;
-  max-width: 800px;
+  transform: translateY(-40%);
+  width: 75%;
+  max-width: 900px;
   z-index: 1;
   pointer-events: none;
 }
@@ -125,9 +125,10 @@ export default { name: 'HeroSection' }
 .hero__isotipo-bg img {
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 0 30px rgba(201, 169, 110, 0.5)) 
-          drop-shadow(0 0 60px rgba(201, 169, 110, 0.2));
-  opacity: 0.8;
+  filter: invert(1)
+          drop-shadow(0 0 22px rgba(207, 153, 71, 0.612)) 
+          drop-shadow(0 0 40px rgba(234, 205, 116, 0.523));
+  opacity: 0.36;
 }
 
 /* --- Content --- */
@@ -167,7 +168,7 @@ export default { name: 'HeroSection' }
 .hero__headline-line--1 { animation-delay: 0.3s; color: var(--c-white); }
 .hero__headline-line--2 { 
   animation-delay: 0.45s; 
-  color: rgba(245,243,239,0.4); 
+  color: rgba(149, 148, 147, 0.559); 
   padding-left: 8vw;
   letter-spacing: 0.05em; /* Add space between L and A */
 }

@@ -199,7 +199,7 @@ export default {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.75);
+  background: rgba(58, 52, 45, 0.7);
   backdrop-filter: blur(2px);
   z-index: 1900;
 }
@@ -222,7 +222,7 @@ export default {
   font-weight: 500;
   z-index: 3000;
   white-space: nowrap;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 32px rgba(58, 52, 45, 0.3);
 }
 
 .toast-icon { color: var(--c-gold); font-size: 1rem; }

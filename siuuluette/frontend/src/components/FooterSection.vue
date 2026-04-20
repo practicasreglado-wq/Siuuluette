@@ -183,7 +183,7 @@ export default {
 <style scoped>
 .footer {
   background: var(--c-dark);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(92, 82, 72, 0.1);
 }
 
 /* --- Marquee Strip --- */
@@ -246,6 +246,7 @@ export default {
   height: 28px;
   object-fit: contain;
   opacity: 0.8;
+  filter: invert(1);
 }
 
 .footer__logo-text {
@@ -276,7 +277,7 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(92, 82, 72, 0.15);
   color: var(--c-grey);
   background: transparent;
   transition: all var(--t-fast);
@@ -285,7 +286,7 @@ export default {
 .footer__social-link:hover {
   border-color: var(--c-gold);
   color: var(--c-gold);
-  background: rgba(201,169,110,0.06);
+  background: rgba(92, 82, 72, 0.08);
 }
 
 /* Link Columns */
@@ -332,7 +333,7 @@ export default {
 .footer__input-row {
   display: flex;
   gap: 0;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(92, 82, 72, 0.2);
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: border-color var(--t-fast);
@@ -374,7 +375,7 @@ export default {
 
 /* --- Bottom Bar --- */
 .footer__bottom {
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(92, 82, 72, 0.1);
   padding: 1.5rem 2rem;
 }
 

@@ -85,7 +85,7 @@ export default {
   background-size: cover;
   background-position: center;
   transition: all 0.6s var(--ease-standard);
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(92, 82, 72, 0.1);
 }
 
 .cat-card::before {
@@ -94,8 +94,8 @@ export default {
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(8,8,8,0.95) 0%,
-    rgba(8,8,8,0.4) 40%,
+    rgba(92, 82, 72, 0.8) 0%,
+    rgba(92, 82, 72, 0.2) 40%,
     transparent 100%
   );
   transition: opacity 0.5s var(--ease-standard);
@@ -104,8 +104,8 @@ export default {
 
 .cat-card:hover {
   transform: translateY(-12px);
-  border-color: rgba(201, 169, 110, 0.3);
-  box-shadow: 0 30px 60px -12px rgba(0,0,0,0.5);
+  border-color: var(--c-gold);
+  box-shadow: 0 30px 60px -12px rgba(92, 82, 72, 0.25);
 }
 
 /* Shimmer effect on hover */
@@ -136,11 +136,11 @@ export default {
   z-index: 3;
   margin: 1.5rem;
   padding: 2.5rem 2rem;
-  background: rgba(15, 15, 15, 0.6);
+  background: rgba(216, 209, 197, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(92, 82, 72, 0.15);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -148,9 +148,9 @@ export default {
 }
 
 .cat-card:hover .cat-card__content {
-  background: rgba(201, 169, 110, 0.12);
-  border-color: rgba(201, 169, 110, 0.4);
-  transform: translateY(-5px);
+  background: rgba(26, 26, 26, 0.75);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-8px);
 }
 
 .cat-card__count {
@@ -158,6 +158,7 @@ export default {
   font-size: 0.75rem;
   letter-spacing: 0.15em;
   opacity: 0.8;
+  transition: color var(--t-medium);
 }
 
 .cat-card__name {
@@ -167,6 +168,13 @@ export default {
   text-transform: uppercase;
   color: var(--c-white);
   line-height: 1;
+  transition: color var(--t-medium);
+}
+
+.cat-card:hover .cat-card__name,
+.cat-card:hover .cat-card__count {
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
 .cat-card__arrow {

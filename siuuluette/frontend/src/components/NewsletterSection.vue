@@ -126,7 +126,7 @@ export default {
 <style scoped>
 .newsletter {
   background: var(--c-black);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(92, 82, 72, 0.12);
 }
 
 .newsletter__inner {
@@ -143,7 +143,7 @@ export default {
 .newsletter__isotipo {
   display: block;
   width: 60px;
-  opacity: 0.4;
+  opacity: 0.15;
   margin-bottom: 1.5rem;
   filter: invert(1);
 }
@@ -194,7 +194,7 @@ export default {
   background: var(--c-dark);
   border-radius: var(--radius-lg);
   padding: 3rem;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(92, 82, 72, 0.12);
 }
 
 .newsletter__form {
@@ -229,7 +229,7 @@ export default {
 
 .newsletter__input:focus {
   border-color: var(--c-gold);
-  box-shadow: 0 0 0 3px rgba(201,169,110,0.12);
+  box-shadow: 0 0 0 3px rgba(92, 82, 72, 0.12);
 }
 
 .newsletter__input--error { border-color: #e57373; }
@@ -266,7 +266,7 @@ export default {
   gap: 1rem;
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(92, 82, 72, 0.12);
 }
 
 .newsletter__avatars {

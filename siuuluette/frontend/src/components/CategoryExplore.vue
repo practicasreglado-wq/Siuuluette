@@ -200,8 +200,8 @@ export default {
 .filter-pill {
   padding: 0.6rem 1.4rem;
   border-radius: 100px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(92, 82, 72, 0.15);
+  background: rgba(92, 82, 72, 0.05);
   color: var(--c-grey);
   font-size: 0.75rem;
   font-weight: 500;
@@ -212,7 +212,7 @@ export default {
 }
 
 .filter-pill:hover {
-  border-color: rgba(255,255,255,0.3);
+  border-color: rgba(92, 82, 72, 0.4);
   color: var(--c-white);
 }
 
@@ -225,7 +225,7 @@ export default {
 .explore-view__meta {
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(92, 82, 72, 0.12);
   color: var(--c-grey);
 }
 

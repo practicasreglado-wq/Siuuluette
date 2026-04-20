@@ -142,14 +142,14 @@ export default {
 }
 
 .navbar--scrolled::after {
-  background: rgba(255,255,255,0.08);
+  background: rgba(92, 82, 72, 0.12);
 }
 
 .navbar--scrolled {
-  background: rgba(8,8,8,0.88);
+  background: rgba(229, 224, 216, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 30px rgba(92, 82, 72, 0.15);
 }
 
 /* --- Inner Layout --- */
@@ -176,6 +176,7 @@ export default {
   width: auto;
   height: 40px;
   object-fit: contain;
+  filter: brightness(0);
 }
 
 .navbar__logo-text {
@@ -241,7 +242,7 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-sm);
-  color: var(--c-light);
+  color: var(--c-white);
   transition: color var(--t-fast), background var(--t-fast);
   cursor: pointer;
   background: transparent;
@@ -249,8 +250,8 @@ export default {
 }
 
 .navbar__icon-btn:hover {
-  color: var(--c-white);
-  background: rgba(255,255,255,0.06);
+  color: var(--c-gold);
+  background: rgba(92, 82, 72, 0.1);
 }
 
 /* --- Cart Button --- */
@@ -262,7 +263,7 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-sm);
-  color: var(--c-light);
+  color: var(--c-white);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -271,7 +272,7 @@ export default {
 
 .navbar__cart-btn:hover {
   color: var(--c-white);
-  background: rgba(255,255,255,0.06);
+  background: rgba(92, 82, 72, 0.1);
 }
 
 .navbar__cart-badge {
@@ -320,8 +321,8 @@ export default {
 
 /* --- Mobile Menu --- */
 .navbar__mobile-menu {
-  background: rgba(8,8,8,0.97);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(229, 224, 216, 0.98);
+  border-top: 1px solid rgba(92, 82, 72, 0.12);
   backdrop-filter: blur(20px);
   overflow: hidden;
 }
@@ -341,7 +342,7 @@ export default {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--c-light);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(92, 82, 72, 0.08);
   transition: color var(--t-fast), padding-left var(--t-fast);
 }
 
