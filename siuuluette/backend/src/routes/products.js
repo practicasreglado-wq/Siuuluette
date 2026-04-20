@@ -1,16 +1,19 @@
-// backend/src/routes/products.js
+import { supabase } from '../db/supabase.js'
+
 export default async function productsRoutes(fastify) {
 
   // GET /api/products — listar todos
   fastify.get('/', async (request, reply) => {
-    // Aquí irá tu consulta a Supabase
-    // Por ahora devuelve mock data
-    return {
-      products: [
-        { id: 1, name: 'Hoodie Siuuluette OG', price: 185, stock: 47 },
-        { id: 2, name: 'Camiseta Victory Core', price: 89, stock: 120 },
-      ]
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+    
+    if (error) {
+      reply.status(500).send({ error: error.message })
+      return
     }
+
+    return { products }
   })
 
   // GET /api/products/:id — un producto específico
