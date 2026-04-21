@@ -16,7 +16,7 @@
     <div class="hero__isotipo-bg">
       <div class="hero__trigger"></div>
       <img src="/Siu_white.png" alt="" />
-      <div class="hero__siuu">SIUU!</div>
+      <div class="hero__siuu">SIUULUETTE!</div>
     </div>
 
     <!-- Content -->
