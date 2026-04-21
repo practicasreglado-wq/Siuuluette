@@ -12,9 +12,11 @@
       <div class="hero__grain"></div>
     </div>
 
-    <!-- Isotipo Large Background -->
-    <div class="hero__isotipo-bg" aria-hidden="true">
+    <!-- Large Isotipo Background -->
+    <div class="hero__isotipo-bg">
+      <div class="hero__trigger"></div>
       <img src="/Siu_white.png" alt="" />
+      <div class="hero__siuu">SIUU!</div>
     </div>
 
     <!-- Content -->
@@ -118,17 +120,53 @@ export default { name: 'HeroSection' }
   transform: translateY(-40%);
   width: 75%;
   max-width: 900px;
-  z-index: 1;
-  pointer-events: none;
+  z-index: 5; /* Above content for hover reach */
+  pointer-events: none; /* Let clicks pass through transparent areas */
 }
 
 .hero__isotipo-bg img {
   width: 100%;
   height: auto;
   filter: invert(1) brightness(0.3) sepia(0.8) hue-rotate(-15deg)
-          drop-shadow(0 0 35px rgba(114, 100, 64, 0.616)) 
-          drop-shadow(0 0 80px rgba(108, 94, 59, 0.984));
-  opacity: 0.45;
+          drop-shadow(0 0 35px rgba(114, 100, 64, 0.502)) 
+          drop-shadow(0 0 80px rgba(108, 94, 59, 0.687));
+  opacity: 0.55;
+  transition: all 0.3s ease;
+  pointer-events: none; /* Image box no longer catches hover */
+}
+
+/* Precise Trigger Area */
+.hero__trigger {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 25%;
+  height: 45%;
+  pointer-events: auto;
+  z-index: 10;
+  cursor: help;
+}
+
+/* Easter Egg Styles */
+.hero__siuu {
+  position: absolute;
+  top: 10%;
+  left: 60%;
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  color: var(--c-gold);
+  opacity: 0;
+  transform: rotate(-12deg) skewX(-10deg) scale(0.5);
+  transition: all 0.4s var(--ease-spring);
+  pointer-events: none;
+  text-shadow: 0 0 20px rgba(92, 82, 72, 0.5);
+  z-index: 15;
+}
+
+.hero__trigger:hover ~ .hero__siuu {
+  opacity: 1;
+  transform: rotate(-12deg) skewX(-10deg) scale(1.1);
 }
 
 /* --- Content --- */

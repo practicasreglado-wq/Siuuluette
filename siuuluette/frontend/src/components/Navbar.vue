@@ -7,9 +7,9 @@
     <div class="navbar__inner">
 
       <!-- Brand Logo -->
-      <a href="#inicio" class="navbar__brand" aria-label="Siuuluette inicio">
+      <a href="#inicio" class="navbar__brand" aria-label="Siuuluette inicio" @click="$emit('nav-click')">
         <img src="/Siu_white.png" alt="Siuuluette isotipo" class="navbar__logo-icon" />
-        <span class="navbar__logo-text">Siuuluette</span>
+        <span class="navbar__logo-text">Le Siuuluette</span>
       </a>
 
       <!-- Primary Navigation (desktop) -->
