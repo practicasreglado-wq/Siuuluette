@@ -5,7 +5,9 @@ const supabaseUrl = process.env.SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn('Supabase URL o Key no encontradas en el archivo .env')
+  console.warn('⚠️ Supabase URL o Key no encontradas en el .env!')
+} else {
+  console.log('✅ Supabase Conectado')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey)

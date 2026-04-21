@@ -52,7 +52,7 @@
           </div>
           <div class="cart-item__controls">
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, -1)" aria-label="Quitar uno">−</button>
-            <span class="cart-item__qty">{{ item.qty }}</span>
+            <span class="cart-item__qty">{{ item.quantity }}</span>
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, 1)" aria-label="Añadir uno">+</button>
             <button class="cart-item__remove" @click="$emit('remove-item', item.id, item.selectedSize)" aria-label="Eliminar">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -72,7 +72,7 @@
         <span class="cart__subtotal-price">€{{ subtotal }}</span>
       </div>
       <p class="cart__shipping-note">Envío calculado en el checkout</p>
-      <button class="btn btn-primary cart__checkout">
+      <button class="btn btn-primary cart__checkout" @click="$emit('checkout')">
         Finalizar compra
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -87,16 +87,16 @@
 <script>
 export default {
   name: 'CartSidebar',
-  emits: ['close', 'remove-item', 'update-qty'],
+  emits: ['close', 'remove-item', 'update-qty', 'checkout'],
   props: {
     cartItems: { type: Array, default: () => [] }
   },
   computed: {
     totalItems() {
-      return this.cartItems.reduce((sum, i) => sum + i.qty, 0)
+      return this.cartItems.reduce((sum, i) => sum + i.quantity, 0)
     },
     subtotal() {
-      return this.cartItems.reduce((sum, i) => sum + i.price * i.qty, 0).toFixed(0)
+      return this.cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(0)
     }
   }
 }

@@ -26,8 +26,18 @@
 
 
         <!-- User Account -->
-        <button class="navbar__icon-btn" aria-label="Mi cuenta">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <button 
+          class="navbar__icon-btn" 
+          :class="{ 'navbar__icon-btn--active': currentUser }"
+          @click="handleUserClick" 
+          :aria-label="currentUser ? `Sesión de ${currentUser.username || currentUser.email}` : 'Mi cuenta'"
+        >
+          <!-- User Initial -->
+          <div v-if="currentUser" class="user-avatar">
+            {{ (currentUser.username || 'U').charAt(0).toUpperCase() }}
+          </div>
+          <!-- Guest Icon -->
+          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
@@ -77,10 +87,11 @@
 <script>
 export default {
   name: 'Navbar',
-  emits: ['open-cart', 'nav-click'],
+  emits: ['open-cart', 'open-auth', 'logout', 'nav-click'],
   props: {
     cartCount: { type: Number, default: 0 },
     isScrolled: { type: Boolean, default: false },
+    currentUser: { type: Object, default: null }
   },
   data() {
     return {
@@ -112,6 +123,9 @@ export default {
         const el = document.getElementById(id)
         if (el) observer.observe(el)
       })
+    },
+    handleUserClick() {
+      this.$emit('open-auth')
     }
   }
 }
@@ -249,9 +263,35 @@ export default {
   border: none;
 }
 
-.navbar__icon-btn:hover {
+.navbar__icon-btn--active {
   color: var(--c-gold);
-  background: rgba(92, 82, 72, 0.1);
+}
+
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  background: var(--c-gold);
+  color: var(--c-black);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.user-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  background: var(--c-gold);
+  border-radius: 50%;
+  border: 1px solid var(--c-black);
 }
 
 /* --- Cart Button --- */

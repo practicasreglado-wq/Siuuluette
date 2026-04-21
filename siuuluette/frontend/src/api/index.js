@@ -15,8 +15,9 @@ async function request(path, options = {}) {
   })
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}))
-    throw new Error(error.message || `Error ${res.status}`)
+    const data = await res.json().catch(() => ({}))
+    const msg = data.error || data.detail || data.message || `Error ${res.status}`
+    throw new Error(msg)
   }
 
   return res.json()
@@ -41,7 +42,10 @@ export const authApi = {
 export const cartApi = {
   get:    ()      => request('/api/cart'),
   add:    (item)  => request('/api/cart/add', { method: 'POST', body: JSON.stringify(item) }),
-  remove: (id)    => request(`/api/cart/${id}`, { method: 'DELETE' }),
+  remove: (productId, size) => request('/api/cart/remove', { 
+    method: 'POST', 
+    body: JSON.stringify({ product_id: productId, size }) 
+  }),
   merge:  (items) => request('/api/cart/merge', { method: 'POST', body: JSON.stringify({ items }) }),
 }
 
