@@ -94,12 +94,23 @@ export default {
     const types = ['Todo', 'Camisetas', 'Sudaderas', 'Pantalones']
 
     const filteredProducts = computed(() => {
-      // First filter by Style (Urban / Urban-Sport)
-      let list = props.products.filter(p => p.style === props.styleName)
+      // 1. Filtro por Colección (Ultra-robusto)
+      let list = props.products.filter(p => {
+        const normalize = (str) => (str || '').toLowerCase().replace(/[- ]/g, '').trim()
+        return normalize(p.collection || p.style) === normalize(props.styleName)
+      })
       
-      // Then filter by Type (Camisetas, etc)
+      // 2. Filtro por Tipo (Camisetas, Sudaderas, etc)
       if (activeType.value !== 'Todo') {
-        list = list.filter(p => p.category === activeType.value)
+        list = list.filter(p => {
+          const pCat = (p.category || '').toLowerCase().trim()
+          const aType = activeType.value.toLowerCase().trim()
+          
+          // Lógica inteligente: Sudaderas (UI) debe coincidir con Sudadera (DB)
+          // Quitamos la 's' final en ambos para comparar la raíz
+          const rootMatch = (s) => s.endsWith('s') ? s.slice(0, -1) : s
+          return rootMatch(pCat) === rootMatch(aType)
+        })
       }
       
       return list

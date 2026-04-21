@@ -69,7 +69,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { products } from './data/products.js'
+import { productsApi, authApi, cartApi } from './api/index.js'
 
 import Navbar           from './components/Navbar.vue'
 import HeroSection      from './components/HeroSection.vue'
@@ -89,7 +89,9 @@ export default {
   },
   setup() {
     /* ---- Refs ---- */
+    const products        = ref([])
     const cartItems       = ref([])
+    const currentUser     = ref(null)
     const isCartOpen      = ref(false)
     const isScrolled      = ref(false)
     const activeCategory  = ref('')
@@ -104,7 +106,64 @@ export default {
     )
 
     /* ---- Methods ---- */
-    function addToCart(product) {
+    async function fetchProducts() {
+      try {
+        const data = await productsApi.getAll()
+        products.value = data.products
+      } catch (err) {
+        console.error('Error cargando productos:', err)
+      }
+    }
+
+    async function checkAuth() {
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          const data = await authApi.me()
+          currentUser.value = data.user
+          // Si estamos logueados, sincronizamos el carrito con la DB
+          await syncCartWithBackend()
+        } catch (err) {
+          localStorage.removeItem('token')
+          currentUser.value = null
+        }
+      }
+    }
+
+    async function syncCartWithBackend() {
+      // 1. Pedir carrito al backend
+      const { cart } = await cartApi.get()
+      
+      // 2. Si tenemos cosas en LocalStorage (de cuando éramos invitados), las fusionamos
+      const localCart = JSON.parse(localStorage.getItem('cart') || '[]')
+      if (localCart.length > 0) {
+        await cartApi.merge(localCart.map(i => ({ 
+          product_id: i.id, 
+          quantity: i.qty 
+        })))
+        localStorage.removeItem('cart')
+        // Volvemos a pedir el carrito ya fusionado
+        const { cart: mergedCart } = await cartApi.get()
+        cartItems.value = formatCartFromBackend(mergedCart)
+      } else {
+        cartItems.value = formatCartFromBackend(cart)
+      }
+    }
+
+    function formatCartFromBackend(items) {
+      return items.map(i => ({
+        id: i.product_id,
+        name: i.products.name,
+        price: i.products.price,
+        qty: i.quantity,
+        image_url: i.products.image_url,
+        // (Nota: aquí podríamos añadir talla si la guardamos en la DB)
+        selectedSize: 'M' 
+      }))
+    }
+
+    async function addToCart(product) {
+      // Optimista: actualizamos UI primero
       const existing = cartItems.value.find(i => 
         i.id === product.id && i.selectedSize === product.selectedSize
       )
@@ -113,13 +172,25 @@ export default {
       } else {
         cartItems.value.push({ ...product, qty: 1 })
       }
-      showToast(`${product.name} (${product.selectedSize}) añadido`)
+
+      // Persistencia
+      const token = localStorage.getItem('token')
+      if (token) {
+        // Enviar a la DB
+        await cartApi.add({ product_id: product.id, quantity: 1 })
+      } else {
+        // Guardar en LocalStorage (Invitado)
+        localStorage.setItem('cart', JSON.stringify(cartItems.value))
+      }
+
+      showToast(`${product.name} añadido`)
     }
 
     function removeFromCart(productId, size) {
       cartItems.value = cartItems.value.filter(i => 
         !(i.id === productId && i.selectedSize === size)
       )
+      // (Aquí añadiríamos la llamada a cartApi.remove si está logueado)
     }
 
     function updateQty(productId, size, delta) {
@@ -154,20 +225,26 @@ export default {
 
     function selectGlobalFilter(catName) {
       activeCategory.value = catName
-      const el = document.getElementById('colecciones')
+      const el = document.getElementById('explora') // Apuntamos a la sección de categorías
       if (el) el.scrollIntoView({ behavior: 'smooth' })
     }
 
-    onMounted(() => window.addEventListener('scroll', handleScroll))
+    onMounted(async () => {
+      window.addEventListener('scroll', handleScroll)
+      await fetchProducts()
+      await checkAuth()
+    })
+
     onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
     return {
-      products, cartItems, cartCount,
+      products, cartItems, cartCount, currentUser,
       isCartOpen, isScrolled,
       activeCategory, selectedStyle,
       toastVisible, toastMessage,
       addToCart, removeFromCart, updateQty, 
-      selectCategory, closeExplore, selectGlobalFilter
+      selectCategory, closeExplore, selectGlobalFilter, 
+      authApi: authApi // Referencia explícita
     }
   }
 }

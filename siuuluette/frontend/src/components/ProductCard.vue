@@ -8,14 +8,14 @@
     <!-- Image Area -->
     <div class="product-card__image-wrap">
       <img
-        :src="product.image"
+        :src="product.image_url || product.image || '/placeholder.jpg'"
         :alt="product.name"
         class="product-card__image product-card__image--primary"
         loading="lazy"
       />
       <img
-        v-if="product.imageSecondary"
-        :src="product.imageSecondary"
+        v-if="product.image_secondary_url || product.imageSecondary"
+        :src="product.image_secondary_url || product.imageSecondary"
         :alt="product.name"
         class="product-card__image product-card__image--secondary"
         loading="lazy"
@@ -39,7 +39,7 @@
         </button>
         <div class="product-card__sizes">
           <span
-            v-for="size in product.sizes"
+            v-for="size in availableSizes"
             :key="size"
             class="product-card__size"
             :class="{ 'is-selected': selectedSize === size }"
@@ -64,6 +64,8 @@
 </template>
 
 <script>
+import { computed } from 'vue'
+
 export default {
   name: 'ProductCard',
   emits: ['add-to-cart'],
@@ -75,6 +77,25 @@ export default {
       justAdded: false,
       selectedSize: null
     }
+  },
+  setup(props) {
+    // Procesamos las tallas dinámicamente
+    const availableSizes = computed(() => {
+      const s = props.product.sizes
+      if (!s) return ['S', 'M', 'L', 'XL'] // Fallback por defecto
+      
+      // Si ya es un array (desde Supabase _text), lo devolvemos
+      if (Array.isArray(s)) return s
+      
+      // Si es una string ("S, M, L"), lo partimos por las comas
+      if (typeof s === 'string') {
+        return s.split(',').map(item => item.trim())
+      }
+      
+      return ['S', 'M', 'L', 'XL']
+    })
+
+    return { availableSizes }
   },
   methods: {
     handleAdd() {
