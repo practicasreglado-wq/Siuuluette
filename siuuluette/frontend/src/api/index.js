@@ -34,6 +34,15 @@ export const authApi = {
   login:    (creds) => request('/api/auth/login',    { method: 'POST', body: JSON.stringify(creds) }),
   register: (data)  => request('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   me:       ()      => request('/api/auth/me'),
+  logout:   ()      => { localStorage.removeItem('token'); window.location.reload(); }
+}
+
+// --- API de carrito ---
+export const cartApi = {
+  get:    ()      => request('/api/cart'),
+  add:    (item)  => request('/api/cart/add', { method: 'POST', body: JSON.stringify(item) }),
+  remove: (id)    => request(`/api/cart/${id}`, { method: 'DELETE' }),
+  merge:  (items) => request('/api/cart/merge', { method: 'POST', body: JSON.stringify({ items }) }),
 }
 
 // --- API de checkout ---

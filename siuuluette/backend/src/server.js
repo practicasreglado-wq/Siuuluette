@@ -5,6 +5,11 @@ import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const fastify = Fastify({
   logger: {
@@ -24,18 +29,38 @@ await fastify.register(jwt, {
   secret: process.env.JWT_SECRET,
 })
 
-// 2. Swagger Specification (Internal)
+// 2. Swagger Specification 
 await fastify.register(swagger, {
   openapi: {
     info: {
       title: 'Siuuluette API',
       description: 'API Documentation for Siuuluette Boutique',
       version: '1.0.0'
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
     }
   }
 })
 
-// 3. Decorators
+// 3. Swagger UI (Configurado para evitar 404s en Fastify v5)
+await fastify.register(swaggerUi, {
+  routePrefix: '/documentation',
+  staticCSP: false,
+  uiConfig: {
+    docExpansion: 'list',
+    deepLinking: false
+  },
+  exposeRoute: true
+})
+
+// 4. Decorators
 fastify.decorate('authenticate', async (request, reply) => {
   try {
     await request.jwtVerify()
@@ -44,20 +69,15 @@ fastify.decorate('authenticate', async (request, reply) => {
   }
 })
 
-// 4. Routes
+// 5. Routes
 await fastify.register(import('./routes/products.js'), { prefix: '/api/products' })
 await fastify.register(import('./routes/drops.js'),    { prefix: '/api/drops' })
 await fastify.register(import('./routes/auth.js'),     { prefix: '/api/auth' })
+await fastify.register(import('./routes/cart.js'),     { prefix: '/api/cart' })
 await fastify.register(import('./routes/checkout.js'), { prefix: '/api/checkout' })
 
-fastify.get('/', async () => {
-  return { status: 'ok', message: 'Siuuluette API is running' }
-})
-
-// 5. Swagger UI (Should be registered AFTER routes for some reason in certain setups)
-await fastify.register(swaggerUi, {
-  routePrefix: '/documentation',
-  staticCSP: false, // Probemos desactivando esto
+fastify.get('/', async (request, reply) => {
+  reply.type('text/html').send('<h1>Siuuluette API is running</h1><p>Documentation at <a href="/documentation/">/documentation/</a></p>')
 })
 
 // 6. Start
