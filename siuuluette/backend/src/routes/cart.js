@@ -13,6 +13,7 @@ export default async function cartRoutes(fastify) {
       .select(`
         id,
         quantity,
+        size,
         product_id,
         products (
           name,
@@ -38,7 +39,8 @@ export default async function cartRoutes(fastify) {
         required: ['product_id'],
         properties: {
           product_id: { type: 'number' },
-          quantity: { type: 'number', minimum: 1, default: 1 }
+          quantity: { type: 'number', minimum: 1, default: 1 },
+          size: { type: 'string' }
         }
       }
     }
@@ -51,21 +53,23 @@ export default async function cartRoutes(fastify) {
     } catch (err) {
       // Usuario no logueado (Invitado)
       // No hacemos nada en la DB, el Frontend se encargará de guardar en LocalStorage
-      return { 
-        message: 'Añadido como invitado (Local)', 
-        isGuest: true 
+      return {
+        message: 'Añadido como invitado (Local)',
+        isGuest: true
       }
     }
 
     // Si llegamos aquí, el usuario está logueado
-    const { product_id, quantity } = request.body
+    const { product_id, quantity, size } = request.body
 
+    // Match por (user_id, product_id, size) para no mezclar tallas distintas
     const { data: existing } = await supabase
       .from('cart_items')
       .select('id, quantity')
       .eq('user_id', userId)
       .eq('product_id', product_id)
-      .single()
+      .eq('size', size)
+      .maybeSingle()
 
     if (existing) {
       const { error } = await supabase
@@ -80,7 +84,8 @@ export default async function cartRoutes(fastify) {
         .insert([{
           user_id: userId,
           product_id,
-          quantity
+          quantity,
+          size
         }])
 
       if (error) return reply.status(400).send({ error: error.message })
@@ -104,7 +109,8 @@ export default async function cartRoutes(fastify) {
               required: ['product_id', 'quantity'],
               properties: {
                 product_id: { type: 'number' },
-                quantity: { type: 'number' }
+                quantity: { type: 'number' },
+                size: { type: 'string' }
               }
             }
           }
@@ -116,13 +122,14 @@ export default async function cartRoutes(fastify) {
     const { items } = request.body
 
     for (const item of items) {
-      // Upsert: Si existe suma, si no inserta
+      // Upsert: match por (user_id, product_id, size) para respetar tallas
       const { data: existing } = await supabase
         .from('cart_items')
         .select('id, quantity')
         .eq('user_id', userId)
         .eq('product_id', item.product_id)
-        .single()
+        .eq('size', item.size)
+        .maybeSingle()
 
       if (existing) {
         await supabase
@@ -135,7 +142,8 @@ export default async function cartRoutes(fastify) {
           .insert([{
             user_id: userId,
             product_id: item.product_id,
-            quantity: item.quantity
+            quantity: item.quantity,
+            size: item.size
           }])
       }
     }

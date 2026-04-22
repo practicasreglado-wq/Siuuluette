@@ -18,6 +18,12 @@
       @nav-click="closeExplore"
     />
 
+    <!-- Products error banner -->
+    <div class="products-error" v-if="productsError">
+      <span>{{ productsError }}</span>
+      <button class="products-error__retry" @click="fetchProducts">Reintentar</button>
+    </div>
+
     <!-- Main Content -->
     <main :style="{ paddingTop: !selectedStyle ? '36px' : '0px' }">
       <HeroSection id="inicio" />
@@ -71,7 +77,6 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { productsApi, authApi, cartApi } from './api/index.js'
-import { products as fallbackProducts } from './data/products.js'
 
 import Navbar           from './components/Navbar.vue'
 import HeroSection      from './components/HeroSection.vue'
@@ -93,6 +98,7 @@ export default {
   setup() {
     /* ---- Refs ---- */
     const products        = ref([])
+    const productsError   = ref('')
     const cartItems       = ref([])
     const currentUser     = ref(null)
     const isCartOpen      = ref(false)
@@ -111,11 +117,16 @@ export default {
     /* ---- Methods ---- */
     async function fetchProducts() {
       try {
+        productsError.value = ''
         const data = await productsApi.getAll()
-        products.value = Array.isArray(data.products) ? data.products : fallbackProducts
+        products.value = Array.isArray(data.products) ? data.products : []
+        if (products.value.length === 0) {
+          productsError.value = 'No hay productos disponibles en este momento.'
+        }
       } catch (err) {
         console.error('Error cargando productos:', err)
-        products.value = fallbackProducts
+        products.value = []
+        productsError.value = 'No hemos podido cargar el catálogo. Revisa tu conexión o inténtalo más tarde.'
       }
     }
 
@@ -137,13 +148,14 @@ export default {
     async function syncCartWithBackend() {
       // 1. Pedir carrito al backend
       const { cart } = await cartApi.get()
-      
+
       // 2. Si tenemos cosas en LocalStorage (de cuando éramos invitados), las fusionamos
       const localCart = JSON.parse(localStorage.getItem('cart') || '[]')
       if (localCart.length > 0) {
-        await cartApi.merge(localCart.map(i => ({ 
-          product_id: i.id, 
-          quantity: i.qty 
+        await cartApi.merge(localCart.map(i => ({
+          product_id: i.id,
+          quantity: i.qty,
+          size: i.selectedSize
         })))
         localStorage.removeItem('cart')
         // Volvemos a pedir el carrito ya fusionado
@@ -161,8 +173,8 @@ export default {
         price: i.products.price,
         qty: i.quantity,
         image_url: i.products.image_url,
-        // (Nota: aquí podríamos añadir talla si la guardamos en la DB)
-        selectedSize: 'M' 
+        // La talla ahora sí viene de la DB
+        selectedSize: i.size || 'M'
       }))
     }
 
@@ -180,8 +192,12 @@ export default {
       // Persistencia
       const token = localStorage.getItem('token')
       if (token) {
-        // Enviar a la DB
-        await cartApi.add({ product_id: product.id, quantity: 1 })
+        // Enviar a la DB (incluyendo la talla)
+        await cartApi.add({
+          product_id: product.id,
+          quantity: 1,
+          size: product.selectedSize
+        })
       } else {
         // Guardar en LocalStorage (Invitado)
         localStorage.setItem('cart', JSON.stringify(cartItems.value))
@@ -242,12 +258,14 @@ export default {
     onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
     return {
-      products, cartItems, cartCount, currentUser,
+      products, productsError,
+      cartItems, cartCount, currentUser,
       isCartOpen, isScrolled,
       activeCategory, selectedStyle,
       toastVisible, toastMessage,
-      addToCart, removeFromCart, updateQty, 
-      selectCategory, closeExplore, selectGlobalFilter, 
+      addToCart, removeFromCart, updateQty,
+      selectCategory, closeExplore, selectGlobalFilter,
+      fetchProducts,
       authApi: authApi // Referencia explícita
     }
   }
@@ -305,6 +323,45 @@ export default {
 }
 
 .toast-icon { color: var(--c-gold); font-size: 1rem; }
+
+/* --- Products error banner --- */
+.products-error {
+  position: fixed;
+  top: 121px; /* 36 (announcement) + 85 (navbar) */
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(180, 60, 60, 0.95);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.products-error__retry {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #fff;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.products-error__retry:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #fff;
+}
 
 /* --- Transitions --- */
 .slide-right-enter-active,
