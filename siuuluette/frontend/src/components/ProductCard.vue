@@ -85,11 +85,11 @@ export default {
       if (!s) return ['S', 'M', 'L', 'XL'] // Fallback por defecto
       
       // Si ya es un array (desde Supabase _text), lo devolvemos
-      if (Array.isArray(s)) return s
+      if (Array.isArray(s)) return s.map(item => String(item).replace(/['"]/g, '').trim()).filter(Boolean)
       
       // Si es una string ("S, M, L"), lo partimos por las comas
       if (typeof s === 'string') {
-        return s.split(',').map(item => item.trim())
+        return s.split(',').map(item => item.replace(/['"]/g, '').trim()).filter(Boolean)
       }
       
       return ['S', 'M', 'L', 'XL']

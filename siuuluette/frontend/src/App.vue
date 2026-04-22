@@ -71,6 +71,7 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { productsApi, authApi, cartApi } from './api/index.js'
+import { products as fallbackProducts } from './data/products.js'
 
 import Navbar           from './components/Navbar.vue'
 import HeroSection      from './components/HeroSection.vue'
@@ -111,9 +112,10 @@ export default {
     async function fetchProducts() {
       try {
         const data = await productsApi.getAll()
-        products.value = data.products
+        products.value = Array.isArray(data.products) ? data.products : fallbackProducts
       } catch (err) {
         console.error('Error cargando productos:', err)
+        products.value = fallbackProducts
       }
     }
 
