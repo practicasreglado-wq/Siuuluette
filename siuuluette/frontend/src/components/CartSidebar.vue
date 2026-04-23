@@ -52,7 +52,7 @@
           </div>
           <div class="cart-item__controls">
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, -1)" aria-label="Quitar uno">−</button>
-            <span class="cart-item__qty">{{ item.quantity }}</span>
+            <span class="cart-item__qty">{{ item.qty ?? item.quantity }}</span>
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, 1)" aria-label="Añadir uno">+</button>
             <button class="cart-item__remove" @click="$emit('remove-item', item.id, item.selectedSize)" aria-label="Eliminar">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -93,10 +93,10 @@ export default {
   },
   computed: {
     totalItems() {
-      return this.cartItems.reduce((sum, i) => sum + i.quantity, 0)
+      return this.cartItems.reduce((sum, i) => sum + (i.qty ?? i.quantity ?? 0), 0)
     },
     subtotal() {
-      return this.cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(0)
+      return this.cartItems.reduce((sum, i) => sum + i.price * (i.qty ?? i.quantity ?? 0), 0).toFixed(0)
     }
   }
 }

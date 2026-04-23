@@ -15,7 +15,6 @@
     <CategoryGrid id="explora" @category-select="selectCategory" />
     <LimitedDrop id="drops" @add-to-cart="addToCart" />
     <BrandValues id="nosotros" />
-    <NewsletterSection />
 
     <!-- Overlay de exploración por estilo -->
     <CategoryExplore
@@ -36,14 +35,13 @@ import HeroSection       from '../components/HeroSection.vue'
 import CategoryGrid      from '../components/CategoryGrid.vue'
 import LimitedDrop       from '../components/LimitedDrop.vue'
 import BrandValues       from '../components/BrandValues.vue'
-import NewsletterSection from '../components/NewsletterSection.vue'
 import CategoryExplore   from '../components/CategoryExplore.vue'
 
 export default {
   name: 'HomeView',
   components: {
     HeroSection, CategoryGrid, LimitedDrop,
-    BrandValues, NewsletterSection, CategoryExplore
+    BrandValues, CategoryExplore
   },
   setup() {
     const { addToCart } = useCart()
