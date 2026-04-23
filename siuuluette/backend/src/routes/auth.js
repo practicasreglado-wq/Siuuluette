@@ -37,7 +37,6 @@ export default async function authRoutes(fastify) {
     }
 
     // Ya no hacemos el insert manual aquí, lo hará Supabase solo.
-    console.log('Usuario creado en Auth con metadatos')
 
     // Generar token si el usuario ya está activo (sin confirmar email)
     let token = null
@@ -51,7 +50,7 @@ export default async function authRoutes(fastify) {
 
     return { 
       message: 'Usuario registrado.',
-      user: { ...authData.user, username },
+      user: { ...authData.user, username, phone: phone || '', shipping_address: null },
       token: token
     }
 
@@ -89,7 +88,7 @@ export default async function authRoutes(fastify) {
     // 2. Buscar el nombre de usuario en profiles
     const { data: profile } = await supabase
       .from('profiles')
-      .select('username')
+      .select('*')
       .eq('id', data.user.id)
       .single()
 
@@ -103,7 +102,7 @@ export default async function authRoutes(fastify) {
     })
 
     return { 
-      user: { ...data.user, username: userUsername }, 
+      user: { ...data.user, ...profile, username: userUsername }, 
       token 
     }
   })
@@ -116,7 +115,7 @@ export default async function authRoutes(fastify) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('username, phone')
+      .select('username, phone, shipping_address')
       .eq('id', userId)
       .single()
 
@@ -126,5 +125,32 @@ export default async function authRoutes(fastify) {
       user: { ...request.user, username: userUsername },
       profile: profile || null
     }
+  })
+
+  // PATCH /api/auth/profile — Actualizar perfil (username, phone, address)
+  fastify.patch('/profile', {
+    onRequest: [fastify.authenticate]
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { username, phone, shipping_address } = request.body
+    
+    // Construir objeto de actualización dinámicamente
+    const updates = { id: userId }
+    if (username !== undefined) updates.username = username
+    if (phone !== undefined) updates.phone = phone
+    if (shipping_address !== undefined) updates.shipping_address = shipping_address
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      return reply.status(400).send({ error: error.message })
+    }
+
+    return { message: 'Perfil actualizado', profile: data }
   })
 }

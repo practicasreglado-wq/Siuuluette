@@ -23,9 +23,6 @@ export default async function checkoutRoutes(fastify) {
 
       if (error) throw error
 
-      console.log('Items recibidos:', items)
-      console.log('Productos en DB:', dbProducts)
-
       // 2. Calcular el total real
       const totalAmount = items.reduce((sum, item) => {
         const product = dbProducts.find(p => p.id === Number(item.id))
@@ -33,8 +30,6 @@ export default async function checkoutRoutes(fastify) {
         const itemPrice = product ? Number(product.price) : 0
         return sum + (itemPrice * itemQty)
       }, 0)
-
-      console.log('Total calculado:', totalAmount)
 
       // Stripe usa céntimos (monto * 100)
       const amountInCents = Math.round(totalAmount * 100)

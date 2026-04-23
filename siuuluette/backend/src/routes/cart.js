@@ -130,10 +130,11 @@ export default async function cartRoutes(fastify) {
         .select('id, quantity')
         .eq('user_id', userId)
         .eq('product_id', item.product_id)
-        .eq('size', item.size)
+        .eq('size', item.size || 'M') // Fallback a M si no hay talla
         .maybeSingle()
 
       if (existingError) {
+        console.error('Error buscando item existente:', existingError)
         return reply.status(400).send({ error: existingError.message })
       }
 
@@ -144,6 +145,7 @@ export default async function cartRoutes(fastify) {
           .eq('id', existing.id)
 
         if (error) {
+          console.error('Error actualizando cantidad:', error)
           return reply.status(400).send({ error: error.message })
         }
       } else {
@@ -153,10 +155,11 @@ export default async function cartRoutes(fastify) {
             user_id: userId,
             product_id: item.product_id,
             quantity: item.quantity,
-            size: item.size
+            size: item.size || 'M'
           }])
 
         if (error) {
+          console.error('Error insertando nuevo item:', error)
           return reply.status(400).send({ error: error.message })
         }
       }
@@ -194,5 +197,37 @@ export default async function cartRoutes(fastify) {
     }
 
     return { message: 'Producto eliminado del carrito' }
+  })
+
+  // POST /api/cart/update — Actualizar cantidad exacta de un ítem
+  fastify.post('/update', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      body: {
+        type: 'object',
+        required: ['product_id', 'quantity'],
+        properties: {
+          product_id: { type: ['number', 'string'] },
+          quantity: { type: 'number', minimum: 1 },
+          size: { type: 'string' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { product_id, quantity, size } = request.body
+
+    const { error } = await supabase
+      .from('cart_items')
+      .update({ quantity })
+      .eq('user_id', userId)
+      .eq('product_id', product_id)
+      .eq('size', size || 'M')
+
+    if (error) {
+      return reply.status(400).send({ error: error.message })
+    }
+
+    return { message: 'Cantidad actualizada' }
   })
 }
