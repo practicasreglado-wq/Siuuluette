@@ -7,17 +7,22 @@
     <div class="navbar__inner">
 
       <!-- Brand Logo -->
-      <a href="#inicio" class="navbar__brand" aria-label="Siuuluette inicio" @click="$emit('nav-click')">
+      <router-link
+        :to="{ path: '/', hash: '#inicio' }"
+        class="navbar__brand"
+        aria-label="Siuuluette inicio"
+        @click="goToSection($event, '#inicio')"
+      >
         <img src="/Siu_white.png" alt="Siuuluette isotipo" class="navbar__logo-icon" />
         <span class="navbar__logo-text">Le Siuuluette</span>
-      </a>
+      </router-link>
 
       <!-- Primary Navigation (desktop) -->
       <nav class="navbar__nav" aria-label="Navegación principal">
-        <a href="#inicio" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }" @click="$emit('nav-click')">Inicio</a>
-        <a href="#explora" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'explora' }" @click="$emit('nav-click')">Explora</a>
-        <a href="#drops" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'drops' }" @click="$emit('nav-click')">Drops</a>
-        <a href="#nosotros" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }" @click="$emit('nav-click')">Nosotros</a>
+        <router-link :to="{ path: '/', hash: '#inicio' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }" @click="goToSection($event, '#inicio')">Inicio</router-link>
+        <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'explora' }" @click="goToSection($event, '#explora')">Explora</router-link>
+        <router-link :to="{ path: '/', hash: '#drops' }" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'drops' }" @click="goToSection($event, '#drops')">Drops</router-link>
+        <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
       </nav>
 
       <!-- Actions -->
@@ -73,11 +78,11 @@
     <Transition name="mobile-menu">
       <div class="navbar__mobile-menu" v-if="menuOpen">
         <nav class="mobile-nav">
-          <a href="#inicio" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Inicio</a>
-          <a href="#explora" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Explora</a>
-          <a href="#drops" class="mobile-nav__link mobile-nav__link--accent" @click="menuOpen = false; $emit('nav-click')">Drops</a>
-          <a href="#nosotros" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Nosotros</a>
-          <a href="#" class="mobile-nav__link" @click="menuOpen = false; $emit('nav-click')">Mi cuenta</a>
+          <router-link :to="{ path: '/', hash: '#inicio' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#inicio')">Inicio</router-link>
+          <router-link :to="{ path: '/', hash: '#explora' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#explora')">Explora</router-link>
+          <router-link :to="{ path: '/', hash: '#drops' }" class="mobile-nav__link mobile-nav__link--accent" @click="closeMenuAndScroll($event, '#drops')">Drops</router-link>
+          <router-link :to="{ path: '/', hash: '#nosotros' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#nosotros')">Nosotros</router-link>
+          <button class="mobile-nav__link" @click="menuOpen = false; $emit('open-auth')">Mi cuenta</button>
         </nav>
       </div>
     </Transition>
@@ -126,6 +131,27 @@ export default {
     },
     handleUserClick() {
       this.$emit('open-auth')
+    },
+    /**
+     * Si ya estamos en "/", hacemos scroll suave al id sin navegar
+     * (el router-link a la misma ruta no dispararía scrollBehavior).
+     * Si estamos en otra ruta (p. ej. /producto/:slug), dejamos que
+     * el router-link navegue y el scrollBehavior global haga el scroll.
+     */
+    goToSection(event, hash) {
+      this.$emit('nav-click')
+      if (this.$route.path === '/') {
+        event.preventDefault()
+        const el = document.querySelector(hash)
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 121
+          window.scrollTo({ top, behavior: 'smooth' })
+        }
+      }
+    },
+    closeMenuAndScroll(event, hash) {
+      this.menuOpen = false
+      this.goToSection(event, hash)
     }
   }
 }

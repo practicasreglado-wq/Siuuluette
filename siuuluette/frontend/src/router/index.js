@@ -28,6 +28,15 @@ const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     // Al volver con el botón Atrás, restaura el scroll previo
     if (savedPosition) return savedPosition
+    // Si la ruta tiene hash (#inicio, #drops, ...), hace scroll a esa sección.
+    // Damos un pequeño offset para no ocultar el contenido bajo el navbar fijo.
+    if (to.hash) {
+      return {
+        el: to.hash,
+        top: 121, // 36 (announcement) + 85 (navbar)
+        behavior: 'smooth'
+      }
+    }
     // Al cambiar de ruta, sube al top
     return { top: 0, behavior: 'smooth' }
   }
