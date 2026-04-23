@@ -94,14 +94,16 @@ export default async function authRoutes(fastify) {
       .single()
 
     // 3. Generar Token JWT
+    const userUsername = profile?.username || data.user.user_metadata?.username || data.user.email.split('@')[0]
+
     const token = fastify.jwt.sign({ 
       id: data.user.id, 
       email: data.user.email,
-      username: profile?.username 
+      username: userUsername
     })
 
     return { 
-      user: { ...data.user, username: profile?.username }, 
+      user: { ...data.user, username: userUsername }, 
       token 
     }
   })
@@ -118,8 +120,10 @@ export default async function authRoutes(fastify) {
       .eq('id', userId)
       .single()
 
+    const userUsername = profile?.username || request.user.user_metadata?.username || request.user.email?.split('@')[0] || 'Usuario'
+
     return { 
-      user: { ...request.user, username: profile?.username },
+      user: { ...request.user, username: userUsername },
       profile: profile || null
     }
   })

@@ -13,7 +13,7 @@ export default async function productsRoutes(fastify) {
       return
     }
 
-    return { products }
+    return { products: products || [] }
   })
 
   // GET /api/products/:id — un producto específico
@@ -29,8 +29,15 @@ export default async function productsRoutes(fastify) {
     }
   }, async (request, reply) => {
     const { id } = request.params
-    // TODO: consulta real a Supabase
-    return { id, name: 'Hoodie Siuuluette OG', price: 185 }
+    const { data: product, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) return reply.status(404).send({ error: 'Producto no encontrado' })
+
+    return product
   })
 
   // POST /api/products — crear (solo admin, requiere JWT)
