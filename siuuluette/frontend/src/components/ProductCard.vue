@@ -1,66 +1,79 @@
 <template>
   <!-- ==========================================
        SIUULUETTE — ProductCard Component
-       Individual product card with add-to-cart
+       Card individual con quick-add y link a la ficha.
+       Toda la card es clickable hacia /producto/:slug,
+       excepto los controles de quick-add que paran la propagación.
        ========================================== -->
-  <article class="product-card" :class="{ 'product-card--added': justAdded }">
+  <router-link
+    :to="productLink"
+    class="product-card-link"
+    custom
+    v-slot="{ navigate }"
+  >
+    <article
+      class="product-card"
+      :class="{ 'product-card--added': justAdded }"
+      @click="navigate"
+    >
 
-    <!-- Image Area -->
-    <div class="product-card__image-wrap">
-      <img
-        :src="product.image_url || product.image || '/placeholder.jpg'"
-        :alt="product.name"
-        class="product-card__image product-card__image--primary"
-        loading="lazy"
-      />
-      <img
-        v-if="product.image_secondary_url || product.imageSecondary"
-        :src="product.image_secondary_url || product.imageSecondary"
-        :alt="product.name"
-        class="product-card__image product-card__image--secondary"
-        loading="lazy"
-      />
+      <!-- Image Area -->
+      <div class="product-card__image-wrap">
+        <img
+          :src="product.image_url || product.image || '/placeholder.jpg'"
+          :alt="product.name"
+          class="product-card__image product-card__image--primary"
+          loading="lazy"
+        />
+        <img
+          v-if="product.image_secondary_url || product.imageSecondary"
+          :src="product.image_secondary_url || product.imageSecondary"
+          :alt="product.name"
+          class="product-card__image product-card__image--secondary"
+          loading="lazy"
+        />
 
-      <!-- Badge -->
-      <span
-        v-if="product.badge"
-        class="badge product-card__badge"
-        :class="`badge-${product.badgeType}`"
-      >{{ product.badge }}</span>
+        <!-- Badge -->
+        <span
+          v-if="product.badge"
+          class="badge product-card__badge"
+          :class="`badge-${product.badgeType}`"
+        >{{ product.badge }}</span>
 
-      <!-- Quick Add Overlay -->
-      <div class="product-card__overlay">
-        <button
-          class="product-card__quick-add btn btn-primary"
-          :class="{ 'btn-disabled': !selectedSize && !justAdded }"
-          @click.stop="handleAdd"
-        >
-          {{ justAdded ? '✓ Añadido' : (selectedSize ? 'Añadir al carrito' : 'Elige talla') }}
-        </button>
-        <div class="product-card__sizes">
-          <span
-            v-for="size in availableSizes"
-            :key="size"
-            class="product-card__size"
-            :class="{ 'is-selected': selectedSize === size }"
-            @click.stop="selectedSize = size"
-          >{{ size }}</span>
+        <!-- Quick Add Overlay -->
+        <div class="product-card__overlay">
+          <button
+            class="product-card__quick-add btn btn-primary"
+            :class="{ 'btn-disabled': !selectedSize && !justAdded }"
+            @click.stop="handleAdd"
+          >
+            {{ justAdded ? '✓ Añadido' : (selectedSize ? 'Añadir al carrito' : 'Elige talla') }}
+          </button>
+          <div class="product-card__sizes">
+            <span
+              v-for="size in availableSizes"
+              :key="size"
+              class="product-card__size"
+              :class="{ 'is-selected': selectedSize === size }"
+              @click.stop="selectedSize = size"
+            >{{ size }}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Info -->
-    <div class="product-card__info">
-      <span class="product-card__category body-sm">{{ product.category }}</span>
-      <h3 class="product-card__name">{{ product.name }}</h3>
+      <!-- Info -->
+      <div class="product-card__info">
+        <span class="product-card__category body-sm">{{ product.category }}</span>
+        <h3 class="product-card__name">{{ product.name }}</h3>
 
-      <div class="product-card__pricing">
-        <span class="product-card__price">€{{ product.price }}</span>
-        <span v-if="product.originalPrice" class="product-card__original">€{{ product.originalPrice }}</span>
+        <div class="product-card__pricing">
+          <span class="product-card__price">€{{ product.price }}</span>
+          <span v-if="product.originalPrice" class="product-card__original">€{{ product.originalPrice }}</span>
+        </div>
       </div>
-    </div>
 
-  </article>
+    </article>
+  </router-link>
 </template>
 
 <script>
@@ -73,7 +86,7 @@ export default {
     product: { type: Object, required: true }
   },
   data() {
-    return { 
+    return {
       justAdded: false,
       selectedSize: null
     }
@@ -82,35 +95,35 @@ export default {
     // Procesamos las tallas dinámicamente
     const availableSizes = computed(() => {
       const s = props.product.sizes
-      if (!s) return ['S', 'M', 'L', 'XL'] // Fallback por defecto
-      
-      // Si ya es un array (desde Supabase _text), lo devolvemos
+      if (!s) return ['S', 'M', 'L', 'XL']
       if (Array.isArray(s)) return s.map(item => String(item).replace(/['"]/g, '').trim()).filter(Boolean)
-      
-      // Si es una string ("S, M, L"), lo partimos por las comas
       if (typeof s === 'string') {
         return s.split(',').map(item => item.replace(/['"]/g, '').trim()).filter(Boolean)
       }
-      
       return ['S', 'M', 'L', 'XL']
     })
 
-    return { availableSizes }
+    // Link a la ficha — usa slug si existe, fallback a id por compatibilidad
+    const productLink = computed(() => {
+      if (props.product.slug) return { name: 'product-detail', params: { slug: props.product.slug } }
+      return { name: 'home' } // Sin slug no podemos navegar; nos quedamos en home
+    })
+
+    return { availableSizes, productLink }
   },
   methods: {
     handleAdd() {
       if (!this.selectedSize) return
-      
+
       this.$emit('add-to-cart', {
         ...this.product,
         selectedSize: this.selectedSize
       })
       this.justAdded = true
       this.selectedSize = null
-      
-      // Reset success feedback after a short delay
-      setTimeout(() => { 
-        this.justAdded = false 
+
+      setTimeout(() => {
+        this.justAdded = false
       }, 1500)
     }
   }
@@ -118,6 +131,12 @@ export default {
 </script>
 
 <style scoped>
+.product-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .product-card {
   background: var(--c-dark);
   border-radius: var(--radius-md);

@@ -1,49 +1,31 @@
 <template>
   <!-- ==========================================
        SIUULUETTE — App Root
-       Manages global cart state and renders all sections
+       Layout global: Navbar + router-view + Cart + Toast
+       El estado del carrito vive en useCart() (composable).
        ========================================== -->
   <div id="siuuluette-app" :class="{ 'cart-open': isCartOpen }">
 
-    <!-- Announcement Banner (Hidden in Explore Mode) -->
-    <div class="announcement-bar" v-if="!selectedStyle">
+    <!-- Announcement Banner (global) -->
+    <div class="announcement-bar">
       <span class="label">Envío gratuito en pedidos superiores a 100€ — Nuevos drops cada mes</span>
     </div>
 
     <Navbar
-      :style="{ top: !selectedStyle ? '36px' : '0px' }"
+      :style="{ top: '36px' }"
       :cart-count="cartCount"
       :is-scrolled="isScrolled"
       @open-cart="isCartOpen = true"
-      @nav-click="closeExplore"
     />
 
-    <!-- Products error banner -->
-    <div class="products-error" v-if="productsError">
-      <span>{{ productsError }}</span>
-      <button class="products-error__retry" @click="fetchProducts">Reintentar</button>
-    </div>
-
-    <!-- Main Content -->
-    <main :style="{ paddingTop: !selectedStyle ? '36px' : '0px' }">
-      <HeroSection id="inicio" />
-      <CategoryGrid id="explora" @category-select="selectCategory" />
-      <LimitedDrop id="drops" @add-to-cart="addToCart" />
-      <BrandValues id="nosotros" />
-      <NewsletterSection />
+    <!-- Vista activa según la ruta (HomeView, ProductDetailView, …) -->
+    <main :style="{ paddingTop: '36px' }">
+      <router-view />
     </main>
 
     <FooterSection />
 
-    <!-- Explore Overlay / View -->
-    <CategoryExplore 
-      :style-name="selectedStyle" 
-      :products="products"
-      @close="closeExplore"
-      @add-to-cart="addToCart"
-    />
-
-    <!-- Cart Sidebar -->
+    <!-- Cart Sidebar (global) -->
     <Transition name="slide-right">
       <CartSidebar
         v-if="isCartOpen"
@@ -54,7 +36,6 @@
       />
     </Transition>
 
-    <!-- Cart Overlay -->
     <Transition name="fade">
       <div
         v-if="isCartOpen"
@@ -63,11 +44,11 @@
       />
     </Transition>
 
-    <!-- Toast Notification -->
+    <!-- Toast Notification (global) -->
     <Transition name="toast">
       <div class="toast" v-if="toastVisible">
         <span class="toast-icon">✓</span>
-        <span>{{ toastMessage }}</span>
+        <span>{{ toastMsg }}</span>
       </div>
     </Transition>
 
@@ -75,246 +56,73 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { productsApi, authApi, cartApi } from './api/index.js'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { authApi } from './api/index.js'
+import { useCart } from './composables/useCart.js'
 
-import Navbar           from './components/Navbar.vue'
-import HeroSection      from './components/HeroSection.vue'
-import CategoryGrid     from './components/CategoryGrid.vue'
-import LimitedDrop      from './components/LimitedDrop.vue'
-import BrandValues      from './components/BrandValues.vue'
-import NewsletterSection from './components/NewsletterSection.vue'
-import FooterSection    from './components/FooterSection.vue'
-import CartSidebar      from './components/CartSidebar.vue'
-import CategoryExplore  from './components/CategoryExplore.vue'
+import Navbar        from './components/Navbar.vue'
+import FooterSection from './components/FooterSection.vue'
+import CartSidebar   from './components/CartSidebar.vue'
 
 export default {
   name: 'App',
-  components: {
-    Navbar, HeroSection, CategoryGrid,
-    LimitedDrop, BrandValues, NewsletterSection, FooterSection,
-    CartSidebar, CategoryExplore
-  },
+  components: { Navbar, FooterSection, CartSidebar },
   setup() {
-    /* ---- Refs ---- */
-    const products        = ref([])
-    const productsError   = ref('')
-    const cartItems       = ref([])
-    const currentUser     = ref(null)
-    const isCartOpen      = ref(false)
-    const isScrolled      = ref(false)
-    const activeCategory  = ref('')
-    const selectedStyle   = ref('')
-    const toastVisible    = ref(false)
-    const toastMessage    = ref('')
-    let toastTimer        = null
+    // --- Estado y acciones del carrito (composable global) ---
+    const {
+      cartItems,
+      cartCount,
+      isCartOpen,
+      toastMsg,
+      toastVisible,
+      removeFromCart,
+      updateQty,
+      fetchCart,
+      mergeGuestCart,
+    } = useCart()
 
-    /* ---- Computed ---- */
-    const cartCount = computed(() =>
-      cartItems.value.reduce((sum, item) => sum + item.qty, 0)
-    )
+    // --- Estado local de UI ---
+    const currentUser = ref(null)
+    const isScrolled  = ref(false)
 
-    /* ---- Methods ---- */
-    async function fetchProducts() {
-      try {
-        productsError.value = ''
-        const data = await productsApi.getAll()
-        products.value = Array.isArray(data.products) ? data.products : []
-        if (products.value.length === 0) {
-          productsError.value = 'No hay productos disponibles en este momento.'
-        }
-      } catch (err) {
-        console.error('Error cargando productos:', err)
-        products.value = []
-        productsError.value = 'No hemos podido cargar el catálogo. Revisa tu conexión o inténtalo más tarde.'
-      }
-    }
-
+    // --- Auth bootstrap ---
     async function checkAuth() {
       const token = localStorage.getItem('token')
-      if (token) {
-        try {
-          const data = await authApi.me()
-          currentUser.value = data.user
-          // Si estamos logueados, sincronizamos el carrito con la DB
-          await syncCartWithBackend()
-        } catch (err) {
-          localStorage.removeItem('token')
-          currentUser.value = null
-        }
+      if (!token) return
+      try {
+        const data = await authApi.me()
+        currentUser.value = data.user
+        // Si veníamos como invitado con cosas en el carrito, las fusionamos en DB
+        await mergeGuestCart()
+        await fetchCart()
+      } catch {
+        localStorage.removeItem('token')
+        currentUser.value = null
       }
-    }
-
-    async function syncCartWithBackend() {
-      // 1. Pedir carrito al backend
-      const { cart } = await cartApi.get()
-
-      // 2. Si tenemos cosas en LocalStorage (de cuando éramos invitados), las fusionamos
-      const localCart = JSON.parse(localStorage.getItem('cart') || '[]')
-      if (localCart.length > 0) {
-        await cartApi.merge(localCart.map(i => ({
-          product_id: i.id,
-          quantity: i.qty,
-          size: i.selectedSize
-        })))
-        localStorage.removeItem('cart')
-        // Volvemos a pedir el carrito ya fusionado
-        const { cart: mergedCart } = await cartApi.get()
-        cartItems.value = formatCartFromBackend(mergedCart)
-      } else {
-        cartItems.value = formatCartFromBackend(cart)
-      }
-    }
-
-    function formatCartFromBackend(items) {
-      return items.map(i => ({
-        cartItemId: i.id, // PK del cart_items (distinta del product_id, usada para PATCH/DELETE)
-        id: i.product_id,
-        name: i.products.name,
-        price: i.products.price,
-        qty: i.quantity,
-        image_url: i.products.image_url,
-        selectedSize: i.size || 'M'
-      }))
-    }
-
-    async function addToCart(product) {
-      // Optimista: actualizamos UI primero
-      const existing = cartItems.value.find(i =>
-        i.id === product.id && i.selectedSize === product.selectedSize
-      )
-      if (existing) {
-        existing.qty++
-      } else {
-        cartItems.value.push({ ...product, qty: 1 })
-      }
-
-      // Persistencia
-      const token = localStorage.getItem('token')
-      if (token) {
-        try {
-          await cartApi.add({
-            product_id: product.id,
-            quantity: 1,
-            size: product.selectedSize
-          })
-          // Refetch para obtener el cartItemId real del backend
-          const { cart } = await cartApi.get()
-          cartItems.value = formatCartFromBackend(cart)
-        } catch (err) {
-          console.error('Error añadiendo al carrito:', err)
-          showToast('No se pudo añadir al carrito')
-          return
-        }
-      } else {
-        // Guardar en LocalStorage (Invitado)
-        localStorage.setItem('cart', JSON.stringify(cartItems.value))
-      }
-
-      showToast(`${product.name} añadido`)
-    }
-
-    async function removeFromCart(productId, size) {
-      const item = cartItems.value.find(i =>
-        i.id === productId && i.selectedSize === size
-      )
-      if (!item) return
-
-      // Optimista: fuera de la UI
-      cartItems.value = cartItems.value.filter(i =>
-        !(i.id === productId && i.selectedSize === size)
-      )
-
-      const token = localStorage.getItem('token')
-      if (token && item.cartItemId) {
-        try {
-          await cartApi.remove(item.cartItemId)
-        } catch (err) {
-          console.error('Error eliminando del carrito:', err)
-          // Rollback: volvemos a insertar el item
-          cartItems.value.push(item)
-          showToast('No se pudo eliminar del carrito')
-        }
-      } else {
-        localStorage.setItem('cart', JSON.stringify(cartItems.value))
-      }
-    }
-
-    async function updateQty(productId, size, delta) {
-      const item = cartItems.value.find(i =>
-        i.id === productId && i.selectedSize === size
-      )
-      if (!item) return
-
-      const newQty = item.qty + delta
-      if (newQty <= 0) {
-        await removeFromCart(productId, size)
-        return
-      }
-
-      // Optimista
-      const previousQty = item.qty
-      item.qty = newQty
-
-      const token = localStorage.getItem('token')
-      if (token && item.cartItemId) {
-        try {
-          await cartApi.updateQty(item.cartItemId, newQty)
-        } catch (err) {
-          console.error('Error actualizando cantidad:', err)
-          item.qty = previousQty
-          showToast('No se pudo actualizar la cantidad')
-        }
-      } else {
-        localStorage.setItem('cart', JSON.stringify(cartItems.value))
-      }
-    }
-
-    function showToast(msg) {
-      toastMessage.value = msg
-      toastVisible.value = true
-      clearTimeout(toastTimer)
-      toastTimer = setTimeout(() => { toastVisible.value = false }, 2800)
     }
 
     function handleScroll() {
       isScrolled.value = window.scrollY > 60
     }
 
-    function selectCategory(styleName) {
-      selectedStyle.value = styleName
-      document.body.style.overflow = 'hidden'
-    }
-
-    function closeExplore() {
-      selectedStyle.value = ''
-      document.body.style.overflow = ''
-    }
-
-    function selectGlobalFilter(catName) {
-      activeCategory.value = catName
-      const el = document.getElementById('explora') // Apuntamos a la sección de categorías
-      if (el) el.scrollIntoView({ behavior: 'smooth' })
-    }
-
     onMounted(async () => {
       window.addEventListener('scroll', handleScroll)
-      await fetchProducts()
       await checkAuth()
     })
 
-    onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+    onUnmounted(() => {
+      window.removeEventListener('scroll', handleScroll)
+    })
 
     return {
-      products, productsError,
-      cartItems, cartCount, currentUser,
-      isCartOpen, isScrolled,
-      activeCategory, selectedStyle,
-      toastVisible, toastMessage,
-      addToCart, removeFromCart, updateQty,
-      selectCategory, closeExplore, selectGlobalFilter,
-      fetchProducts,
-      authApi: authApi // Referencia explícita
+      cartItems,
+      cartCount,
+      isCartOpen,
+      toastMsg,
+      toastVisible,
+      removeFromCart,
+      updateQty,
+      isScrolled,
     }
   }
 }
@@ -337,7 +145,7 @@ export default {
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.12em;
-  z-index: 1200; /* Above Navbar */
+  z-index: 1200;
 }
 
 /* --- Overlay --- */
@@ -372,50 +180,11 @@ export default {
 
 .toast-icon { color: var(--c-gold); font-size: 1rem; }
 
-/* --- Products error banner --- */
-.products-error {
-  position: fixed;
-  top: 121px; /* 36 (announcement) + 85 (navbar) */
-  left: 0;
-  right: 0;
-  z-index: 1050;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
-  background: rgba(180, 60, 60, 0.95);
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.products-error__retry {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  color: #fff;
-  padding: 0.35rem 0.9rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast);
-}
-
-.products-error__retry:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: #fff;
-}
-
 /* --- Transitions --- */
 .slide-right-enter-active,
 .slide-right-leave-active { transition: transform var(--t-slow) var(--ease-standard); }
 .slide-right-enter-from,
-.slide-right-leave-to    { transform: translateX(100%); }
+.slide-right-leave-to     { transform: translateX(100%); }
 
 .fade-enter-active,
 .fade-leave-active { transition: opacity var(--t-medium); }

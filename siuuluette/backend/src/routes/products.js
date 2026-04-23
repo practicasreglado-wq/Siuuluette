@@ -16,7 +16,7 @@ export default async function productsRoutes(fastify) {
     return { products }
   })
 
-  // GET /api/products/:id — un producto específico
+  // GET /api/products/:id — un producto específico (consulta real)
   fastify.get('/:id', {
     schema: {
       params: {
@@ -29,8 +29,128 @@ export default async function productsRoutes(fastify) {
     }
   }, async (request, reply) => {
     const { id } = request.params
-    // TODO: consulta real a Supabase
-    return { id, name: 'Hoodie Siuuluette OG', price: 185 }
+
+    const { data: product, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) {
+      return reply.status(500).send({ error: error.message })
+    }
+
+    if (!product) {
+      return reply.status(404).send({ error: 'Producto no encontrado' })
+    }
+
+    return { product }
+  })
+
+  // GET /api/products/slug/:slug — un producto por su slug (URL pública)
+  fastify.get('/slug/:slug', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['slug'],
+        properties: {
+          slug: { type: 'string', minLength: 1 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { slug } = request.params
+
+    const { data: product, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle()
+
+    if (error) {
+      return reply.status(500).send({ error: error.message })
+    }
+
+    if (!product) {
+      return reply.status(404).send({ error: 'Producto no encontrado' })
+    }
+
+    return { product }
+  })
+
+  // GET /api/products/:id/variants — variantes de color (misma colección + misma categoría)
+  fastify.get('/:id/variants', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'integer' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params
+
+    // 1) Buscar la colección y categoría del producto base
+    const { data: base, error: baseErr } = await supabase
+      .from('products')
+      .select('collection, category')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (baseErr) return reply.status(500).send({ error: baseErr.message })
+    if (!base)   return reply.status(404).send({ error: 'Producto no encontrado' })
+
+    // 2) Devolver todos los productos con misma collection + category (incluyendo el actual)
+    //    para que el frontend pueda marcar cuál está seleccionado.
+    const { data: variants, error } = await supabase
+      .from('products')
+      .select('id, name, slug, color, image_url')
+      .eq('collection', base.collection)
+      .eq('category', base.category)
+      .order('id')
+
+    if (error) return reply.status(500).send({ error: error.message })
+
+    return { variants: variants || [] }
+  })
+
+  // GET /api/products/:id/related — productos relacionados (misma colección)
+  fastify.get('/:id/related', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'integer' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params
+
+    // 1) Buscar la colección del producto base
+    const { data: base, error: baseErr } = await supabase
+      .from('products')
+      .select('collection')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (baseErr) return reply.status(500).send({ error: baseErr.message })
+    if (!base)   return reply.status(404).send({ error: 'Producto no encontrado' })
+
+    // 2) Devolver hasta 4 productos de la misma colección, excluyendo el actual
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('collection', base.collection)
+      .neq('id', id)
+      .limit(4)
+
+    if (error) return reply.status(500).send({ error: error.message })
+
+    return { products: products || [] }
   })
 
   // POST /api/products — crear (solo admin, requiere JWT)

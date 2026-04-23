@@ -24,9 +24,19 @@ async function request(path, options = {}) {
 
 // --- API de productos ---
 export const productsApi = {
-  getAll: ()      => request('/api/products'),
-  getOne: (id)    => request(`/api/products/${id}`),
-  create: (data)  => request('/api/products', { method: 'POST', body: JSON.stringify(data) }),
+  getAll:     ()      => request('/api/products'),
+  getOne:     (id)    => request(`/api/products/${id}`),
+  getBySlug:  (slug)  => request(`/api/products/slug/${slug}`),
+  getRelated: (id)    => request(`/api/products/${id}/related`),
+  getVariants:(id)    => request(`/api/products/${id}/variants`),
+  create:     (data)  => request('/api/products', { method: 'POST', body: JSON.stringify(data) }),
+}
+
+// --- API de favoritos ---
+export const favoritesApi = {
+  list:   ()           => request('/api/favorites'),
+  add:    (productId)  => request(`/api/favorites/${productId}`, { method: 'POST' }),
+  remove: (productId)  => request(`/api/favorites/${productId}`, { method: 'DELETE' }),
 }
 
 // --- API de auth ---
