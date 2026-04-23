@@ -41,7 +41,7 @@
           :key="item.id"
           class="cart-item"
         >
-          <img :src="item.image" :alt="item.name" class="cart-item__img" />
+          <img :src="item.image_url || item.image || '/placeholder.jpg'" :alt="item.name" class="cart-item__img" />
           <div class="cart-item__info">
             <span class="cart-item__cat body-sm">{{ item.category }}</span>
             <h3 class="cart-item__name">{{ item.name }}</h3>

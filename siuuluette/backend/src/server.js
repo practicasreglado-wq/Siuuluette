@@ -19,9 +19,24 @@ const fastify = Fastify({
   }
 })
 
+const allowedOrigins = new Set([
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+].filter(Boolean))
+
 // 1. Plugins Globales
 await fastify.register(cors, {
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.has(origin)) {
+      cb(null, true)
+      return
+    }
+
+    cb(new Error(`Origin ${origin} not allowed by CORS`), false)
+  },
   credentials: true,
 })
 

@@ -103,13 +103,21 @@ export default {
       // 2. Filtro por Tipo (Camisetas, Sudaderas, etc)
       if (activeType.value !== 'Todo') {
         list = list.filter(p => {
-          const pCat = (p.category || '').toLowerCase().trim()
-          const aType = activeType.value.toLowerCase().trim()
-          
-          // Lógica inteligente: Sudaderas (UI) debe coincidir con Sudadera (DB)
-          // Quitamos la 's' final en ambos para comparar la raíz
-          const rootMatch = (s) => s.endsWith('s') ? s.slice(0, -1) : s
-          return rootMatch(pCat) === rootMatch(aType)
+          const normalizeCategory = (value) => {
+            const normalized = (value || '')
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .trim()
+
+            if (normalized.startsWith('camiseta')) return 'camiseta'
+            if (normalized.startsWith('sudadera')) return 'sudadera'
+            if (normalized.startsWith('pantalon')) return 'pantalon'
+
+            return normalized.endsWith('s') ? normalized.slice(0, -1) : normalized
+          }
+
+          return normalizeCategory(p.category) === normalizeCategory(activeType.value)
         })
       }
       
