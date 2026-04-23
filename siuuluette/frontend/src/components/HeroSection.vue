@@ -51,14 +51,6 @@
 
     </div>
 
-    <!-- Scroll Indicator -->
-    <div class="hero__scroll-hint" aria-hidden="true">
-      <span class="label">Scroll</span>
-      <div class="hero__scroll-line">
-        <div class="hero__scroll-dot"></div>
-      </div>
-    </div>
-
   </section>
 </template>
 
@@ -239,40 +231,6 @@ export default { name: 'HeroSection' }
 }
 
 
-/* Scroll indicator */
-.hero__scroll-hint {
-  position: absolute;
-  bottom: 2.5rem;
-  right: 3rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  z-index: 2;
-  animation: fadeIn 1s 1.4s both;
-}
-
-.hero__scroll-line {
-  width: 1px;
-  height: 60px;
-  background: rgba(255,255,255,0.15);
-  position: relative;
-  overflow: hidden;
-}
-
-.hero__scroll-dot {
-  width: 1px;
-  height: 20px;
-  background: var(--c-gold);
-  animation: scrollDown 2s ease-in-out infinite;
-}
-
-@keyframes scrollDown {
-  0%   { transform: translateY(-20px); opacity: 0; }
-  30%  { opacity: 1; }
-  100% { transform: translateY(60px); opacity: 0; }
-}
-
 /* --- Responsive --- */
 @media (max-width: 768px) {
   .hero {
@@ -280,7 +238,6 @@ export default { name: 'HeroSection' }
     align-items: flex-end;
   }
   .hero__isotipo-bg { width: 110%; right: -10%; opacity: 0.15; }
-  .hero__scroll-hint { display: none; }
 }
 
 @media (max-width: 480px) {

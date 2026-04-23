@@ -60,7 +60,6 @@
               @click.stop="nextImg"
               aria-label="Imagen siguiente"
             >›</button>
-            <span class="pdp__zoom-hint">{{ zoomActive ? 'Click para salir del zoom' : 'Click para hacer zoom' }}</span>
           </div>
           <div v-if="gallery.length > 1" class="pdp__thumbs">
             <button
@@ -461,7 +460,8 @@ export default {
 .pdp {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem 2rem 4rem;
+  /* 85px = altura del navbar fijo + ~16px de respiro para el breadcrumb */
+  padding: calc(85px + 1.5rem) 2rem 4rem;
   color: var(--c-white);
   min-height: 80vh;
 }
@@ -556,27 +556,6 @@ export default {
   transition: transform 0.18s ease-out;
   will-change: transform;
 }
-
-/* Hint flotante "Pasa el ratón para hacer zoom" */
-.pdp__zoom-hint {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(28, 24, 20, 0.7);
-  backdrop-filter: blur(8px);
-  color: var(--c-white);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  pointer-events: none;
-  opacity: 0.9;
-  transition: opacity var(--t-medium);
-}
-
-.pdp__main-img.is-zooming .pdp__zoom-hint { opacity: 0; }
 
 .pdp__nav {
   position: absolute;
@@ -974,7 +953,7 @@ export default {
 
 /* RESPONSIVE */
 @media (max-width: 900px) {
-  .pdp { padding: 1.2rem 1rem 3rem; }
+  .pdp { padding: calc(85px + 1rem) 1rem 3rem; }
 
   .pdp__main {
     grid-template-columns: 1fr;

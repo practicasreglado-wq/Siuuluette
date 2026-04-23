@@ -30,7 +30,11 @@
         </svg>
       </div>
       <p>Tu carrito está vacío</p>
-      <a href="#explora" class="btn btn-primary btn-sm" @click="$emit('close')">Explorar productos</a>
+      <router-link
+        :to="{ path: '/', hash: '#explora' }"
+        class="btn btn-primary btn-sm"
+        @click="$emit('close')"
+      >Explorar productos</router-link>
     </div>
 
     <!-- Items -->

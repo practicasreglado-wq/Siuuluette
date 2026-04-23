@@ -117,7 +117,7 @@ export default {
 
       try {
         const data = await authApi.me()
-        currentUser.value = data.user
+        currentUser.value = { ...data.user, ...data.profile }
         await mergeGuestCart()
         await fetchCart()
       } catch (err) {
