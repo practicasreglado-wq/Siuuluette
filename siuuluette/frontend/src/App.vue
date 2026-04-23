@@ -70,28 +70,39 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { authApi } from './api/index.js'
 import { useCart } from './composables/useCart.js'
 
-import Navbar          from './components/Navbar.vue'
-import FooterSection   from './components/FooterSection.vue'
-import CartSidebar     from './components/CartSidebar.vue'
-import AuthOverlay     from './components/AuthOverlay.vue'
+import Navbar from './components/Navbar.vue'
+import FooterSection from './components/FooterSection.vue'
+import CartSidebar from './components/CartSidebar.vue'
+import AuthOverlay from './components/AuthOverlay.vue'
 import CheckoutOverlay from './components/CheckoutOverlay.vue'
-import SuccessOverlay  from './components/SuccessOverlay.vue'
+import SuccessOverlay from './components/SuccessOverlay.vue'
 
 export default {
   name: 'App',
-  components: { 
-    Navbar, FooterSection, CartSidebar, 
-    AuthOverlay, CheckoutOverlay, SuccessOverlay 
+  components: {
+    Navbar,
+    FooterSection,
+    CartSidebar,
+    AuthOverlay,
+    CheckoutOverlay,
+    SuccessOverlay
   },
   setup() {
     const {
-      cartItems, cartCount, cartSubtotal, isCartOpen,
-      toastMsg, toastVisible, removeFromCart, updateQty,
-      fetchCart, mergeGuestCart,
+      cartItems,
+      cartCount,
+      cartSubtotal,
+      isCartOpen,
+      toastMsg,
+      toastVisible,
+      removeFromCart,
+      updateQty,
+      fetchCart,
+      mergeGuestCart,
     } = useCart()
 
     const currentUser = ref(null)
@@ -103,16 +114,18 @@ export default {
     async function checkAuth() {
       const token = localStorage.getItem('token')
       if (!token) return
+
       try {
         const data = await authApi.me()
         currentUser.value = { ...data.user, ...data.profile }
         await mergeGuestCart()
         await fetchCart()
-      } catch {
+      } catch (err) {
         localStorage.removeItem('token')
         currentUser.value = null
       }
     }
+
     function handleLoginSuccess(user) {
       currentUser.value = user
       isAuthOpen.value = false
@@ -122,11 +135,15 @@ export default {
     function handleLogout() {
       authApi.logout()
       currentUser.value = null
-      cartItems.value = [] 
+      cartItems.value = []
+      isAuthOpen.value = false
+      isCheckoutOpen.value = false
+      isCartOpen.value = false
     }
 
     function handleCheckout() {
       isCartOpen.value = false
+
       if (!currentUser.value) {
         isAuthOpen.value = true
       } else {
@@ -138,6 +155,7 @@ export default {
       if (updatedUser) {
         currentUser.value = updatedUser
       }
+
       isCheckoutOpen.value = false
       isSuccessOpen.value = true
       cartItems.value = []
@@ -158,10 +176,24 @@ export default {
     })
 
     return {
-      cartItems, cartCount, cartSubtotal, isCartOpen,
-      toastMsg, toastVisible, removeFromCart, updateQty, fetchCart,
-      isScrolled, currentUser, isAuthOpen, isCheckoutOpen, isSuccessOpen,
-      handleLoginSuccess, handleLogout, handleCheckout, handlePaymentSuccess
+      cartItems,
+      cartCount,
+      cartSubtotal,
+      isCartOpen,
+      toastMsg,
+      toastVisible,
+      removeFromCart,
+      updateQty,
+      fetchCart,
+      isScrolled,
+      currentUser,
+      isAuthOpen,
+      isCheckoutOpen,
+      isSuccessOpen,
+      handleLoginSuccess,
+      handleLogout,
+      handleCheckout,
+      handlePaymentSuccess
     }
   }
 }
