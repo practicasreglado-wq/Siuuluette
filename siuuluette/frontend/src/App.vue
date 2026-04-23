@@ -33,6 +33,7 @@
       :is-open="isCheckoutOpen"
       :items="cartItems"
       :total="cartSubtotal"
+      :current-user="currentUser"
       @close="isCheckoutOpen = false"
       @success="handlePaymentSuccess"
     />
@@ -104,7 +105,7 @@ export default {
       if (!token) return
       try {
         const data = await authApi.me()
-        currentUser.value = data.user
+        currentUser.value = { ...data.user, ...data.profile }
         await mergeGuestCart()
         await fetchCart()
       } catch {
@@ -112,7 +113,6 @@ export default {
         currentUser.value = null
       }
     }
-
     function handleLoginSuccess(user) {
       currentUser.value = user
       isAuthOpen.value = false
@@ -134,11 +134,14 @@ export default {
       }
     }
 
-    function handlePaymentSuccess() {
+    function handlePaymentSuccess(updatedUser) {
+      if (updatedUser) {
+        currentUser.value = updatedUser
+      }
       isCheckoutOpen.value = false
       isSuccessOpen.value = true
-      // Limpiar carrito tras éxito
       cartItems.value = []
+      localStorage.removeItem('cart')
     }
 
     function handleScroll() {

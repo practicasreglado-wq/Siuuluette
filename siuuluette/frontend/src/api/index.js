@@ -45,6 +45,7 @@ export const authApi = {
   login:    (creds) => request('/api/auth/login',    { method: 'POST', body: JSON.stringify(creds) }),
   register: (data)  => request('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   me:       ()      => request('/api/auth/me'),
+  updateProfile: (data) => request('/api/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }),
   logout:   ()      => { localStorage.removeItem('token'); window.location.reload(); }
 }
 
@@ -57,6 +58,7 @@ export const cartApi = {
     body: JSON.stringify({ product_id: productId, size }) 
   }),
   merge:  (items) => request('/api/cart/merge', { method: 'POST', body: JSON.stringify({ items }) }),
+  update: (data) => request('/api/cart/update', { method: 'POST', body: JSON.stringify(data) }),
 }
 
 // --- API de checkout ---

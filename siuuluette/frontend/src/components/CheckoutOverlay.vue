@@ -31,21 +31,18 @@
           <form id="payment-form" @submit.prevent="handleSubmit" class="payment-form">
             <div id="link-authentication-element"></div>
             
-            <!-- Shipping Form -->
-            <div class="shipping-form">
+            <!-- Stripe Address Element (Autocomplete & Validation) -->
+            <div class="shipping-section">
               <h3 class="label-xs uppercase tracking-widest mb-4 opacity-60">Dirección de Envío</h3>
-              <div class="form-group">
-                <input v-model="shipping.address" type="text" placeholder="Calle y número" required class="form-input">
-              </div>
-              <div class="form-row">
-                <input v-model="shipping.city" type="text" placeholder="Ciudad" required class="form-input">
-                <input v-model="shipping.zip" type="text" placeholder="Código Postal" required class="form-input">
-              </div>
+              <div id="address-element"></div>
             </div>
 
-            <div class="divider mb-6"></div>
+            <div class="divider"></div>
 
-            <div id="payment-element"></div>
+            <div class="payment-section">
+              <h3 class="label-xs uppercase tracking-widest mb-4 opacity-60">Método de Pago</h3>
+              <div id="payment-element"></div>
+            </div>
             
             <div v-if="errorMessage" class="error-message">
               {{ errorMessage }}
@@ -76,71 +73,96 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
-import { checkoutApi } from '../api/index.js'
+import { checkoutApi, authApi } from '../api/index.js'
 
 export default {
   name: 'CheckoutOverlay',
   props: {
     isOpen: Boolean,
     items: { type: Array, default: () => [] },
-    total: { type: [String, Number], default: 0 }
+    total: { type: [String, Number], default: 0 },
+    currentUser: { type: Object, default: null }
   },
   emits: ['close', 'success'],
   setup(props, { emit }) {
     const stripeLoaded = ref(false)
     const loading = ref(false)
     const errorMessage = ref('')
-    const clientSecret = ref('')
-    const shipping = reactive({
-      address: '',
-      city: '',
-      zip: ''
-    })
     let stripe = null
     let elements = null
-
-    const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+    let paymentElement = null
+    let addressElement = null
 
     async function initStripe() {
-      if (!props.isOpen || stripeLoaded.value) return
+      if (!props.isOpen) return
 
       try {
-        stripe = await loadStripe(stripeKey)
-        
-        // 1. Crear Intent en el backend
-        const cartItems = props.items.map(i => ({ id: i.id, quantity: i.quantity }))
-        const { clientSecret: secret } = await checkoutApi.createIntent({ 
-          items: cartItems,
+        const stripeModule = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+        if (!stripeModule) return
+        stripe = stripeModule
+
+        const { clientSecret } = await checkoutApi.createIntent({ 
+          items: props.items,
           totalAmount: props.total 
         })
-        clientSecret.value = secret
+        
+        elements = stripe.elements({ 
+          clientSecret,
+          appearance: {
+            theme: 'night',
+            variables: {
+              colorPrimary: '#c5a36a',
+              colorBackground: '#1c1917',
+              colorText: '#f5f5f4',
+              colorDanger: '#ef4444',
+              fontFamily: 'Outfit, sans-serif',
+              borderRadius: '12px',
+            }
+          }
+        })
 
-        // 2. Montar elementos
-        const appearance = {
-          theme: 'night',
-          variables: {
-            colorPrimary: '#c5a36a', // Gold
-            colorBackground: '#1c1917', // Dark brown
-            colorText: '#f5f5f4',
-            colorDanger: '#ef4444',
-            fontFamily: 'Outfit, sans-serif',
-            spacingUnit: '4px',
-            borderRadius: '8px',
-          },
+        paymentElement = elements.create('payment', {
+          layout: 'tabs',
+        })
+        paymentElement.mount('#payment-element')
+
+        // Procesar dirección guardada
+        let savedAddr = props.currentUser?.shipping_address
+        if (typeof savedAddr === 'string') {
+          try { savedAddr = JSON.parse(savedAddr) } catch (e) { savedAddr = null }
         }
 
-        elements = stripe.elements({ appearance, clientSecret: clientSecret.value })
+        // Address Element
+        addressElement = elements.create('address', {
+          mode: 'shipping',
+          allowedCountries: ['ES', 'FR', 'IT', 'PT', 'DE', 'GB', 'US'],
+          defaultValues: {
+            name: props.currentUser?.username || '',
+            address: {
+              line1: savedAddr?.line1 || '',
+              line2: savedAddr?.line2 || '',
+              city: savedAddr?.city || '',
+              state: savedAddr?.state || '',
+              postal_code: savedAddr?.postal_code || '',
+              country: savedAddr?.country || 'ES',
+            }
+          },
+          fields: { phone: 'always' },
+          validation: { phone: { required: 'never' } }
+        })
 
-        const paymentElementOptions = { layout: "tabs" }
-        const paymentElement = elements.create("payment", paymentElementOptions)
-        paymentElement.mount("#payment-element")
+        await nextTick()
+        const addrContainer = document.getElementById('address-element')
+        if (addrContainer) {
+          addressElement.mount('#address-element')
+        }
 
         stripeLoaded.value = true
       } catch (err) {
         console.error('Stripe Init Error:', err)
-        errorMessage.value = `Error: ${err.message || 'No se pudo inicializar el sistema de pagos'}. Verifica la consola del navegador.`
+        errorMessage.value = 'No se pudo cargar el sistema de pagos'
       }
     }
 
@@ -149,65 +171,88 @@ export default {
       loading.value = true
       errorMessage.value = ''
 
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + '/success',
-          shipping: {
-            name: 'Cliente Siuuluette', // Podríamos coger el nombre del perfil
-            address: {
-              line1: shipping.address,
-              city: shipping.city,
-              postal_code: shipping.zip,
-              country: 'ES'
-            }
-          }
-        },
-        redirect: 'if_required' // Importante para manejar modales 3DS sin redirigir
-      })
-
-      if (error) {
-        if (error.type === "card_error" || error.type === "validation_error") {
-          errorMessage.value = error.message
-        } else {
-          errorMessage.value = "Ocurrió un error inesperado al procesar el pago."
+      try {
+        const { complete, value } = await addressElement.getValue()
+        if (!complete) {
+          errorMessage.value = 'Por favor, completa la dirección de envío'
+          loading.value = false
+          return
         }
-      } else {
-        // Pago completado con éxito sin redirección (o ya manejada)
-        
-        // --- GUARDAR EN DB ---
-        try {
-          // Buscamos el ID del payment intent en Elements
-          const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret.value)
-          
-          await checkoutApi.confirmOrder({
+
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: window.location.origin + '/success',
+          },
+          redirect: 'if_required'
+        })
+
+        if (error) {
+          errorMessage.value = error.message
+        } else if (paymentIntent.status === 'succeeded') {
+          const confirmRes = await checkoutApi.confirmOrder({
             paymentIntentId: paymentIntent.id,
-            shippingAddress: shipping,
+            shippingAddress: value.address,
             items: props.items,
             totalAmount: props.total
           })
-          
-          emit('success')
-          emit('close')
-        } catch (dbErr) {
-          console.error('Error guardando pedido:', dbErr)
-          errorMessage.value = 'El pago se realizó, pero hubo un error al guardar el pedido. Contacta con soporte.'
-        }
-      }
 
-      loading.value = false
+          let updatedUser = props.currentUser
+          if (props.currentUser) {
+            try {
+              const res = await authApi.updateProfile({
+                shipping_address: {
+                  line1: value.address.line1,
+                  line2: value.address.line2,
+                  city: value.address.city,
+                  state: value.address.state,
+                  postal_code: value.address.postal_code,
+                  country: value.address.country
+                }
+              })
+              if (res.profile) {
+                updatedUser = res.profile
+              }
+            } catch (err) {
+              console.error('Error auto-guardado dirección:', err)
+            }
+          }
+
+          emit('order-complete')
+          emit('success', updatedUser)
+          handleClose()
+        }
+      } catch (err) {
+        console.error('Submit Error:', err)
+        errorMessage.value = err.message || 'Error al procesar el pedido'
+      } finally {
+        loading.value = false
+      }
     }
 
     function handleClose() {
-      if (!loading.value) emit('close')
+      if (loading.value) return
+      
+      stripeLoaded.value = false
+      stripe = null
+      elements = null
+      paymentElement = null
+      addressElement = null
+      
+      emit('close')
     }
 
-    watch(() => props.isOpen, (newVal) => {
+    watch(() => props.isOpen, async (newVal) => {
       if (newVal) {
-        // Pequeño delay para asegurar que el DOM está listo para montar el elemento
-        setTimeout(initStripe, 100)
+        await nextTick()
+        initStripe()
       } else {
+        // Si el padre lo cierra, solo limpiamos pero no volvemos a emitir
         stripeLoaded.value = false
+        stripe = null
+        elements = null
+        paymentElement = null
+        addressElement = null
       }
     })
 
@@ -215,7 +260,6 @@ export default {
       stripeLoaded,
       loading,
       errorMessage,
-      shipping,
       handleSubmit,
       handleClose
     }
@@ -232,9 +276,9 @@ export default {
   z-index: 3000;
   display: flex;
   justify-content: center;
-  padding: 4rem 2rem; /* Más espacio arriba y abajo */
-  overflow-y: auto; /* Habilitar scroll */
-  align-items: flex-start; /* Empezar desde arriba */
+  padding: 4rem 2rem;
+  overflow-y: auto;
+  align-items: flex-start;
 }
 
 .checkout-card {
@@ -251,6 +295,20 @@ export default {
 @keyframes slide-up {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+.shipping-section {
+  padding-bottom: 0.5rem;
+}
+
+.payment-section {
+  padding-top: 0.5rem;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 1.5rem 0;
 }
 
 .checkout-card__header {
@@ -311,19 +369,6 @@ export default {
 .payment-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.shipping-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
 }
 
 .form-input {

@@ -100,8 +100,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Success State for Registration -->
           <div v-else-if="isRegistered" class="registration-success">
             <div class="check-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -113,8 +111,6 @@
             <p class="body-sm subtitle">Por favor, pulsa el botón en el correo para activar tu cuenta antes de iniciar sesión.</p>
             <button class="btn btn-outline w-full" @click="resetToLogin">Volver al inicio</button>
           </div>
-
-          <!-- Normal Form State (Login/Register) -->
           <template v-else>
             <div v-if="message" class="auth-notice">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -126,7 +122,6 @@
             <p class="body-sm subtitle">
               {{ mode === 'login' ? 'Accede a tu cuenta para gestionar tus pedidos.' : 'Crea tu perfil para una experiencia personalizada.' }}
             </p>
-
             <form @submit.prevent="handleSubmit" class="auth-form">
               <div v-if="mode === 'register'" class="form-group">
                 <label class="label-xs">Nombre de usuario</label>
@@ -138,7 +133,6 @@
                   class="form-input"
                 >
               </div>
-
               <div class="form-group">
                 <label class="label-xs">Email</label>
                 <input 
@@ -149,7 +143,6 @@
                   class="form-input"
                 >
               </div>
-
               <div class="form-group">
                 <label class="label-xs">Contraseña</label>
                 <input 
@@ -160,7 +153,6 @@
                   class="form-input"
                 >
               </div>
-
               <div v-if="mode === 'register'" class="form-group">
                 <label class="label-xs">Teléfono (Opcional)</label>
                 <input 
@@ -170,22 +162,17 @@
                   class="form-input"
                 >
               </div>
-
               <div v-if="error" class="error-msg">{{ error }}</div>
-
               <button type="submit" class="btn btn-primary w-full" :disabled="loading">
                 <span v-if="loading" class="loader"></span>
                 <span v-else>{{ mode === 'login' ? 'Entrar' : 'Registrarse' }}</span>
               </button>
             </form>
-
             <div class="auth-footer" v-if="mode === 'login'">
               <button class="text-link label-xs">¿Has olvidado tu contraseña?</button>
             </div>
           </template>
         </div>
-
-        <!-- Decorative element -->
         <div class="brand-bg">SIU</div>
       </div>
     </div>
@@ -193,8 +180,9 @@
 </template>
 
 <script>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, nextTick } from 'vue'
 import { authApi, checkoutApi } from '../api/index.js'
+import { loadStripe } from '@stripe/stripe-js'
 
 export default {
   name: 'AuthOverlay',
@@ -760,5 +748,40 @@ export default {
   margin: 2rem auto;
 }
 
-@keyframes auth-spin { to { transform: rotate(360deg); } }
+.address-view {
+  animation: auth-fade-in 0.5s ease-out;
+  text-align: left;
+}
+
+.address-view h3 {
+  color: var(--c-white);
+  text-align: center;
+}
+
+.save-notice {
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.save-notice.error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.stripe-address-container {
+  margin-bottom: 2rem;
+  min-height: 200px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1rem;
+}
 </style>
