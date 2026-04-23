@@ -50,6 +50,7 @@
       :is-open="isCheckoutOpen"
       :items="cartItems"
       :total="cartTotal"
+      :current-user="currentUser"
       @close="isCheckoutOpen = false"
       @success="handlePaymentSuccess"
     />
@@ -184,7 +185,7 @@ export default {
       if (token) {
         try {
           const data = await authApi.me()
-          currentUser.value = data.user
+          currentUser.value = { ...data.user, ...data.profile }
           await syncCartWithBackend()
         } catch (err) {
           localStorage.removeItem('token')
@@ -312,9 +313,9 @@ export default {
 
       if (token) {
         try {
-          await cartApi.add({
+          await cartApi.update({
             product_id: productId,
-            quantity: delta,
+            quantity: newQty,
             size
           })
         } catch (err) {
@@ -349,7 +350,10 @@ export default {
       }, 2800)
     }
 
-    function handlePaymentSuccess() {
+    function handlePaymentSuccess(updatedUser) {
+      if (updatedUser) {
+        currentUser.value = updatedUser
+      }
       isSuccessOpen.value = true
       cartItems.value = []
       localStorage.removeItem('cart')
