@@ -20,7 +20,12 @@
             </button>
           </div>
           <div v-else class="auth-tabs">
-            <span class="tab-btn active">Mi Perfil</span>
+            <span v-if="view === 'profile'" class="tab-btn active">Mi Perfil</span>
+            <span v-else class="tab-btn active">Mis Pedidos</span>
+            
+            <button v-if="view === 'orders'" class="back-link-btn" @click="view = 'profile'">
+              Volver
+            </button>
           </div>
           <button class="close-btn" @click="$emit('close')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -30,8 +35,7 @@
         </div>
 
         <div class="auth-card__content">
-          <!-- PROFILE VIEW (If logged in) -->
-          <div v-if="currentUser" class="profile-view">
+          <div v-if="currentUser && view === 'profile'" class="profile-view">
             <div class="profile-header">
               <div class="profile-avatar">
                 {{ (currentUser.username || 'U').charAt(0).toUpperCase() }}
@@ -41,12 +45,59 @@
             </div>
 
             <div class="profile-actions">
-              <button class="profile-btn w-full">
+              <button class="profile-btn w-full" @click="fetchOrders">
                 Mis Pedidos
               </button>
               <button class="profile-btn w-full logout-btn" @click="$emit('logout')">
                 Cerrar Sesión
               </button>
+            </div>
+          </div>
+
+          <!-- ORDERS VIEW -->
+          <div v-else-if="currentUser && view === 'orders'" class="orders-view">
+            <div v-if="loadingOrders" class="orders-loading">
+              <div class="spinner"></div>
+            </div>
+            
+            <div v-else-if="orders.length === 0" class="no-orders">
+              <p class="body-md">Aún no has realizado ningún pedido.</p>
+              <button class="btn btn-outline btn-sm" @click="$emit('close')">Explorar Tienda</button>
+            </div>
+
+            <div v-else class="orders-list">
+              <div v-for="order in orders" :key="order.id" class="order-card">
+                <div class="order-card__header">
+                  <div class="order-info">
+                    <span class="label-xs">PEDIDO #{{ order.id }}</span>
+                    <span class="order-date">{{ formatDate(order.created_at) }}</span>
+                  </div>
+                  <span class="order-total">€{{ order.total_amount }}</span>
+                </div>
+                
+                <div class="order-items">
+                  <div v-for="item in order.order_items" :key="item.id" class="order-item">
+                    <img :src="item.products.image_url" :alt="item.products.name" class="item-thumb">
+                    <div class="item-details">
+                      <p class="item-name">{{ item.products.name }}</p>
+                      <p class="item-meta">Talla: {{ item.size }} | Cant: {{ item.quantity }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BUY AGAIN BUTTON -->
+                <div class="order-card__footer">
+                  <button class="buy-again-btn" @click="$emit('buy-again', order.order_items)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                      <path d="M3 21v-5h5"/>
+                    </svg>
+                    Comprar de nuevo
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -65,6 +116,12 @@
 
           <!-- Normal Form State (Login/Register) -->
           <template v-else>
+            <div v-if="message" class="auth-notice">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ message }}</span>
+            </div>
             <h2 class="display-sm">{{ mode === 'login' ? 'Bienvenido de nuevo' : 'Únete a Siuuluette' }}</h2>
             <p class="body-sm subtitle">
               {{ mode === 'login' ? 'Accede a tu cuenta para gestionar tus pedidos.' : 'Crea tu perfil para una experiencia personalizada.' }}
@@ -137,20 +194,24 @@
 
 <script>
 import { ref, reactive, watch } from 'vue'
-import { authApi } from '../api/index.js'
+import { authApi, checkoutApi } from '../api/index.js'
 
 export default {
   name: 'AuthOverlay',
   props: {
     isOpen: Boolean,
-    currentUser: Object
+    currentUser: Object,
+    message: { type: String, default: '' }
   },
-  emits: ['close', 'login-success', 'logout'],
+  emits: ['close', 'login-success', 'logout', 'buy-again'],
   setup(props, { emit }) {
     const mode = ref('login')
+    const view = ref('profile') // 'profile' or 'orders'
     const loading = ref(false)
+    const loadingOrders = ref(false)
     const error = ref('')
     const isRegistered = ref(false)
+    const orders = ref([])
     
     const form = reactive({
       email: '',
@@ -158,6 +219,28 @@ export default {
       username: '',
       phone: ''
     })
+
+    const fetchOrders = async () => {
+      view.value = 'orders'
+      loadingOrders.value = true
+      try {
+        const res = await checkoutApi.getHistory()
+        orders.value = res.orders
+      } catch (err) {
+        console.error('Error fetching orders:', err)
+      } finally {
+        loadingOrders.value = false
+      }
+    }
+
+    const formatDate = (dateStr) => {
+      if (!dateStr) return ''
+      return new Date(dateStr).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    }
 
     const handleSubmit = async () => {
       loading.value = true
@@ -203,7 +286,8 @@ export default {
     })
 
     return {
-      mode, form, loading, error, isRegistered, handleSubmit, resetToLogin
+      mode, view, form, loading, loadingOrders, error, isRegistered, orders, 
+      handleSubmit, resetToLogin, fetchOrders, formatDate
     }
   }
 }
@@ -277,6 +361,30 @@ export default {
   color: white;
 }
 
+.auth-notice {
+  background: rgba(197, 163, 106, 0.15);
+  border: 1px solid rgba(197, 163, 106, 0.4);
+  color: #f3d09a; /* Oro más brillante */
+  padding: 1.25rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  animation: noticeSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.display-sm {
+  color: #f5f5f4 !important; /* Forzamos blanco premium */
+}
+
+@keyframes noticeSlideIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .registration-success {
   text-align: center;
   padding: 1rem 0;
@@ -331,7 +439,7 @@ export default {
 .auth-card {
   background: #1c1917;
   width: 100%;
-  max-width: 420px;
+  max-width: 550px;
   border-radius: 24px;
   border: 1px solid rgba(197, 163, 106, 0.15);
   overflow: hidden;
@@ -478,14 +586,178 @@ export default {
 
 .w-full { width: 100%; }
 
-.loader {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
+/* Orders View Styles — Premium Update */
+.orders-view {
+  max-height: 550px;
+  overflow-y: auto;
+  padding: 0.5rem 1rem 1rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-gold) transparent;
+}
+
+.orders-view::-webkit-scrollbar {
+  width: 4px;
+}
+
+.orders-view::-webkit-scrollbar-thumb {
+  background: var(--c-gold);
+  border-radius: 10px;
+}
+
+.order-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  text-align: left; /* Asegurar alineación izquierda */
+}
+
+.order-card:hover {
+  border-color: rgba(197, 163, 106, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.order-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.order-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.order-info .label-xs {
+  color: #f3d09a; /* Oro brillante para el ID */
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+.order-date {
+  font-size: 0.85rem;
+  color: #e5e0d8; /* Blanco hueso para la fecha */
+  font-weight: 500;
+}
+
+.order-total {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: #f5f5f4;
+  line-height: 1;
+}
+
+.order-card__footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.buy-again-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(197, 163, 106, 0.1);
+  border: 1px solid rgba(197, 163, 106, 0.3);
+  color: #f3d09a;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buy-again-btn:hover {
+  background: var(--c-gold);
+  color: var(--c-black);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(197, 163, 106, 0.2);
+}
+
+.order-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.order-item {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.item-thumb {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.item-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f5f5f4;
+  letter-spacing: 0.02em;
+}
+
+.item-meta {
+  font-size: 0.8rem;
+  color: #a89a8c; /* Gris cálido para detalles */
+  font-weight: 400;
+}
+
+.back-link-btn {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: #f3d09a;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-left: auto;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(197, 163, 106, 0.3);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.back-link-btn:hover {
+  background: rgba(197, 163, 106, 0.1);
+  border-color: #f3d09a;
+}
+
+.no-orders {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.no-orders p {
+  color: #a89a8c;
+  margin-bottom: 2rem;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(197, 163, 106, 0.1);
+  border-top-color: var(--c-gold);
   border-radius: 50%;
-  display: inline-block;
   animation: auth-spin 0.8s linear infinite;
+  margin: 2rem auto;
 }
 
 @keyframes auth-spin { to { transform: rotate(360deg); } }

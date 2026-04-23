@@ -52,4 +52,6 @@ export const cartApi = {
 // --- API de checkout ---
 export const checkoutApi = {
   createIntent: (cart) => request('/api/checkout/intent', { method: 'POST', body: JSON.stringify(cart) }),
+  confirmOrder: (data) => request('/api/checkout/confirm', { method: 'POST', body: JSON.stringify(data) }),
+  getHistory:   ()     => request('/api/checkout/orders'),
 }

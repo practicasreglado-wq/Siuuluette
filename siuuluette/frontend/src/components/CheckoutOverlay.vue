@@ -30,6 +30,21 @@
           <!-- Stripe Form -->
           <form id="payment-form" @submit.prevent="handleSubmit" class="payment-form">
             <div id="link-authentication-element"></div>
+            
+            <!-- Shipping Form -->
+            <div class="shipping-form">
+              <h3 class="label-xs uppercase tracking-widest mb-4 opacity-60">Dirección de Envío</h3>
+              <div class="form-group">
+                <input v-model="shipping.address" type="text" placeholder="Calle y número" required class="form-input">
+              </div>
+              <div class="form-row">
+                <input v-model="shipping.city" type="text" placeholder="Ciudad" required class="form-input">
+                <input v-model="shipping.zip" type="text" placeholder="Código Postal" required class="form-input">
+              </div>
+            </div>
+
+            <div class="divider mb-6"></div>
+
             <div id="payment-element"></div>
             
             <div v-if="errorMessage" class="error-message">
@@ -61,7 +76,7 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import { checkoutApi } from '../api/index.js'
 
@@ -77,6 +92,12 @@ export default {
     const stripeLoaded = ref(false)
     const loading = ref(false)
     const errorMessage = ref('')
+    const clientSecret = ref('')
+    const shipping = reactive({
+      address: '',
+      city: '',
+      zip: ''
+    })
     let stripe = null
     let elements = null
 
@@ -90,10 +111,11 @@ export default {
         
         // 1. Crear Intent en el backend
         const cartItems = props.items.map(i => ({ id: i.id, quantity: i.quantity }))
-        const { clientSecret } = await checkoutApi.createIntent({ 
+        const { clientSecret: secret } = await checkoutApi.createIntent({ 
           items: cartItems,
           totalAmount: props.total 
         })
+        clientSecret.value = secret
 
         // 2. Montar elementos
         const appearance = {
@@ -109,7 +131,7 @@ export default {
           },
         }
 
-        elements = stripe.elements({ appearance, clientSecret })
+        elements = stripe.elements({ appearance, clientSecret: clientSecret.value })
 
         const paymentElementOptions = { layout: "tabs" }
         const paymentElement = elements.create("payment", paymentElementOptions)
@@ -131,6 +153,15 @@ export default {
         elements,
         confirmParams: {
           return_url: window.location.origin + '/success',
+          shipping: {
+            name: 'Cliente Siuuluette', // Podríamos coger el nombre del perfil
+            address: {
+              line1: shipping.address,
+              city: shipping.city,
+              postal_code: shipping.zip,
+              country: 'ES'
+            }
+          }
         },
         redirect: 'if_required' // Importante para manejar modales 3DS sin redirigir
       })
@@ -143,8 +174,25 @@ export default {
         }
       } else {
         // Pago completado con éxito sin redirección (o ya manejada)
-        emit('success')
-        emit('close')
+        
+        // --- GUARDAR EN DB ---
+        try {
+          // Buscamos el ID del payment intent en Elements
+          const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret.value)
+          
+          await checkoutApi.confirmOrder({
+            paymentIntentId: paymentIntent.id,
+            shippingAddress: shipping,
+            items: props.items,
+            totalAmount: props.total
+          })
+          
+          emit('success')
+          emit('close')
+        } catch (dbErr) {
+          console.error('Error guardando pedido:', dbErr)
+          errorMessage.value = 'El pago se realizó, pero hubo un error al guardar el pedido. Contacta con soporte.'
+        }
       }
 
       loading.value = false
@@ -167,6 +215,7 @@ export default {
       stripeLoaded,
       loading,
       errorMessage,
+      shipping,
       handleSubmit,
       handleClose
     }
@@ -210,6 +259,10 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.display-sm {
+  color: #f5f5f4 !important;
 }
 
 .close-btn {
@@ -260,6 +313,45 @@ export default {
   flex-direction: column;
   gap: 1.5rem;
 }
+
+.shipping-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  color: #f5f5f4;
+  font-size: 0.9rem;
+  width: 100%;
+  transition: all 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--c-gold);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.form-group {
+  width: 100%;
+}
+
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.uppercase { text-transform: uppercase; }
+.tracking-widest { letter-spacing: 0.1em; }
+.opacity-60 { opacity: 0.6; }
 
 .error-message {
   color: #ef4444;

@@ -94,7 +94,7 @@ export default {
 }
 
 .success-card__content h2 {
-  color: var(--c-white);
+  color: #f5f5f4 !important;
   letter-spacing: 0.05em;
 }
 

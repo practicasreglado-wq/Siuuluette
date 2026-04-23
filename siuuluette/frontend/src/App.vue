@@ -58,9 +58,11 @@
     <AuthOverlay
       :is-open="isAuthOpen"
       :current-user="currentUser"
-      @close="isAuthOpen = false"
+      :message="authOverlayMessage"
+      @close="isAuthOpen = false; authOverlayMessage = ''"
       @login-success="handleLoginSuccess"
       @logout="handleLogout"
+      @buy-again="handleBuyAgain"
     />
 
     <!-- Cart Sidebar -->
@@ -69,7 +71,7 @@
         v-if="isCartOpen"
         :cart-items="cartItems"
         @close="isCartOpen = false"
-        @checkout="isCheckoutOpen = true; isCartOpen = false"
+        @checkout="handleCheckout"
         @remove-item="removeFromCart"
         @update-qty="updateQty"
       />
@@ -127,6 +129,7 @@ export default {
     const isCheckoutOpen  = ref(false)
     const isSuccessOpen   = ref(false)
     const isAuthOpen      = ref(false)
+    const authOverlayMessage = ref('')
     const isScrolled      = ref(false)
     const activeCategory  = ref('')
     const selectedStyle   = ref('')
@@ -269,6 +272,17 @@ export default {
       }
     }
 
+    function handleCheckout() {
+      if (!currentUser.value) {
+        authOverlayMessage.value = 'Debes iniciar sesión o crear una cuenta para finalizar tu pedido'
+        isAuthOpen.value = true
+        isCartOpen.value = false
+        return
+      }
+      isCheckoutOpen.value = true
+      isCartOpen.value = false
+    }
+
     function showToast(msg) {
       toastMessage.value = msg
       toastVisible.value = true
@@ -294,6 +308,22 @@ export default {
       currentUser.value = null
       isAuthOpen.value = false
       showToast('Sesión cerrada correctamente')
+    }
+
+    async function handleBuyAgain(orderItems) {
+      for (const item of orderItems) {
+        const product = {
+          id: item.product_id,
+          name: item.products.name,
+          price: item.products.price,
+          image_url: item.products.image_url,
+          selectedSize: item.size
+        }
+        await addToCart(product)
+      }
+      isAuthOpen.value = false
+      isCartOpen.value = true
+      showToast('Productos añadidos al carrito')
     }
 
     function handleScroll() {
@@ -328,10 +358,11 @@ export default {
       products, cartItems, cartCount, cartTotal, currentUser,
       isCartOpen, isCheckoutOpen, isSuccessOpen, isAuthOpen, isScrolled,
       activeCategory, selectedStyle,
-      toastVisible, toastMessage,
+      toastVisible, toastMessage, authOverlayMessage,
       addToCart, removeFromCart, updateQty, 
       selectCategory, closeExplore, selectGlobalFilter, 
-      authApi: authApi, handlePaymentSuccess, handleLoginSuccess, handleLogout
+      authApi: authApi, handlePaymentSuccess, handleLoginSuccess, handleLogout, handleCheckout,
+      handleBuyAgain
     }
   }
 }
