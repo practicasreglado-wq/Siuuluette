@@ -13,7 +13,7 @@ export default async function productsRoutes(fastify) {
       return
     }
 
-    return { products }
+    return { products: products || [] }
   })
 
   // GET /api/products/:id — un producto específico (consulta real)
