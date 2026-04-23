@@ -14,7 +14,10 @@
       :style="{ top: !selectedStyle ? '36px' : '0px' }"
       :cart-count="cartCount"
       :is-scrolled="isScrolled"
+      :current-user="currentUser"
       @open-cart="isCartOpen = true"
+      @open-auth="isAuthOpen = true"
+      @logout="handleLogout"
       @nav-click="closeExplore"
     />
 
@@ -30,7 +33,6 @@
       <CategoryGrid id="explora" @category-select="selectCategory" />
       <LimitedDrop id="drops" @add-to-cart="addToCart" />
       <BrandValues id="nosotros" />
-      <NewsletterSection />
     </main>
 
     <FooterSection />
@@ -43,12 +45,39 @@
       @add-to-cart="addToCart"
     />
 
+    <!-- Checkout Overlay -->
+    <CheckoutOverlay
+      :is-open="isCheckoutOpen"
+      :items="cartItems"
+      :total="cartTotal"
+      @close="isCheckoutOpen = false"
+      @success="handlePaymentSuccess"
+    />
+
+    <!-- Success Overlay -->
+    <SuccessOverlay
+      :is-open="isSuccessOpen"
+      @close="isSuccessOpen = false"
+    />
+
+    <!-- Auth Overlay -->
+    <AuthOverlay
+      :is-open="isAuthOpen"
+      :current-user="currentUser"
+      :message="authOverlayMessage"
+      @close="isAuthOpen = false; authOverlayMessage = ''"
+      @login-success="handleLoginSuccess"
+      @logout="handleLogout"
+      @buy-again="handleBuyAgain"
+    />
+
     <!-- Cart Sidebar -->
     <Transition name="slide-right">
       <CartSidebar
         v-if="isCartOpen"
         :cart-items="cartItems"
         @close="isCartOpen = false"
+        @checkout="handleCheckout"
         @remove-item="removeFromCart"
         @update-qty="updateQty"
       />
@@ -83,35 +112,53 @@ import HeroSection      from './components/HeroSection.vue'
 import CategoryGrid     from './components/CategoryGrid.vue'
 import LimitedDrop      from './components/LimitedDrop.vue'
 import BrandValues      from './components/BrandValues.vue'
-import NewsletterSection from './components/NewsletterSection.vue'
 import FooterSection    from './components/FooterSection.vue'
 import CartSidebar      from './components/CartSidebar.vue'
 import CategoryExplore  from './components/CategoryExplore.vue'
+import CheckoutOverlay  from './components/CheckoutOverlay.vue'
+import SuccessOverlay   from './components/SuccessOverlay.vue'
+import AuthOverlay      from './components/AuthOverlay.vue'
 
 export default {
   name: 'App',
   components: {
-    Navbar, HeroSection, CategoryGrid,
-    LimitedDrop, BrandValues, NewsletterSection, FooterSection,
-    CartSidebar, CategoryExplore
+    Navbar,
+    HeroSection,
+    CategoryGrid,
+    LimitedDrop,
+    BrandValues,
+    FooterSection,
+    CartSidebar,
+    CategoryExplore,
+    CheckoutOverlay,
+    SuccessOverlay,
+    AuthOverlay
   },
   setup() {
     /* ---- Refs ---- */
-    const products        = ref([])
-    const productsError   = ref('')
-    const cartItems       = ref([])
-    const currentUser     = ref(null)
-    const isCartOpen      = ref(false)
-    const isScrolled      = ref(false)
-    const activeCategory  = ref('')
-    const selectedStyle   = ref('')
-    const toastVisible    = ref(false)
-    const toastMessage    = ref('')
-    let toastTimer        = null
+    const products = ref([])
+    const productsError = ref('')
+    const cartItems = ref([])
+    const currentUser = ref(null)
+    const isCartOpen = ref(false)
+    const isCheckoutOpen = ref(false)
+    const isSuccessOpen = ref(false)
+    const isAuthOpen = ref(false)
+    const authOverlayMessage = ref('')
+    const isScrolled = ref(false)
+    const activeCategory = ref('')
+    const selectedStyle = ref('')
+    const toastVisible = ref(false)
+    const toastMessage = ref('')
+    let toastTimer = null
 
     /* ---- Computed ---- */
     const cartCount = computed(() =>
-      cartItems.value.reduce((sum, item) => sum + item.qty, 0)
+      cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
+    )
+
+    const cartTotal = computed(() =>
+      cartItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(0)
     )
 
     /* ---- Methods ---- */
@@ -120,6 +167,7 @@ export default {
         productsError.value = ''
         const data = await productsApi.getAll()
         products.value = Array.isArray(data.products) ? data.products : []
+
         if (products.value.length === 0) {
           productsError.value = 'No hay productos disponibles en este momento.'
         }
@@ -132,11 +180,11 @@ export default {
 
     async function checkAuth() {
       const token = localStorage.getItem('token')
+
       if (token) {
         try {
           const data = await authApi.me()
           currentUser.value = data.user
-          // Si estamos logueados, sincronizamos el carrito con la DB
           await syncCartWithBackend()
         } catch (err) {
           localStorage.removeItem('token')
@@ -146,19 +194,21 @@ export default {
     }
 
     async function syncCartWithBackend() {
-      // 1. Pedir carrito al backend
       const { cart } = await cartApi.get()
 
-      // 2. Si tenemos cosas en LocalStorage (de cuando éramos invitados), las fusionamos
       const localCart = JSON.parse(localStorage.getItem('cart') || '[]')
+
       if (localCart.length > 0) {
-        await cartApi.merge(localCart.map(i => ({
-          product_id: i.id,
-          quantity: i.qty,
-          size: i.selectedSize
-        })))
+        await cartApi.merge(
+          localCart.map(i => ({
+            product_id: i.id,
+            quantity: i.quantity || i.qty || 1,
+            size: i.selectedSize
+          }))
+        )
+
         localStorage.removeItem('cart')
-        // Volvemos a pedir el carrito ya fusionado
+
         const { cart: mergedCart } = await cartApi.get()
         cartItems.value = formatCartFromBackend(mergedCart)
       } else {
@@ -168,37 +218,43 @@ export default {
 
     function formatCartFromBackend(items) {
       return items.map(i => ({
-        cartItemId: i.id, // PK del cart_items (distinta del product_id, usada para PATCH/DELETE)
+        cartItemId: i.id,
         id: i.product_id,
         name: i.products.name,
         price: i.products.price,
-        qty: i.quantity,
+        quantity: i.quantity,
         image_url: i.products.image_url,
         selectedSize: i.size || 'M'
       }))
     }
 
     async function addToCart(product) {
-      // Optimista: actualizamos UI primero
+      const size = product.selectedSize || 'M'
+
       const existing = cartItems.value.find(i =>
-        i.id === product.id && i.selectedSize === product.selectedSize
+        i.id === product.id && i.selectedSize === size
       )
+
       if (existing) {
-        existing.qty++
+        existing.quantity++
       } else {
-        cartItems.value.push({ ...product, qty: 1 })
+        cartItems.value.push({
+          ...product,
+          selectedSize: size,
+          quantity: 1
+        })
       }
 
-      // Persistencia
       const token = localStorage.getItem('token')
+
       if (token) {
         try {
           await cartApi.add({
             product_id: product.id,
             quantity: 1,
-            size: product.selectedSize
+            size
           })
-          // Refetch para obtener el cartItemId real del backend
+
           const { cart } = await cartApi.get()
           cartItems.value = formatCartFromBackend(cart)
         } catch (err) {
@@ -207,7 +263,6 @@ export default {
           return
         }
       } else {
-        // Guardar en LocalStorage (Invitado)
         localStorage.setItem('cart', JSON.stringify(cartItems.value))
       }
 
@@ -215,24 +270,20 @@ export default {
     }
 
     async function removeFromCart(productId, size) {
-      const item = cartItems.value.find(i =>
-        i.id === productId && i.selectedSize === size
-      )
-      if (!item) return
+      const previousItems = [...cartItems.value]
 
-      // Optimista: fuera de la UI
       cartItems.value = cartItems.value.filter(i =>
         !(i.id === productId && i.selectedSize === size)
       )
 
       const token = localStorage.getItem('token')
-      if (token && item.cartItemId) {
+
+      if (token) {
         try {
-          await cartApi.remove(item.cartItemId)
+          await cartApi.remove(productId, size)
         } catch (err) {
           console.error('Error eliminando del carrito:', err)
-          // Rollback: volvemos a insertar el item
-          cartItems.value.push(item)
+          cartItems.value = previousItems
           showToast('No se pudo eliminar del carrito')
         }
       } else {
@@ -244,25 +295,31 @@ export default {
       const item = cartItems.value.find(i =>
         i.id === productId && i.selectedSize === size
       )
+
       if (!item) return
 
-      const newQty = item.qty + delta
+      const previousQty = item.quantity
+      const newQty = item.quantity + delta
+
       if (newQty <= 0) {
         await removeFromCart(productId, size)
         return
       }
 
-      // Optimista
-      const previousQty = item.qty
-      item.qty = newQty
+      item.quantity = newQty
 
       const token = localStorage.getItem('token')
-      if (token && item.cartItemId) {
+
+      if (token) {
         try {
-          await cartApi.updateQty(item.cartItemId, newQty)
+          await cartApi.add({
+            product_id: productId,
+            quantity: delta,
+            size
+          })
         } catch (err) {
           console.error('Error actualizando cantidad:', err)
-          item.qty = previousQty
+          item.quantity = previousQty
           showToast('No se pudo actualizar la cantidad')
         }
       } else {
@@ -270,11 +327,64 @@ export default {
       }
     }
 
+    function handleCheckout() {
+      if (!currentUser.value) {
+        authOverlayMessage.value = 'Debes iniciar sesión o crear una cuenta para finalizar tu pedido'
+        isAuthOpen.value = true
+        isCartOpen.value = false
+        return
+      }
+
+      isCheckoutOpen.value = true
+      isCartOpen.value = false
+    }
+
     function showToast(msg) {
       toastMessage.value = msg
       toastVisible.value = true
       clearTimeout(toastTimer)
-      toastTimer = setTimeout(() => { toastVisible.value = false }, 2800)
+
+      toastTimer = setTimeout(() => {
+        toastVisible.value = false
+      }, 2800)
+    }
+
+    function handlePaymentSuccess() {
+      isSuccessOpen.value = true
+      cartItems.value = []
+      localStorage.removeItem('cart')
+      isCheckoutOpen.value = false
+    }
+
+    function handleLoginSuccess(user) {
+      currentUser.value = user
+      isAuthOpen.value = false
+      showToast(`Bienvenido, ${user.email}`)
+    }
+
+    function handleLogout() {
+      authApi.logout()
+      currentUser.value = null
+      isAuthOpen.value = false
+      showToast('Sesión cerrada correctamente')
+    }
+
+    async function handleBuyAgain(orderItems) {
+      for (const item of orderItems) {
+        const product = {
+          id: item.product_id,
+          name: item.products.name,
+          price: item.products.price,
+          image_url: item.products.image_url,
+          selectedSize: item.size
+        }
+
+        await addToCart(product)
+      }
+
+      isAuthOpen.value = false
+      isCartOpen.value = true
+      showToast('Productos añadidos al carrito')
     }
 
     function handleScroll() {
@@ -293,7 +403,7 @@ export default {
 
     function selectGlobalFilter(catName) {
       activeCategory.value = catName
-      const el = document.getElementById('explora') // Apuntamos a la sección de categorías
+      const el = document.getElementById('explora')
       if (el) el.scrollIntoView({ behavior: 'smooth' })
     }
 
@@ -303,18 +413,41 @@ export default {
       await checkAuth()
     })
 
-    onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+    onUnmounted(() => {
+      window.removeEventListener('scroll', handleScroll)
+      clearTimeout(toastTimer)
+    })
 
     return {
-      products, productsError,
-      cartItems, cartCount, currentUser,
-      isCartOpen, isScrolled,
-      activeCategory, selectedStyle,
-      toastVisible, toastMessage,
-      addToCart, removeFromCart, updateQty,
-      selectCategory, closeExplore, selectGlobalFilter,
+      products,
+      productsError,
+      cartItems,
+      cartCount,
+      cartTotal,
+      currentUser,
+      isCartOpen,
+      isCheckoutOpen,
+      isSuccessOpen,
+      isAuthOpen,
+      isScrolled,
+      activeCategory,
+      selectedStyle,
+      toastVisible,
+      toastMessage,
+      authOverlayMessage,
+      addToCart,
+      removeFromCart,
+      updateQty,
+      selectCategory,
+      closeExplore,
+      selectGlobalFilter,
       fetchProducts,
-      authApi: authApi // Referencia explícita
+      authApi,
+      handlePaymentSuccess,
+      handleLoginSuccess,
+      handleLogout,
+      handleCheckout,
+      handleBuyAgain
     }
   }
 }

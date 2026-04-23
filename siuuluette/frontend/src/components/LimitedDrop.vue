@@ -114,7 +114,7 @@ export default {
         name: 'Hoodie Drop 02 — Las 4AM',
         category: 'Ediciones Limitadas',
         price: 195,
-        image: 'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=400&q=80',
+        image: '/Siu_white.png',
       })
     }
   }
