@@ -197,7 +197,7 @@ input {
 .btn-outline {
   background: transparent;
   color: var(--c-white);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1.5px solid var(--c-white);
 }
 
 .btn-outline:hover {

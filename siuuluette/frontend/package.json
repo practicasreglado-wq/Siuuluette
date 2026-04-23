@@ -8,8 +8,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "vue": "^3.4.0",
     "vue-router": "^4.4.0"
+=======
+    "@stripe/stripe-js": "^9.2.0",
+    "vue": "^3.4.0"
+>>>>>>> 2376b9eba32ae7fd993617a3072ecc53b4b9ffd1
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

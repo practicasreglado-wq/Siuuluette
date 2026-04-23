@@ -27,17 +27,7 @@
           <p class="footer__tagline">
             No sigas tendencias.<br />Créalas.
           </p>
-          <div class="footer__social">
-            <a
-              v-for="social in socials"
-              :key="social.name"
-              :href="social.href"
-              :aria-label="social.name"
-              class="footer__social-link"
-            >
-              <span v-html="social.icon"></span>
-            </a>
-          </div>
+
         </div>
 
         <!-- Links Columns -->
@@ -54,35 +44,17 @@
           </ul>
         </div>
 
-        <!-- Mini Newsletter -->
-        <div class="footer__newsletter">
-          <h3 class="footer__col-title">Comunidad</h3>
-          <p class="footer__newsletter-text">
-            Acceso anticipado a drops y contenido exclusivo.
-          </p>
-          <form class="footer__form" @submit.prevent="handleMiniSubmit" novalidate>
-            <div class="footer__input-row">
-              <input
-                v-model="email"
-                type="email"
-                placeholder="tu@email.com"
-                class="footer__input"
-                :disabled="subscribed"
-                aria-label="Tu email para la newsletter"
-              />
-              <button
-                type="submit"
-                class="footer__submit"
-                :disabled="subscribed"
-                aria-label="Suscribirse"
-              >
-                <svg v-if="!subscribed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-                <span v-else>✓</span>
-              </button>
-            </div>
-          </form>
+        <!-- Contact -->
+        <div class="footer__col">
+          <h3 class="footer__col-title">Contacto</h3>
+          <ul class="footer__links">
+            <li>
+              <a href="mailto:hola@lesiuuluette.com" class="footer__link">hola@lesiuuluette.com</a>
+            </li>
+            <li>
+              <a href="tel:+34000000000" class="footer__link">+34 000 000 000</a>
+            </li>
+          </ul>
         </div>
 
       </div>
@@ -95,17 +67,10 @@
           © {{ year }} Siuuluette Brand. Todos los derechos reservados.
         </p>
         <div class="footer__legal">
-          <a href="#" class="footer__legal-link">Privacidad</a>
-          <a href="#" class="footer__legal-link">Términos</a>
+          <a href="#" class="footer__legal-link">Términos, Privacidad y Accesibilidad</a>
           <a href="#" class="footer__legal-link">Cookies</a>
-          <a href="#" class="footer__legal-link">Accesibilidad</a>
         </div>
-        <div class="footer__payments" aria-label="Métodos de pago aceptados">
-          <span class="footer__payment-icon">VISA</span>
-          <span class="footer__payment-icon">MC</span>
-          <span class="footer__payment-icon">AMEX</span>
-          <span class="footer__payment-icon">PAY</span>
-        </div>
+
       </div>
     </div>
 
@@ -117,66 +82,22 @@ export default {
   name: 'FooterSection',
   data() {
     return {
-      email: '',
-      subscribed: false,
       year: new Date().getFullYear(),
-      socials: [
-        {
-          name: 'Instagram',
-          href: '#',
-          icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/>
-            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
-          </svg>`,
-        },
-        {
-          name: 'TikTok',
-          href: '#',
-          icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
-          </svg>`,
-        },
-        {
-          name: 'Twitter / X',
-          href: '#',
-          icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M4 4l16 16M4 20L20 4"/>
-          </svg>`,
-        },
-        {
-          name: 'YouTube',
-          href: '#',
-          icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M22 8a2.83 2.83 0 0 0-2-2C18.18 6 12 6 12 6s-6.18 0-8 .46a2.83 2.83 0 0 0-2 2A29 29 0 0 0 2 12a29 29 0 0 0 .46 4 2.83 2.83 0 0 0 2 2C6 18.55 12 18.55 12 18.55s6.18 0 8-.46a2.83 2.83 0 0 0 2-2 29 29 0 0 0 .54-4 29 29 0 0 0-.54-4z"/>
-            <polygon points="10 15 15 12 10 9 10 15" fill="currentColor" stroke="none"/>
-          </svg>`,
-        },
-      ],
+      socials: [],
       linkColumns: [
         {
-          title: 'Tienda',
+          title: 'Navegación',
           links: [
             { label: 'Inicio', href: '#inicio' },
             { label: 'Explora', href: '#explora' },
             { label: 'Drops', href: '#drops' },
-          ],
-        },
-        {
-          title: 'Marca',
-          links: [
             { label: 'Nosotros', href: '#nosotros' },
           ],
         },
       ],
     }
   },
-  methods: {
-    handleMiniSubmit() {
-      const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRx.test(this.email)) return
-      this.subscribed = true
-    }
-  }
+  methods: {}
 }
 </script>
 
@@ -223,7 +144,7 @@ export default {
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  grid-template-columns: 2fr 1.5fr 1.5fr;
   gap: 4rem;
   align-items: start;
 }
@@ -317,61 +238,7 @@ export default {
   padding-left: 4px;
 }
 
-/* Newsletter mini */
-.footer__newsletter {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
 
-.footer__newsletter-text {
-  font-size: 0.85rem;
-  color: var(--c-grey);
-  line-height: 1.6;
-}
-
-.footer__input-row {
-  display: flex;
-  gap: 0;
-  border: 1px solid rgba(92, 82, 72, 0.2);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  transition: border-color var(--t-fast);
-}
-
-.footer__input-row:focus-within {
-  border-color: var(--c-gold);
-}
-
-.footer__input {
-  flex: 1;
-  padding: 0.7rem 0.9rem;
-  background: var(--c-dark-2);
-  border: none;
-  color: var(--c-white);
-  font-size: 0.85rem;
-  outline: none;
-}
-
-.footer__input::placeholder { color: var(--c-mid); }
-.footer__input:disabled     { opacity: 0.5; }
-
-.footer__submit {
-  padding: 0 1rem;
-  background: var(--c-gold);
-  color: var(--c-black);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  transition: background var(--t-fast);
-  flex-shrink: 0;
-}
-
-.footer__submit:hover   { background: var(--c-gold-light); }
-.footer__submit:disabled { background: #2e7d32; color: #fff; cursor: default; }
 
 /* --- Bottom Bar --- */
 .footer__bottom {
