@@ -39,10 +39,11 @@ export const authApi = {
 
 // --- API de carrito ---
 export const cartApi = {
-  get:    ()      => request('/api/cart'),
-  add:    (item)  => request('/api/cart/add', { method: 'POST', body: JSON.stringify(item) }),
-  remove: (id)    => request(`/api/cart/${id}`, { method: 'DELETE' }),
-  merge:  (items) => request('/api/cart/merge', { method: 'POST', body: JSON.stringify({ items }) }),
+  get:       ()               => request('/api/cart'),
+  add:       (item)           => request('/api/cart/add', { method: 'POST', body: JSON.stringify(item) }),
+  remove:    (id)             => request(`/api/cart/${id}`, { method: 'DELETE' }),
+  updateQty: (id, quantity)   => request(`/api/cart/${id}`, { method: 'PATCH', body: JSON.stringify({ quantity }) }),
+  merge:     (items)          => request('/api/cart/merge', { method: 'POST', body: JSON.stringify({ items }) }),
 }
 
 // --- API de checkout ---

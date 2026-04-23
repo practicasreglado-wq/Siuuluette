@@ -151,6 +151,37 @@ export default async function cartRoutes(fastify) {
     return { message: 'Carrito sincronizado con éxito' }
   })
 
+  // PATCH /api/cart/:id — Actualizar cantidad de un ítem
+  fastify.patch('/:id', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'number' } }
+      },
+      body: {
+        type: 'object',
+        required: ['quantity'],
+        properties: { quantity: { type: 'number', minimum: 1 } }
+      }
+    }
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { id } = request.params
+    const { quantity } = request.body
+
+    const { error } = await supabase
+      .from('cart_items')
+      .update({ quantity })
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) return reply.status(400).send({ error: error.message })
+
+    return { message: 'Cantidad actualizada' }
+  })
+
   // DELETE /api/cart/:id — Eliminar un ítem del carrito
   fastify.delete('/:id', {
     onRequest: [fastify.authenticate],

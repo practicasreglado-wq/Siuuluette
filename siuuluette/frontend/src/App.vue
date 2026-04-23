@@ -168,19 +168,19 @@ export default {
 
     function formatCartFromBackend(items) {
       return items.map(i => ({
+        cartItemId: i.id, // PK del cart_items (distinta del product_id, usada para PATCH/DELETE)
         id: i.product_id,
         name: i.products.name,
         price: i.products.price,
         qty: i.quantity,
         image_url: i.products.image_url,
-        // La talla ahora sí viene de la DB
         selectedSize: i.size || 'M'
       }))
     }
 
     async function addToCart(product) {
       // Optimista: actualizamos UI primero
-      const existing = cartItems.value.find(i => 
+      const existing = cartItems.value.find(i =>
         i.id === product.id && i.selectedSize === product.selectedSize
       )
       if (existing) {
@@ -192,12 +192,20 @@ export default {
       // Persistencia
       const token = localStorage.getItem('token')
       if (token) {
-        // Enviar a la DB (incluyendo la talla)
-        await cartApi.add({
-          product_id: product.id,
-          quantity: 1,
-          size: product.selectedSize
-        })
+        try {
+          await cartApi.add({
+            product_id: product.id,
+            quantity: 1,
+            size: product.selectedSize
+          })
+          // Refetch para obtener el cartItemId real del backend
+          const { cart } = await cartApi.get()
+          cartItems.value = formatCartFromBackend(cart)
+        } catch (err) {
+          console.error('Error añadiendo al carrito:', err)
+          showToast('No se pudo añadir al carrito')
+          return
+        }
       } else {
         // Guardar en LocalStorage (Invitado)
         localStorage.setItem('cart', JSON.stringify(cartItems.value))
@@ -206,20 +214,60 @@ export default {
       showToast(`${product.name} añadido`)
     }
 
-    function removeFromCart(productId, size) {
-      cartItems.value = cartItems.value.filter(i => 
-        !(i.id === productId && i.selectedSize === size)
-      )
-      // (Aquí añadiríamos la llamada a cartApi.remove si está logueado)
-    }
-
-    function updateQty(productId, size, delta) {
-      const item = cartItems.value.find(i => 
+    async function removeFromCart(productId, size) {
+      const item = cartItems.value.find(i =>
         i.id === productId && i.selectedSize === size
       )
       if (!item) return
-      item.qty += delta
-      if (item.qty <= 0) removeFromCart(productId, size)
+
+      // Optimista: fuera de la UI
+      cartItems.value = cartItems.value.filter(i =>
+        !(i.id === productId && i.selectedSize === size)
+      )
+
+      const token = localStorage.getItem('token')
+      if (token && item.cartItemId) {
+        try {
+          await cartApi.remove(item.cartItemId)
+        } catch (err) {
+          console.error('Error eliminando del carrito:', err)
+          // Rollback: volvemos a insertar el item
+          cartItems.value.push(item)
+          showToast('No se pudo eliminar del carrito')
+        }
+      } else {
+        localStorage.setItem('cart', JSON.stringify(cartItems.value))
+      }
+    }
+
+    async function updateQty(productId, size, delta) {
+      const item = cartItems.value.find(i =>
+        i.id === productId && i.selectedSize === size
+      )
+      if (!item) return
+
+      const newQty = item.qty + delta
+      if (newQty <= 0) {
+        await removeFromCart(productId, size)
+        return
+      }
+
+      // Optimista
+      const previousQty = item.qty
+      item.qty = newQty
+
+      const token = localStorage.getItem('token')
+      if (token && item.cartItemId) {
+        try {
+          await cartApi.updateQty(item.cartItemId, newQty)
+        } catch (err) {
+          console.error('Error actualizando cantidad:', err)
+          item.qty = previousQty
+          showToast('No se pudo actualizar la cantidad')
+        }
+      } else {
+        localStorage.setItem('cart', JSON.stringify(cartItems.value))
+      }
     }
 
     function showToast(msg) {
