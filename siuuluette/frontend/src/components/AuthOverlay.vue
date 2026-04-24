@@ -217,7 +217,6 @@
             </div>
           </template>
         </div>
-        <div class="brand-bg">SIU</div>
       </div>
     </div>
   </Transition>
@@ -411,9 +410,10 @@ export default {
 }
 
 .logout-btn {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   color: #ef4444;
+  font-weight: 600;
 }
 .logout-btn:hover {
   background: #ef4444;
@@ -537,7 +537,7 @@ export default {
   transition: color 0.3s;
 }
 
-.tab-btn.active { color: var(--c-gold); }
+.tab-btn.active { color: var(--c-accent-vibrant); }
 .tab-btn.active::after {
   content: '';
   position: absolute;
@@ -545,7 +545,8 @@ export default {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--c-gold);
+  background: var(--c-accent-vibrant);
+  box-shadow: 0 0 10px var(--c-accent-glow);
 }
 
 .close-btn {
@@ -624,18 +625,6 @@ export default {
   text-underline-offset: 4px;
 }
 .text-link:hover { color: var(--c-white); }
-
-.brand-bg {
-  position: absolute;
-  top: 50%;
-  right: -20px;
-  transform: translateY(-50%);
-  font-family: var(--font-display);
-  font-size: 10rem;
-  color: rgba(255, 255, 255, 0.02);
-  pointer-events: none;
-  z-index: -1;
-}
 
 /* Transitions */
 .auth-fade-enter-active,

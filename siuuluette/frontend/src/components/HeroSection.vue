@@ -195,14 +195,26 @@ export default { name: 'HeroSection' }
   animation: heroLine 0.9s var(--ease-standard) both;
 }
 
-.hero__headline-line--1 { animation-delay: 0.3s; color: var(--c-white); }
+.hero__headline-line--1 { 
+  animation-delay: 0.3s; 
+  color: var(--c-white);
+  background: linear-gradient(135deg, var(--c-white) 0%, var(--c-light) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .hero__headline-line--2 { 
   animation-delay: 0.45s; 
-  color: rgba(149, 148, 147, 0.559); 
+  color: rgba(149, 148, 147, 0.85); /* Increased opacity for better visibility */
   padding-left: 8vw;
-  letter-spacing: 0.05em; /* Add space between L and A */
+  letter-spacing: 0.05em; 
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.1));
 }
-.hero__headline-line--3 { animation-delay: 0.6s; color: var(--c-gold); }
+.hero__headline-line--3 { 
+  animation-delay: 0.6s; 
+  color: var(--c-gold);
+  text-shadow: 0 0 30px rgba(92, 82, 72, 0.2);
+}
 
 @keyframes heroLine {
   from { opacity: 0; transform: translateY(60px) skewY(3deg); }

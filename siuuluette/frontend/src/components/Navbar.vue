@@ -279,7 +279,7 @@ export default {
 .navbar__link--active {
   color: var(--c-white);
 }
-.navbar__link--accent       { color: var(--c-gold); }
+.navbar__link--accent       { color: var(--c-accent-vibrant); font-weight: 600; }
 
 /* --- Actions --- */
 .navbar__actions {

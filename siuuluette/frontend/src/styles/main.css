@@ -21,6 +21,10 @@
   --c-gold-light:#8a817c;
   --c-gold-dark: #3e3833;
 
+  /* Vibrant Accents for Dark UI */
+  --c-accent-vibrant: #d9b87a;
+  --c-accent-glow:    rgba(217, 184, 122, 0.4);
+
   /* Typography */
   --font-display: 'Bebas Neue', 'Impact', sans-serif;
   --font-body:    'DM Sans', 'Helvetica Neue', sans-serif;

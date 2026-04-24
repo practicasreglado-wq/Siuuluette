@@ -441,8 +441,9 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.15em;
   margin-bottom: 1.25rem;
-  color: var(--c-gold);
-  font-weight: 600;
+  color: var(--c-accent-vibrant);
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--c-accent-glow);
 }
 
 .label-highlight {
