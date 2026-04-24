@@ -234,5 +234,5 @@ export const categories = [
   { id: 2, name: 'Deporte',    count: 1, image: '/img/coleccion-deporte.png' },
   { id: 3, name: 'Essentials', count: 2, image: '/img/coleccion-essentials.png' },
   { id: 4, name: 'Casual',     count: 1, image: '/img/colecciones-casual.png' },
-  { id: 5, name: 'Tenis',      count: 0, image: '/img/coleccion-tenis.png' },
+  { id: 5, name: 'Club',      count: 0, image: '/img/coleccion-tenis.png' },
 ]

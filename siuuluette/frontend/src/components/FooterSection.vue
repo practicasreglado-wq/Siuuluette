@@ -90,7 +90,7 @@ export default {
           links: [
             { label: 'Inicio', href: '#inicio' },
             { label: 'Explora', href: '#explora' },
-            { label: 'Drops', href: '#drops' },
+            { label: 'Descuentos', href: '#ofertas' },
             { label: 'Nosotros', href: '#nosotros' },
           ],
         },

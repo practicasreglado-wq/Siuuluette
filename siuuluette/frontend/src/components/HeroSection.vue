@@ -44,8 +44,8 @@
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </a>
-        <a href="#drops" class="btn btn-outline hero__cta">
-          Ver limitados
+        <a href="#ofertas" class="btn btn-outline hero__cta">
+          Ver ofertas
         </a>
       </div>
 
