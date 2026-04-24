@@ -27,9 +27,9 @@
 
       <div v-else class="sales__empty">
         <div class="sales__empty-card">
-          <span class="body-sm">PRÓXIMAMENTE</span>
-          <h3>Nuevas piezas en camino</h3>
-          <p>Estamos preparando una selección exclusiva de final de temporada. Suscríbete para ser el primero en saberlo.</p>
+          <span class="body-sm">SIN REBAJAS ACTIVAS</span>
+          <h3>Preparando la selección</h3>
+          <p>Nuestra sección de descuentos se renueva constantemente. Muy pronto añadiremos nuevas piezas exclusivas a precios especiales. Mantente atento.</p>
         </div>
       </div>
 

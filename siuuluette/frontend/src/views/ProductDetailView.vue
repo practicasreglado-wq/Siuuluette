@@ -232,7 +232,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { productsApi } from '../api/index.js'
 import { useCart } from '../composables/useCart.js'
@@ -351,7 +351,10 @@ export default {
       return currentVariant.value?.original_price_gross ?? product.value?.originalPrice ?? null
     })
 
-    const isFav = computed(() => product.value && isFavorite(product.value.id))
+    const isFav = computed(() => {
+      const targetId = currentVariant.value?.id || product.value?.id
+      return targetId && isFavorite(targetId)
+    })
 
     const hasSizeGuide = computed(() =>
       product.value?.size_guide && Object.keys(product.value.size_guide).length > 0
@@ -430,9 +433,11 @@ export default {
     }
 
     async function handleToggleFav() {
-      if (!product.value) return
+      const targetId = currentVariant.value?.id || product.value?.id
+      if (!targetId) return
+      
       const wasFav = isFav.value
-      await toggleFavorite(product.value.id)
+      await toggleFavorite(targetId)
       showToast(wasFav ? 'Quitado de favoritos' : 'Añadido a favoritos')
     }
 
@@ -448,11 +453,27 @@ export default {
       zoomActive.value = false
 
       try {
+        console.log('[PDP] Cargando slug:', slug)
         const data = await productsApi.getBySlug(slug)
-        product.value = data.product
+        console.log('[PDP] Datos recibidos:', data)
+        
+        if (!data || !data.product) {
+          throw new Error('El servidor no ha devuelto los datos del producto')
+        }
 
-        // Meta tags dinámicos
-        document.title = `${product.value.name} | Le Siuuluette`
+        product.value = data.product
+        document.title = `${product.value.name} | Le Siuuluette®`
+
+        // Selección automática por color en URL (?color=...)
+        const queryColor = route.query.color
+        if (queryColor && product.value.variants) {
+          const vIdx = product.value.variants.findIndex(
+            v => v.color_name?.toLowerCase() === queryColor.toLowerCase()
+          )
+          if (vIdx !== -1) {
+            currentVariantIdx.value = vIdx
+          }
+        }
 
         // Las variantes ya vienen embebidas en product.variants — no hace
         // falta una llamada extra. Solo cargamos los relacionados.

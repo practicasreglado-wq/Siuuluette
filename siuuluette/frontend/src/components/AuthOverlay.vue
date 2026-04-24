@@ -121,15 +121,18 @@
             <div v-else class="favorites-list">
               <div v-for="fav in fullFavorites" :key="fav.product_id" class="favorite-card">
                 <div class="favorite-card__content">
-                  <img :src="fav.products?.variants?.[0]?.images?.[0]?.url || '/placeholder.jpg'" class="item-thumb">
+                  <img :src="fav.variant?.images?.[0]?.url || fav.products?.variants?.[0]?.images?.[0]?.url || '/placeholder.jpg'" class="item-thumb">
                   <div class="item-details">
                     <p class="item-name">{{ fav.products?.name }}</p>
-                    <p class="item-meta">€{{ fav.products?.price_gross }} | {{ fav.products?.category }}</p>
+                    <p class="item-meta">
+                      {{ fav.variant?.color_name ? `${fav.variant.color_name} | ` : '' }}
+                      €{{ fav.products?.price_gross }}
+                    </p>
                   </div>
                 </div>
                 
                 <div class="favorite-card__actions">
-                  <button class="buy-btn" @click="goToProduct(fav.products.slug)">
+                  <button class="buy-btn" @click="goToProduct(fav.products.slug, fav.variant?.color_name)">
                     Comprar
                   </button>
                   <button class="remove-fav-btn" @click="toggleFavorite(fav.product_id)" title="Quitar de favoritos">
@@ -265,9 +268,13 @@ export default {
       }
     }
 
-    const goToProduct = (slug) => {
+    const goToProduct = (slug, color) => {
       emit('close')
-      router.push({ name: 'product-detail', params: { slug } })
+      router.push({ 
+        name: 'product-detail', 
+        params: { slug },
+        query: color ? { color } : {}
+      })
     }
 
     const fetchOrders = async () => {

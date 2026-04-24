@@ -27,6 +27,7 @@
       @close="isAuthOpen = false"
       @login-success="handleLoginSuccess"
       @logout="handleLogout"
+      @buy-again="handleBuyAgain"
     />
 
     <CheckoutOverlay
@@ -106,7 +107,29 @@ export default {
       fetchCart,
       mergeGuestCart,
       clearCart,
+      addToCart, // Importamos addToCart
     } = useCart()
+
+    // ... (resto del setup)
+
+    function handleBuyAgain(orderItems) {
+      if (!orderItems || !orderItems.length) return
+      
+      orderItems.forEach(item => {
+        const productData = {
+          variant_id: item.variant?.id,
+          name: item.variant?.product?.name || 'Producto',
+          selectedSize: item.size,
+          // El precio lo recalculará el backend, pero mandamos lo básico
+          price: item.unit_price,
+          image: item.variant?.images?.[0]?.url
+        }
+        addToCart(productData)
+      })
+      
+      isAuthOpen.value = false
+      isCartOpen.value = true
+    }
 
     const currentUser = ref(null)
     const isScrolled = ref(false)
@@ -196,7 +219,8 @@ export default {
       handleLoginSuccess,
       handleLogout,
       handleCheckout,
-      handlePaymentSuccess
+      handlePaymentSuccess,
+      handleBuyAgain
     }
   }
 }

@@ -57,19 +57,14 @@ function isSizeAvailable(s) {
 function normalizeProduct(p) {
   if (!p) return null
 
-  // Filtrar variantes activas y ordenar
+  // 1. Mapeamos variantes (con seguridad)
   const variants = (p.variants || [])
     .filter(v => v.is_active !== false)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map(v => {
-      const prices = computePrices(p, v)
-
-      // Ordenar imágenes
-      const images = (v.images || [])
-        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      const vPrices = computePrices(p, v)
+      const images = (v.images || []).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
       const imageUrls = images.map(i => i.url)
-
-      // Ordenar tallas y marcar disponibilidad
       const sizes = (v.stock || [])
         .sort((a, b) => SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size))
         .map(s => ({
@@ -80,30 +75,26 @@ function normalizeProduct(p) {
           sku_code: s.sku_code,
           available: isSizeAvailable(s)
         }))
-      const sizeNames = sizes.map(s => s.size)
 
       return {
         id: v.id,
         color_name: v.color_name,
         color_hex: v.color_hex,
-        ...prices,
+        ...vPrices,
         primary_image: imageUrls[0] || null,
         secondary_image: imageUrls[1] || null,
-        images,
         gallery: imageUrls,
         sizes,
-        size_names: sizeNames,
+        size_names: sizes.map(s => s.size),
         in_stock: sizes.some(s => s.available),
         image_url: imageUrls[0] || null,
-        price: prices.price_gross,
         color: v.color_name
       }
     })
 
-  // Defaults a nivel padre (primera variante)
+  // 2. Extraemos defaults de la primera variante o del padre
   const firstVariant = variants[0] || {}
   const prices = computePrices(p, firstVariant)
-  const discount = p.discount_percent || 0
 
   return {
     id: p.id,
@@ -115,19 +106,19 @@ function normalizeProduct(p) {
     style: p.style,
     materials: p.materials,
     size_guide: p.size_guide,
-    discount_percent: discount,
+    discount_percent: p.discount_percent || 0,
 
-    // Precios base (originales del padre)
+    // Precios base
     price_net: p.price_net,
     price_gross: p.price_gross,
+
+    variants,
+    in_stock: variants.some(v => v.in_stock),
 
     // Defaults para catálogo
     default_image: firstVariant.primary_image,
     default_color: firstVariant.color_name,
     default_price_gross: prices.price_gross,
-
-    variants,
-    in_stock: variants.some(v => v.in_stock),
 
     // Compatibilidad frontend
     price: prices.price_gross,

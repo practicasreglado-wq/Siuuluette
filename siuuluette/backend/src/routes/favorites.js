@@ -3,13 +3,13 @@ import { supabase } from '../db/supabase.js'
 
 export default async function favoritesRoutes(fastify) {
 
-  // GET /api/favorites — Lista de favoritos del usuario logueado
+  // GET /api/favorites — Lista de favoritos (ahora basados en variantes/colores)
   fastify.get('/', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
     const userId = request.user.id
 
-    // 1. Obtener IDs de favoritos
+    // 1. Obtener IDs de favoritos (que ahora son variant_ids)
     const { data: favs, error: favError } = await supabase
       .from('favorites')
       .select('product_id, created_at')
@@ -19,26 +19,42 @@ export default async function favoritesRoutes(fastify) {
     if (favError) return reply.status(500).send({ error: favError.message })
     if (!favs || favs.length === 0) return { favorites: [] }
 
-    // 2. Obtener datos de productos (manual join)
-    const productIds = favs.map(f => f.product_id)
-    const { data: products, error: prodError } = await supabase
-      .from('products')
+    // 2. Obtener datos de las variantes específicas (incluyendo precios)
+    const variantIds = favs.map(f => f.product_id)
+    const { data: variantData, error: varError } = await supabase
+      .from('product_variants')
       .select(`
-        id, name, slug, price_gross, collection, category,
-        variants:product_variants (
-          id,
-          images:product_images (url)
-        )
+        id, color_name, color_hex,
+        price_net_override, price_gross_override,
+        product:products (
+          id, name, slug, collection, category, 
+          price_net, price_gross, discount_percent
+        ),
+        images:product_images (url)
       `)
-      .in('id', productIds)
+      .in('id', variantIds)
 
-    if (prodError) return reply.status(500).send({ error: prodError.message })
+    if (varError) return reply.status(500).send({ error: varError.message })
 
-    // 3. Enriquecer
-    const enrichedFavs = favs.map(f => ({
-      ...f,
-      products: products.find(p => p.id === f.product_id) || null
-    }))
+    // 3. Reconstruir para el frontend (calculando precios reales)
+    const enrichedFavs = favs.map(f => {
+      const v = variantData.find(vd => vd.id === f.product_id)
+      if (!v) return null
+      
+      const p = v.product || {}
+      // Lógica de precio: prioridad a la variante, luego al padre
+      const priceGross = v.price_gross_override ?? p.price_gross ?? 0
+
+      return {
+        ...f,
+        variant: v,
+        products: {
+          ...p,
+          price_gross: priceGross,
+          variants: [v]
+        }
+      }
+    }).filter(Boolean)
 
     return { favorites: enrichedFavs }
   })
