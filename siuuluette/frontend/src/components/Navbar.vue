@@ -19,10 +19,10 @@
 
       <!-- Primary Navigation (desktop) -->
       <nav class="navbar__nav" aria-label="Navegación principal">
-        <router-link :to="{ path: '/', hash: '#inicio' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }" @click="goToSection($event, '#inicio')">Inicio</router-link>
-        <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'explora' }" @click="goToSection($event, '#explora')">Explora</router-link>
-        <router-link :to="{ path: '/', hash: '#ofertas' }" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'ofertas' }" @click="goToSection($event, '#ofertas')">Descuentos</router-link>
-        <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
+        <router-link :to="{ path: '/', hash: '#inicio' }" class="navbar__link" @click="goToSection($event, '#inicio')">Inicio</router-link>
+        <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" @click="goToSection($event, '#explora')">Explora</router-link>
+        <router-link :to="{ path: '/', hash: '#ofertas' }" class="navbar__link navbar__link--accent" @click="goToSection($event, '#ofertas')">Descuentos</router-link>
+        <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
       </nav>
 
       <!-- Actions -->
@@ -100,44 +100,13 @@ export default {
   },
   data() {
     return {
-      menuOpen: false,
-      activeSection: 'inicio'
+      menuOpen: false
     }
   },
-  mounted() {
-    this.initScrollSpy()
-  },
   methods: {
-    initScrollSpy() {
-      const options = {
-        root: null,
-        rootMargin: '-20% 0px -70% 0px',
-        threshold: 0
-      }
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            this.activeSection = entry.target.id
-          }
-        })
-      }, options)
-
-      const sections = ['inicio', 'explora', 'ofertas', 'nosotros']
-      sections.forEach(id => {
-        const el = document.getElementById(id)
-        if (el) observer.observe(el)
-      })
-    },
     handleUserClick() {
       this.$emit('open-auth')
     },
-    /**
-     * Si ya estamos en "/", hacemos scroll suave al id sin navegar
-     * (el router-link a la misma ruta no dispararía scrollBehavior).
-     * Si estamos en otra ruta (p. ej. /producto/:slug), dejamos que
-     * el router-link navegue y el scrollBehavior global haga el scroll.
-     */
     goToSection(event, hash) {
       this.$emit('nav-click')
       if (this.$route.path === '/') {
@@ -270,13 +239,11 @@ export default {
   transition: width var(--t-medium) var(--ease-standard);
 }
 
-.navbar__link:hover::after,
-.navbar__link--active::after {
+.navbar__link:hover::after {
   width: 100%;
 }
 
-.navbar__link:hover,
-.navbar__link--active {
+.navbar__link:hover {
   color: var(--c-white);
 }
 .navbar__link--accent       { color: var(--c-accent-vibrant); font-weight: 600; }
