@@ -101,7 +101,7 @@ export default {
   data() {
     return {
       menuOpen: false,
-      activeSection: 'inicio'
+      activeSection: null
     }
   },
   mounted() {
@@ -109,13 +109,21 @@ export default {
   },
   methods: {
     initScrollSpy() {
+      if (this.$route.path !== '/') {
+        this.activeSection = null
+        return
+      }
+
       const options = {
         root: null,
-        rootMargin: '-20% 0px -70% 0px', // Detect when section is in top part of screen
+        rootMargin: '-20% 0px -70% 0px',
         threshold: 0
       }
 
-      const observer = new IntersectionObserver((entries) => {
+      // Cleanup previous observer if any
+      if (this.observer) this.observer.disconnect()
+
+      this.observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             this.activeSection = entry.target.id
@@ -123,10 +131,10 @@ export default {
         })
       }, options)
 
-      const sections = ['inicio', 'ofertas', 'explora', 'nosotros']
+      const sections = ['inicio', 'explora', 'ofertas', 'nosotros']
       sections.forEach(id => {
         const el = document.getElementById(id)
-        if (el) observer.observe(el)
+        if (el) this.observer.observe(el)
       })
     },
     handleUserClick() {
@@ -153,6 +161,17 @@ export default {
       this.menuOpen = false
       this.goToSection(event, hash)
     }
+  },
+  watch: {
+    '$route.path': {
+      handler() {
+        this.initScrollSpy()
+      },
+      immediate: true
+    }
+  },
+  beforeUnmount() {
+    if (this.observer) this.observer.disconnect()
   }
 }
 </script>
