@@ -101,7 +101,7 @@ export default {
   data() {
     return {
       menuOpen: false,
-      activeSection: null
+      activeSection: 'inicio'
     }
   },
   mounted() {
@@ -109,21 +109,13 @@ export default {
   },
   methods: {
     initScrollSpy() {
-      if (this.$route.path !== '/') {
-        this.activeSection = null
-        return
-      }
-
       const options = {
         root: null,
         rootMargin: '-20% 0px -70% 0px',
         threshold: 0
       }
 
-      // Cleanup previous observer if any
-      if (this.observer) this.observer.disconnect()
-
-      this.observer = new IntersectionObserver((entries) => {
+      const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             this.activeSection = entry.target.id
@@ -134,7 +126,7 @@ export default {
       const sections = ['inicio', 'explora', 'ofertas', 'nosotros']
       sections.forEach(id => {
         const el = document.getElementById(id)
-        if (el) this.observer.observe(el)
+        if (el) observer.observe(el)
       })
     },
     handleUserClick() {
@@ -161,17 +153,6 @@ export default {
       this.menuOpen = false
       this.goToSection(event, hash)
     }
-  },
-  watch: {
-    '$route.path': {
-      handler() {
-        this.initScrollSpy()
-      },
-      immediate: true
-    }
-  },
-  beforeUnmount() {
-    if (this.observer) this.observer.disconnect()
   }
 }
 </script>

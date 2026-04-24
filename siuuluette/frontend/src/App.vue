@@ -72,10 +72,9 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { authApi } from './api/index.js'
 import { useCart } from './composables/useCart.js'
-import { useRoute } from 'vue-router'
 
 import Navbar from './components/Navbar.vue'
 import FooterSection from './components/FooterSection.vue'
@@ -189,18 +188,12 @@ export default {
     }
 
     function handleScroll() {
-      isScrolled.value = window.scrollY > 60 || route.path !== '/'
+      isScrolled.value = window.scrollY > 60
     }
-
-    const route = useRoute()
-    watch(() => route.path, () => {
-      handleScroll()
-    })
 
     onMounted(async () => {
       window.addEventListener('scroll', handleScroll)
       await checkAuth()
-      handleScroll()
     })
 
     onUnmounted(() => {
