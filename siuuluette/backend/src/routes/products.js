@@ -133,7 +133,9 @@ function normalizeProduct(p) {
 
     // === Compatibilidad con frontend actual (lee de la 1ª variante) ===
     price: firstVariant.price_gross ?? p.price_gross,
+    price_net: firstVariant.price_net ?? p.price_net,
     originalPrice: firstVariant.original_price_gross ?? null,
+    originalPriceNet: firstVariant.original_price_net ?? null,
     color: firstVariant.color_name ?? null,
     image_url: firstVariant.primary_image ?? null,
     image_secondary_url: firstVariant.secondary_image ?? null,

@@ -33,6 +33,7 @@
       :is-open="isCheckoutOpen"
       :items="cartItems"
       :total="cartSubtotal"
+      :net-total="cartNetTotal"
       :current-user="currentUser"
       @close="isCheckoutOpen = false"
       @success="handlePaymentSuccess"
@@ -96,6 +97,7 @@ export default {
       cartItems,
       cartCount,
       cartSubtotal,
+      cartNetTotal,
       isCartOpen,
       toastMsg,
       toastVisible,
@@ -179,6 +181,7 @@ export default {
       cartItems,
       cartCount,
       cartSubtotal,
+      cartNetTotal,
       isCartOpen,
       toastMsg,
       toastVisible,

@@ -407,6 +407,7 @@ export default {
         ...product.value,
         // Sobrescribimos con datos de la variante activa
         price: v?.price_gross ?? product.value.price,
+        priceNet: v?.price_net_override ?? product.value.price_net ?? 0,
         image_url: v?.primary_image ?? product.value.image_url,
         image: v?.primary_image ?? product.value.image_url,
         color: v?.color_name ?? product.value.color,

@@ -117,6 +117,8 @@ export default {
 
       this.$emit('add-to-cart', {
         ...this.product,
+        priceNet: this.product.price_net || this.product.priceNet || 0,
+        variant_id: this.product.variants?.[0]?.id || null,
         selectedSize: this.selectedSize
       })
       this.justAdded = true

@@ -81,10 +81,13 @@
                 
                 <div class="order-items">
                   <div v-for="item in order.order_items" :key="item.id" class="order-item">
-                    <img :src="item.products.image_url" :alt="item.products.name" class="item-thumb">
+                    <img :src="item.variant?.images?.[0]?.url || '/placeholder.jpg'" class="item-thumb">
                     <div class="item-details">
-                      <p class="item-name">{{ item.products.name }}</p>
-                      <p class="item-meta">Talla: {{ item.size }} | Cant: {{ item.quantity }}</p>
+                      <p class="item-name">{{ item.variant?.product?.name || 'Producto' }}</p>
+                      <p class="item-meta">
+                        {{ item.variant?.color_name ? `Color: ${item.variant.color_name} | ` : '' }}
+                        Talla: {{ item.size }} | {{ item.unit_price }}€
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -118,10 +121,10 @@
             <div v-else class="favorites-list">
               <div v-for="fav in fullFavorites" :key="fav.product_id" class="favorite-card">
                 <div class="favorite-card__content">
-                  <img :src="fav.products.image_url" :alt="fav.products.name" class="item-thumb">
+                  <img :src="fav.products?.variants?.[0]?.images?.[0]?.url || '/placeholder.jpg'" class="item-thumb">
                   <div class="item-details">
-                    <p class="item-name">{{ fav.products.name }}</p>
-                    <p class="item-meta">€{{ fav.products.price }} | {{ fav.products.category }}</p>
+                    <p class="item-name">{{ fav.products?.name }}</p>
+                    <p class="item-meta">€{{ fav.products?.price_gross }} | {{ fav.products?.category }}</p>
                   </div>
                 </div>
                 

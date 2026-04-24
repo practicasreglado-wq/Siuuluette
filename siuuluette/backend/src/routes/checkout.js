@@ -4,7 +4,7 @@ import { supabase } from '../db/supabase.js'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export default async function checkoutRoutes(fastify) {
-  
+
   // POST /api/checkout/intent — Crear intención de pago
   fastify.post('/intent', async (request, reply) => {
     const { items } = request.body // Array de { id, qty }
@@ -14,21 +14,33 @@ export default async function checkoutRoutes(fastify) {
     }
 
     try {
-      // 1. Obtener info de productos de la DB (seguridad: no fiarse del precio del frontend)
-      const productIds = items.map(i => i.id)
-      const { data: dbProducts, error } = await supabase
-        .from('products')
-        .select('id, price')
-        .in('id', productIds)
+      // 1. Obtener info de variantes de la DB (seguridad)
+      const variantIds = items.map(i => i.id)
+      const { data: dbVariants, error } = await supabase
+        .from('product_variants')
+        .select(`
+          id,
+          price_gross_override,
+          product:products (
+            price_gross,
+            discount_percent
+          )
+        `)
+        .in('id', variantIds)
 
       if (error) throw error
 
-      // 2. Calcular el total real
+      // 2. Calcular el total real aplicando overrides y descuentos
       const totalAmount = items.reduce((sum, item) => {
-        const product = dbProducts.find(p => p.id === Number(item.id))
+        const v = dbVariants.find(dv => dv.id === Number(item.id))
+        if (!v) return sum
+
+        const basePrice = v.price_gross_override ?? v.product?.price_gross ?? 0
+        const discount  = v.product?.discount_percent || 0
+        const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
+
         const itemQty = item.qty || item.quantity || 0
-        const itemPrice = product ? Number(product.price) : 0
-        return sum + (itemPrice * itemQty)
+        return sum + (finalPrice * itemQty)
       }, 0)
 
       // Stripe usa céntimos (monto * 100)
@@ -55,7 +67,7 @@ export default async function checkoutRoutes(fastify) {
 
     } catch (err) {
       fastify.log.error(err)
-      return reply.status(500).send({ 
+      return reply.status(500).send({
         error: 'Error al procesar el pago',
         message: err.message
       })
@@ -84,28 +96,35 @@ export default async function checkoutRoutes(fastify) {
         .single()
 
       if (orderError) {
-        console.error('--- ERROR AL CREAR ORDER ---')
-        console.error('Código:', orderError.code)
-        console.error('Mensaje:', orderError.message)
-        console.error('Detalles:', orderError.details)
-        console.error('Hint:', orderError.hint)
         throw orderError
       }
 
       // 2. Crear los Detalles del Pedido (Order Items)
-      const productIds = items.map(i => i.id)
-      const { data: products } = await supabase
-        .from('products')
-        .select('id, price')
-        .in('id', productIds)
+      // Buscamos las variantes para saber los precios finales guardados
+      const variantIds = items.map(i => i.id)
+      const { data: dbVariants } = await supabase
+        .from('product_variants')
+        .select(`
+          id,
+          color_name,
+          price_gross_override,
+          product:products (
+            id, name, price_gross, discount_percent
+          )
+        `)
+        .in('id', variantIds)
 
       const orderItems = items.map(item => {
-        const product = products.find(p => p.id === item.id)
+        const v = dbVariants.find(dv => dv.id === item.id)
+        const basePrice = v?.price_gross_override ?? v?.product?.price_gross ?? 0
+        const discount  = v?.product?.discount_percent || 0
+        const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
+
         return {
           order_id: order.id,
-          product_id: item.id,
+          product_id: v?.id || item.id, // Guardamos el ID de la variante aquí
           quantity: item.qty || item.quantity || 0,
-          unit_price: product ? product.price : 0,
+          unit_price: finalPrice,
           size: item.selectedSize || 'M'
         }
       })
@@ -115,11 +134,10 @@ export default async function checkoutRoutes(fastify) {
         .insert(orderItems)
 
       if (itemsError) {
-        console.error('Error al crear ORDER_ITEMS:', itemsError)
         throw itemsError
       }
 
-      // 3. Vaciar el Carrito del Usuario (Solo si está logueado)
+      // 3. Vaciar el Carrito del Usuario
       if (userId) {
         await supabase
           .from('cart_items')
@@ -130,8 +148,12 @@ export default async function checkoutRoutes(fastify) {
       return { message: 'Pedido guardado con éxito', orderId: order.id }
 
     } catch (err) {
-      fastify.log.error(err)
-      return reply.status(500).send({ error: 'Error al guardar el pedido', message: err.message })
+      console.error('[CHECKOUT_CONFIRM] Error crítico:', err)
+      return reply.status(500).send({ 
+        error: 'Error al guardar el pedido', 
+        message: err.message,
+        details: err.details || null 
+      })
     }
   })
 
@@ -141,23 +163,38 @@ export default async function checkoutRoutes(fastify) {
   }, async (request, reply) => {
     const userId = request.user.id
 
-    const { data, error } = await supabase
+    // 1. Obtener pedidos
+    const { data: orders, error: ordersError } = await supabase
       .from('orders')
       .select(`
         *,
-        order_items (
-          *,
-          products (name, image_url, price)
-        )
+        order_items (*)
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      return reply.status(400).send({ error: error.message })
+    if (ordersError) return reply.status(400).send({ error: ordersError.message })
+
+    // 2. Enriquecer los order_items con datos de variantes y productos (manual)
+    const allVariantIds = orders.flatMap(o => o.order_items.map(oi => oi.product_id))
+    
+    if (allVariantIds.length > 0) {
+      const { data: variants } = await supabase
+        .from('product_variants')
+        .select(`
+          id, color_name,
+          product:products (name, price_gross),
+          images:product_images (url)
+        `)
+        .in('id', allVariantIds)
+
+      orders.forEach(o => {
+        o.order_items.forEach(oi => {
+          oi.variant = variants?.find(v => v.id === oi.product_id) || null
+        })
+      })
     }
 
-    return { orders: data }
+    return { orders }
   })
 }
-
