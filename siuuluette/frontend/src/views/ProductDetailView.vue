@@ -80,25 +80,25 @@
           <span class="pdp__collection">{{ product.collection }}</span>
           <h1 class="pdp__name">{{ product.name }}</h1>
           <div class="pdp__price-row">
-            <span class="pdp__price">€{{ product.price }}</span>
+            <span class="pdp__price">€{{ displayPrice }}</span>
             <span class="pdp__category">{{ product.category }}</span>
           </div>
 
           <!-- Color -->
-          <div v-if="product.color" class="pdp__field">
-            <span class="pdp__label">Color: <strong>{{ product.color }}</strong></span>
+          <div v-if="displayColor" class="pdp__field">
+            <span class="pdp__label">Color: <strong>{{ displayColor }}</strong></span>
             <div v-if="variants.length > 1" class="pdp__colors">
               <button
-                v-for="v in variants"
+                v-for="(v, idx) in variants"
                 :key="v.id"
                 class="pdp__color"
-                :class="{ 'is-selected': v.id === product.id }"
-                :title="v.color"
-                :aria-label="`Color ${v.color}`"
-                @click="selectVariant(v)"
+                :class="{ 'is-selected': idx === currentVariantIdx }"
+                :title="v.color_name"
+                :aria-label="`Color ${v.color_name}`"
+                @click="selectVariant(idx)"
               >
-                <img :src="v.image_url" :alt="v.color" />
-                <span class="pdp__color-label">{{ v.color }}</span>
+                <img :src="v.primary_image" :alt="v.color_name" />
+                <span class="pdp__color-label">{{ v.color_name }}</span>
               </button>
             </div>
           </div>
@@ -243,16 +243,16 @@ export default {
     const { isFavorite, toggleFavorite, fetchFavorites } = useFavorites()
 
     // --- Estado ---
-    const product         = ref(null)
-    const related         = ref([])
-    const variants        = ref([])
-    const loading         = ref(true)
-    const error           = ref('')
-    const selectedSize    = ref(null)
-    const sizeError       = ref(false)
-    const justAdded       = ref(false)
-    const activeImageIdx  = ref(0)
-    const openSection     = ref('descripcion')
+    const product            = ref(null)
+    const related            = ref([])
+    const loading            = ref(true)
+    const error              = ref('')
+    const selectedSize       = ref(null)
+    const sizeError          = ref(false)
+    const justAdded          = ref(false)
+    const activeImageIdx     = ref(0)
+    const openSection        = ref('descripcion')
+    const currentVariantIdx  = ref(0)   // índice de la variante activa (color)
 
     // --- Zoom interactivo en la imagen principal ---
     const zoomActive = ref(false)
@@ -284,26 +284,43 @@ export default {
       zoomActive.value = !zoomActive.value
     }
 
-    // --- Cambio de variante de color ---
-    function selectVariant(variant) {
-      if (!variant?.slug || variant.id === product.value?.id) return
-      // Salir del zoom antes de cambiar (sino la nueva imagen aparece ya zoomeada)
+    // --- Variantes (colores del mismo producto padre) ---
+    const variants = computed(() => product.value?.variants || [])
+
+    const currentVariant = computed(() =>
+      variants.value[currentVariantIdx.value] || null
+    )
+
+    // --- Cambio de variante de color (sin navegación) ---
+    function selectVariant(variantOrIdx) {
+      // Acepta el objeto variante o el índice directamente
+      const idx = typeof variantOrIdx === 'number'
+        ? variantOrIdx
+        : variants.value.findIndex(v => v.id === variantOrIdx?.id)
+
+      if (idx < 0 || idx === currentVariantIdx.value) return
+
       zoomActive.value = false
-      router.push({ name: 'product-detail', params: { slug: variant.slug } })
+      currentVariantIdx.value = idx
+      activeImageIdx.value = 0
+      selectedSize.value = null
     }
 
-    // --- Computeds ---
+    // --- Computeds derivados de la variante activa ---
     const gallery = computed(() => {
+      if (currentVariant.value?.gallery?.length) return currentVariant.value.gallery
       if (!product.value) return []
       const g = product.value.gallery
       if (Array.isArray(g) && g.length) return g
-      // Fallback: image_url + image_secondary_url
       return [product.value.image_url, product.value.image_secondary_url].filter(Boolean)
     })
 
     const activeImage = computed(() => gallery.value[activeImageIdx.value] || '/placeholder.jpg')
 
     const availableSizes = computed(() => {
+      // Tallas de la variante activa
+      if (currentVariant.value?.size_names?.length) return currentVariant.value.size_names
+      // Fallback al producto
       if (!product.value) return []
       const s = product.value.sizes
       if (!s) return ['S', 'M', 'L', 'XL']
@@ -313,6 +330,15 @@ export default {
       }
       return ['S', 'M', 'L', 'XL']
     })
+
+    // Precio y color que se ven en el PDP (de la variante activa)
+    const displayPrice = computed(() =>
+      currentVariant.value?.price_gross ?? product.value?.price ?? null
+    )
+
+    const displayColor = computed(() =>
+      currentVariant.value?.color_name ?? product.value?.color ?? null
+    )
 
     const isFav = computed(() => product.value && isFavorite(product.value.id))
 
@@ -374,8 +400,17 @@ export default {
         return
       }
       sizeError.value = false
+
+      // Construimos el item del carrito con la variante activa
+      const v = currentVariant.value
       await addToCart({
         ...product.value,
+        // Sobrescribimos con datos de la variante activa
+        price: v?.price_gross ?? product.value.price,
+        image_url: v?.primary_image ?? product.value.image_url,
+        image: v?.primary_image ?? product.value.image_url,
+        color: v?.color_name ?? product.value.color,
+        variant_id: v?.id ?? null,
         selectedSize: selectedSize.value
       })
       justAdded.value = true
@@ -395,9 +430,9 @@ export default {
       error.value = ''
       product.value = null
       related.value = []
-      variants.value = []
       selectedSize.value = null
       activeImageIdx.value = 0
+      currentVariantIdx.value = 0
       zoomActive.value = false
 
       try {
@@ -407,18 +442,13 @@ export default {
         // Meta tags dinámicos
         document.title = `${product.value.name} — Le Siuuluette®`
 
-        // Cargar variantes y relacionados en paralelo (no bloqueantes)
-        const [variantsRes, relatedRes] = await Promise.allSettled([
-          productsApi.getVariants(product.value.id),
-          productsApi.getRelated(product.value.id),
-        ])
-
-        if (variantsRes.status === 'fulfilled') {
-          variants.value = variantsRes.value.variants || []
-        }
-
-        if (relatedRes.status === 'fulfilled') {
-          related.value = relatedRes.value.products || []
+        // Las variantes ya vienen embebidas en product.variants — no hace
+        // falta una llamada extra. Solo cargamos los relacionados.
+        try {
+          const relatedRes = await productsApi.getRelated(product.value.id)
+          related.value = relatedRes.products || []
+        } catch (err) {
+          console.warn('No se pudieron cargar relacionados:', err)
         }
       } catch (err) {
         console.error('Error cargando producto:', err)
@@ -443,7 +473,7 @@ export default {
     })
 
     return {
-      product, related, variants, loading, error,
+      product, related, loading, error,
       selectedSize, sizeError, justAdded,
       activeImageIdx, openSection,
       zoomActive, zoomStyle, onZoomMove, toggleZoom,
@@ -451,6 +481,9 @@ export default {
       isFav, hasSizeGuide, sizeGuideOrder, sizeGuideKeys,
       capitalize, nextImg, prevImg, openAccordion, onToggle,
       handleAdd, handleToggleFav, addToCart, selectVariant,
+      // Variantes (colores)
+      variants, currentVariant, currentVariantIdx,
+      displayPrice, displayColor,
     }
   }
 }
