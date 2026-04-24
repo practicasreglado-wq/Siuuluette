@@ -33,32 +33,17 @@
           loading="lazy"
         />
 
-        <!-- Badge -->
+        <!-- Badges -->
         <span
-          v-if="product.badge"
+          v-if="product.discount_percent > 0"
+          class="badge badge-sale product-card__badge"
+        >-{{ product.discount_percent }}%</span>
+
+        <span
+          v-else-if="product.badge"
           class="badge product-card__badge"
           :class="`badge-${product.badgeType}`"
         >{{ product.badge }}</span>
-
-        <!-- Quick Add Overlay -->
-        <div class="product-card__overlay">
-          <button
-            class="product-card__quick-add btn btn-primary"
-            :class="{ 'btn-disabled': !selectedSize && !justAdded }"
-            @click.stop="handleAdd"
-          >
-            {{ justAdded ? '✓ Añadido' : (selectedSize ? 'Añadir al carrito' : 'Elige talla') }}
-          </button>
-          <div class="product-card__sizes">
-            <span
-              v-for="size in availableSizes"
-              :key="size"
-              class="product-card__size"
-              :class="{ 'is-selected': selectedSize === size }"
-              @click.stop="selectedSize = size"
-            >{{ size }}</span>
-          </div>
-        </div>
       </div>
 
       <!-- Info -->
@@ -195,60 +180,8 @@ export default {
   z-index: 2;
 }
 
-/* Overlay */
-.product-card__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(92, 82, 72, 0.6);
-  backdrop-filter: blur(3px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  opacity: 0;
-  transition: opacity var(--t-medium);
-  z-index: 3;
-}
-
-.product-card:hover .product-card__overlay {
-  opacity: 1;
-}
-
-.product-card__quick-add {
-  transform: translateY(10px);
-  transition: transform var(--t-medium) var(--ease-standard),
-              background var(--t-fast);
-  min-width: 180px;
-}
-
-.product-card:hover .product-card__quick-add {
-  transform: translateY(0);
-}
-
-.product-card--added .product-card__quick-add {
-  background: #2e7d32;
-  color: #fff;
-}
-
-/* Size pills */
-.product-card__sizes {
-  display: flex;
-  gap: 0.4rem;
-  transform: translateY(10px);
-  transition: transform var(--t-medium) 0.05s var(--ease-standard);
-}
-
-.product-card:hover .product-card__sizes {
-  transform: translateY(0);
-}
-
-.product-card__size {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Info */
+.product-card__info {
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.05em;

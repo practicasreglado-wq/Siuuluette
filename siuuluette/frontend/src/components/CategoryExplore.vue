@@ -161,7 +161,7 @@ export default {
   background: var(--c-black);
   z-index: 1000;
   overflow-y: auto;
-  padding: 8rem 0 4rem;
+  padding: 10rem 0 4rem;
   visibility: hidden;
   opacity: 0;
   transform: translateY(20px);
@@ -176,7 +176,7 @@ export default {
 
 .explore-view__back {
   position: absolute;
-  top: 7rem;
+  top: 8.5rem;
   left: 2rem;
   display: flex;
   align-items: center;

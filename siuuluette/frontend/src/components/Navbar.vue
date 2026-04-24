@@ -21,7 +21,7 @@
       <nav class="navbar__nav" aria-label="Navegación principal">
         <router-link :to="{ path: '/', hash: '#inicio' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }" @click="goToSection($event, '#inicio')">Inicio</router-link>
         <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'explora' }" @click="goToSection($event, '#explora')">Explora</router-link>
-        <router-link :to="{ path: '/', hash: '#drops' }" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'drops' }" @click="goToSection($event, '#drops')">Drops</router-link>
+        <router-link :to="{ path: '/', hash: '#ofertas' }" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'ofertas' }" @click="goToSection($event, '#ofertas')">Descuentos</router-link>
         <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
       </nav>
 
@@ -80,7 +80,7 @@
         <nav class="mobile-nav">
           <router-link :to="{ path: '/', hash: '#inicio' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#inicio')">Inicio</router-link>
           <router-link :to="{ path: '/', hash: '#explora' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#explora')">Explora</router-link>
-          <router-link :to="{ path: '/', hash: '#drops' }" class="mobile-nav__link mobile-nav__link--accent" @click="closeMenuAndScroll($event, '#drops')">Drops</router-link>
+          <router-link :to="{ path: '/', hash: '#ofertas' }" class="mobile-nav__link mobile-nav__link--accent" @click="closeMenuAndScroll($event, '#ofertas')">Descuentos</router-link>
           <router-link :to="{ path: '/', hash: '#nosotros' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#nosotros')">Nosotros</router-link>
           <button class="mobile-nav__link" @click="menuOpen = false; $emit('open-auth')">Mi cuenta</button>
         </nav>
@@ -123,7 +123,7 @@ export default {
         })
       }, options)
 
-      const sections = ['inicio', 'drops', 'explora', 'nosotros']
+      const sections = ['inicio', 'ofertas', 'explora', 'nosotros']
       sections.forEach(id => {
         const el = document.getElementById(id)
         if (el) observer.observe(el)

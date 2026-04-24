@@ -90,24 +90,22 @@ function normalizeProduct(p) {
         primary_image: imageUrls[0] || null,
         secondary_image: imageUrls[1] || null,
         images,
-        gallery: imageUrls,            // alias legacy
+        gallery: imageUrls,
         sizes,
-        size_names: sizeNames,         // array de strings ['S','M','L','XL']
+        size_names: sizeNames,
         in_stock: sizes.some(s => s.available),
-
-        // Alias legacy a nivel variante (por si algún componente lo usa así)
         image_url: imageUrls[0] || null,
-        image_secondary_url: imageUrls[1] || null,
         price: prices.price_gross,
         color: v.color_name
       }
     })
 
-  // Defaults a nivel padre (lo que se ve en catálogo): primera variante
+  // Defaults a nivel padre (primera variante)
   const firstVariant = variants[0] || {}
+  const prices = computePrices(p, firstVariant)
+  const discount = p.discount_percent || 0
 
   return {
-    // === Modelo nuevo ===
     id: p.id,
     name: p.name,
     slug: p.slug,
@@ -117,25 +115,24 @@ function normalizeProduct(p) {
     style: p.style,
     materials: p.materials,
     size_guide: p.size_guide,
-    discount_percent: p.discount_percent || 0,
+    discount_percent: discount,
 
-    // Precios base del padre
+    // Precios base (originales del padre)
     price_net: p.price_net,
     price_gross: p.price_gross,
 
     // Defaults para catálogo
     default_image: firstVariant.primary_image,
     default_color: firstVariant.color_name,
-    default_price_gross: firstVariant.price_gross ?? p.price_gross,
+    default_price_gross: prices.price_gross,
 
     variants,
     in_stock: variants.some(v => v.in_stock),
 
-    // === Compatibilidad con frontend actual (lee de la 1ª variante) ===
-    price: firstVariant.price_gross ?? p.price_gross,
-    price_net: firstVariant.price_net ?? p.price_net,
-    originalPrice: firstVariant.original_price_gross ?? null,
-    originalPriceNet: firstVariant.original_price_net ?? null,
+    // Compatibilidad frontend
+    price: prices.price_gross,
+    price_net: prices.price_net,
+    originalPrice: prices.original_price_gross,
     color: firstVariant.color_name ?? null,
     image_url: firstVariant.primary_image ?? null,
     image_secondary_url: firstVariant.secondary_image ?? null,

@@ -277,6 +277,13 @@ input {
   border: 1px solid var(--c-mid);
 }
 
+.badge-sale {
+  background: var(--c-gold);
+  color: var(--c-black);
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(92, 82, 72, 0.3);
+}
+
 /* --- 5. Scrollbar --- */
 ::-webkit-scrollbar {
   width: 6px;
