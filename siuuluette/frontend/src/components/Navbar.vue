@@ -226,6 +226,19 @@ export default {
   color: var(--c-white);
   text-transform: uppercase;
   line-height: 1;
+  position: relative;
+  display: flex;
+  align-items: baseline;
+}
+
+.navbar__logo-text::after {
+  content: '®';
+  font-size: 0.8rem;
+  margin-left: 0.2rem;
+  font-weight: 400;
+  color: var(--c-light);
+  position: relative;
+  top: 0.25rem; /* Ajuste para bajarlo */
 }
 
 /* --- Desktop Nav --- */

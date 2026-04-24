@@ -9,7 +9,7 @@
     <div class="footer__marquee" aria-hidden="true">
       <div class="footer__marquee-track">
         <span v-for="n in 8" :key="n" class="footer__marquee-item">
-          SIUULUETTE &nbsp;·&nbsp; VISTE LA VICTORIA &nbsp;·&nbsp; MAKE IT REAL &nbsp;·&nbsp;
+          SIUULUETTE® &nbsp;·&nbsp; VISTE LA VICTORIA &nbsp;·&nbsp; MAKE IT REAL &nbsp;·&nbsp;
         </span>
       </div>
     </div>
@@ -176,6 +176,17 @@ export default {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--c-white);
+  display: flex;
+  align-items: baseline;
+}
+
+.footer__logo-text::after {
+  content: '®';
+  font-size: 0.65rem;
+  margin-left: 0.15rem;
+  color: var(--c-grey);
+  position: relative;
+  top: 0.2rem; /* Ajuste para bajarlo */
 }
 
 .footer__tagline {

@@ -405,7 +405,7 @@ export default {
         product.value = data.product
 
         // Meta tags dinámicos
-        document.title = `${product.value.name} — Siuuluette`
+        document.title = `${product.value.name} — Le Siuuluette®`
 
         // Cargar variantes y relacionados en paralelo (no bloqueantes)
         const [variantsRes, relatedRes] = await Promise.allSettled([
