@@ -21,9 +21,10 @@
           </div>
           <div v-else class="auth-tabs">
             <span v-if="view === 'profile'" class="tab-btn active">Mi Perfil</span>
-            <span v-else class="tab-btn active">Mis Pedidos</span>
+            <span v-else-if="view === 'orders'" class="tab-btn active">Mis Pedidos</span>
+            <span v-else class="tab-btn active">Mis Favoritos</span>
             
-            <button v-if="view === 'orders'" class="back-link-btn" @click="view = 'profile'">
+            <button v-if="view !== 'profile'" class="back-link-btn" @click="view = 'profile'">
               Volver
             </button>
           </div>
@@ -47,6 +48,9 @@
             <div class="profile-actions">
               <button class="profile-btn w-full" @click="fetchOrders">
                 Mis Pedidos
+              </button>
+              <button class="profile-btn w-full" @click="goToFavorites">
+                Mis Favoritos
               </button>
               <button class="profile-btn w-full logout-btn" @click="$emit('logout')">
                 Cerrar Sesión
@@ -95,6 +99,40 @@
                       <path d="M3 21v-5h5"/>
                     </svg>
                     Comprar de nuevo
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- FAVORITES VIEW -->
+          <div v-else-if="currentUser && view === 'favorites'" class="favorites-view">
+            <div v-if="loadingFavorites" class="orders-loading">
+              <div class="spinner"></div>
+            </div>
+            
+            <div v-else-if="fullFavorites.length === 0" class="no-orders">
+              <p class="body-md">No tienes productos en favoritos.</p>
+              <button class="btn btn-outline btn-sm" @click="$emit('close')">Explorar Tienda</button>
+            </div>
+
+            <div v-else class="favorites-list">
+              <div v-for="fav in fullFavorites" :key="fav.product_id" class="favorite-card">
+                <div class="favorite-card__content">
+                  <img :src="fav.products.image_url" :alt="fav.products.name" class="item-thumb">
+                  <div class="item-details">
+                    <p class="item-name">{{ fav.products.name }}</p>
+                    <p class="item-meta">€{{ fav.products.price }} | {{ fav.products.category }}</p>
+                  </div>
+                </div>
+                
+                <div class="favorite-card__actions">
+                  <button class="buy-btn" @click="goToProduct(fav.products.slug)">
+                    Comprar
+                  </button>
+                  <button class="remove-fav-btn" @click="toggleFavorite(fav.product_id)" title="Quitar de favoritos">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -181,7 +219,9 @@
 
 <script>
 import { ref, reactive, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { authApi, checkoutApi } from '../api/index.js'
+import { useFavorites } from '../composables/useFavorites.js'
 import { loadStripe } from '@stripe/stripe-js'
 
 export default {
@@ -207,6 +247,25 @@ export default {
       username: '',
       phone: ''
     })
+
+    const router = useRouter()
+    const { fullFavorites, fetchFavorites: refreshFavs, toggleFavorite } = useFavorites()
+    const loadingFavorites = ref(false)
+
+    const goToFavorites = async () => {
+      view.value = 'favorites'
+      loadingFavorites.value = true
+      try {
+        await refreshFavs()
+      } finally {
+        loadingFavorites.value = false
+      }
+    }
+
+    const goToProduct = (slug) => {
+      emit('close')
+      router.push({ name: 'product-detail', params: { slug } })
+    }
 
     const fetchOrders = async () => {
       view.value = 'orders'
@@ -275,7 +334,9 @@ export default {
 
     return {
       mode, view, form, loading, loadingOrders, error, isRegistered, orders, 
-      handleSubmit, resetToLogin, fetchOrders, formatDate
+      fullFavorites, loadingFavorites,
+      handleSubmit, resetToLogin, fetchOrders, formatDate,
+      goToFavorites, goToProduct, toggleFavorite
     }
   }
 }
@@ -783,5 +844,87 @@ export default {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 1rem;
+}
+
+/* Favorites View Styles */
+.favorites-view {
+  max-height: 550px;
+  overflow-y: auto;
+  padding: 0.5rem 1rem 1rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-gold) transparent;
+}
+
+.favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.favorite-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.favorite-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(197, 163, 106, 0.3);
+  transform: translateX(4px);
+}
+
+.favorite-card__content {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.favorite-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.buy-btn {
+  background: var(--c-gold);
+  color: var(--c-black);
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buy-btn:hover {
+  background: #d4b47d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(197, 163, 106, 0.2);
+}
+
+.remove-fav-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.remove-fav-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
 }
 </style>

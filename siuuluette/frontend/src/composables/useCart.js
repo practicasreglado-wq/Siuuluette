@@ -90,11 +90,9 @@ async function addToCart(product) {
   showToast(`${product.name} añadido`)
 }
 
-async function removeFromCart(productId, size) {
-  const item = cartItems.value.find(
-    i => i.id === productId && i.selectedSize === size
-  )
+async function removeFromCart(item) {
   if (!item) return
+  const { id: productId, selectedSize: size } = item
 
   // Optimista
   cartItems.value = cartItems.value.filter(
@@ -122,7 +120,7 @@ async function updateQty(productId, size, delta) {
   const newQty = item.qty + delta
 
   if (newQty <= 0) {
-    await removeFromCart(productId, size)
+    await removeFromCart(item)
     return
   }
 
@@ -156,13 +154,30 @@ async function mergeGuestCart() {
   }
 }
 
+async function clearCart() {
+  cartItems.value = []
+  localStorage.removeItem('cart')
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      await cartApi.clear()
+    } catch (err) {
+      console.error('Error vaciando carrito en backend:', err)
+    }
+  }
+}
+
 // --- Computeds ---
 const cartCount = computed(() =>
   cartItems.value.reduce((sum, i) => sum + i.qty, 0)
 )
 
 const cartSubtotal = computed(() =>
-  cartItems.value.reduce((sum, i) => sum + (i.price * i.qty), 0)
+  cartItems.value.reduce((sum, i) => {
+    const price = Number(i.price) || 0
+    const qty = Number(i.qty) || 0
+    return sum + (price * qty)
+  }, 0)
 )
 
 // --- Composable público ---
@@ -182,6 +197,7 @@ export function useCart() {
     removeFromCart,
     updateQty,
     mergeGuestCart,
+    clearCart,
     showToast,
   }
 }

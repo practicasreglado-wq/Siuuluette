@@ -6,12 +6,15 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 async function request(path, options = {}) {
   const token = localStorage.getItem('token')
 
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(options.headers || {})
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
     ...options,
+    headers
   })
 
   if (!res.ok) {
@@ -53,10 +56,12 @@ export const authApi = {
 export const cartApi = {
   get:    ()      => request('/api/cart'),
   add:    (item)  => request('/api/cart/add', { method: 'POST', body: JSON.stringify(item) }),
-  remove: (productId, size) => request('/api/cart/remove', { 
-    method: 'POST', 
-    body: JSON.stringify({ product_id: productId, size }) 
+  remove: (cartItemId) => request(`/api/cart/${cartItemId}`, { method: 'DELETE' }),
+  updateQty: (cartItemId, quantity) => request(`/api/cart/${cartItemId}`, { 
+    method: 'PATCH', 
+    body: JSON.stringify({ quantity }) 
   }),
+  clear:  ()      => request('/api/cart', { method: 'DELETE' }),
   merge:  (items) => request('/api/cart/merge', { method: 'POST', body: JSON.stringify({ items }) }),
   update: (data) => request('/api/cart/update', { method: 'POST', body: JSON.stringify(data) }),
 }

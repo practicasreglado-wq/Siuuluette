@@ -103,6 +103,7 @@ export default {
       updateQty,
       fetchCart,
       mergeGuestCart,
+      clearCart,
     } = useCart()
 
     const currentUser = ref(null)
@@ -158,8 +159,7 @@ export default {
 
       isCheckoutOpen.value = false
       isSuccessOpen.value = true
-      cartItems.value = []
-      localStorage.removeItem('cart')
+      clearCart()
     }
 
     function handleScroll() {

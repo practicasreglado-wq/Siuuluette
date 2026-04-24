@@ -230,4 +230,78 @@ export default async function cartRoutes(fastify) {
 
     return { message: 'Cantidad actualizada' }
   })
+
+  // DELETE /api/cart/:id — Eliminar por ID de fila (Más preciso)
+  fastify.delete('/:id', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' }
+        },
+        required: ['id']
+      }
+    }
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { id } = request.params
+
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Item eliminado' }
+  })
+
+  // PATCH /api/cart/:id — Actualizar cantidad por ID de fila
+  fastify.patch('/:id', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' }
+        },
+        required: ['id']
+      },
+      body: {
+        type: 'object',
+        required: ['quantity'],
+        properties: {
+          quantity: { type: 'number', minimum: 1 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { id } = request.params
+    const { quantity } = request.body
+
+    const { error } = await supabase
+      .from('cart_items')
+      .update({ quantity })
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Cantidad actualizada' }
+  })
+
+  // DELETE /api/cart — Vaciar carrito completo
+  fastify.delete('/', {
+    onRequest: [fastify.authenticate]
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('user_id', userId)
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Carrito vaciado' }
+  })
 }

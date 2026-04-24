@@ -26,7 +26,7 @@ export default async function checkoutRoutes(fastify) {
       // 2. Calcular el total real
       const totalAmount = items.reduce((sum, item) => {
         const product = dbProducts.find(p => p.id === Number(item.id))
-        const itemQty = item.quantity || 0
+        const itemQty = item.qty || item.quantity || 0
         const itemPrice = product ? Number(product.price) : 0
         return sum + (itemPrice * itemQty)
       }, 0)
@@ -104,7 +104,7 @@ export default async function checkoutRoutes(fastify) {
         return {
           order_id: order.id,
           product_id: item.id,
-          quantity: item.quantity,
+          quantity: item.qty || item.quantity || 0,
           unit_price: product ? product.price : 0,
           size: item.selectedSize || 'M'
         }

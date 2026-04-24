@@ -9,6 +9,7 @@ import { favoritesApi } from '../api/index.js'
 
 // --- Estado compartido (module-scoped) ---
 const favoriteIds = ref(new Set()) // Set<number> de product_id
+const fullFavorites = ref([]) // Lista de objetos { product_id, created_at, products: {...} }
 
 // --- Helpers ---
 function loadGuestFavorites() {
@@ -36,6 +37,7 @@ async function fetchFavorites() {
   }
   try {
     const { favorites } = await favoritesApi.list()
+    fullFavorites.value = favorites || []
     favoriteIds.value = new Set((favorites || []).map(f => f.product_id))
   } catch (err) {
     console.error('Error cargando favoritos:', err)
@@ -51,8 +53,15 @@ async function toggleFavorite(productId) {
   const wasFav = favoriteIds.value.has(id)
 
   // Optimista
-  if (wasFav) favoriteIds.value.delete(id)
-  else        favoriteIds.value.add(id)
+  if (wasFav) {
+    favoriteIds.value.delete(id)
+    fullFavorites.value = fullFavorites.value.filter(f => f.product_id !== id)
+  } else {
+    favoriteIds.value.add(id)
+    // Nota: para invitados no tenemos el objeto completo del producto aquí fácilmente
+    // a menos que lo pasemos como argumento. Por ahora el perfil solo muestra
+    // favoritos de usuarios logueados o los que se carguen al fetch.
+  }
   // Forzar reactividad sobre el Set
   favoriteIds.value = new Set(favoriteIds.value)
 
@@ -60,6 +69,9 @@ async function toggleFavorite(productId) {
     try {
       if (wasFav) await favoritesApi.remove(id)
       else        await favoritesApi.add(id)
+      
+      // Refetch para asegurar que fullFavorites esté al día
+      await fetchFavorites()
     } catch (err) {
       console.error('Error sincronizando favorito:', err)
       // Rollback
@@ -79,6 +91,7 @@ const favoritesCount = computed(() => favoriteIds.value.size)
 export function useFavorites() {
   return {
     favoriteIds,
+    fullFavorites,
     favoritesCount,
     fetchFavorites,
     isFavorite,

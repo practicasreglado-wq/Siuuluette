@@ -42,7 +42,7 @@
       <TransitionGroup name="cart-item" tag="div">
         <div
           v-for="item in cartItems"
-          :key="item.id"
+          :key="item.cartItemId || (item.id + item.selectedSize)"
           class="cart-item"
         >
           <img :src="item.image_url || item.image || '/placeholder.jpg'" :alt="item.name" class="cart-item__img" />
@@ -56,9 +56,9 @@
           </div>
           <div class="cart-item__controls">
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, -1)" aria-label="Quitar uno">−</button>
-            <span class="cart-item__qty">{{ item.qty ?? item.quantity }}</span>
+            <span class="cart-item__qty">{{ item.qty }}</span>
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, 1)" aria-label="Añadir uno">+</button>
-            <button class="cart-item__remove" @click="$emit('remove-item', item.id, item.selectedSize)" aria-label="Eliminar">
+            <button class="cart-item__remove" @click="$emit('remove-item', item)" aria-label="Eliminar">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M18 6 6 18M6 6l12 12"/>
               </svg>
@@ -97,10 +97,14 @@ export default {
   },
   computed: {
     totalItems() {
-      return this.cartItems.reduce((sum, i) => sum + (i.qty ?? i.quantity ?? 0), 0)
+      return this.cartItems.reduce((sum, i) => sum + (Number(i.qty) || 0), 0)
     },
     subtotal() {
-      return this.cartItems.reduce((sum, i) => sum + i.price * (i.qty ?? i.quantity ?? 0), 0).toFixed(0)
+      return this.cartItems.reduce((sum, i) => {
+        const p = Number(i.price) || 0
+        const q = Number(i.qty) || 0
+        return sum + (p * q)
+      }, 0).toFixed(0)
     }
   }
 }

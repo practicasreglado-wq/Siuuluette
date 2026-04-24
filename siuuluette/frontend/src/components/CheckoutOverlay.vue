@@ -16,9 +16,9 @@
         <div class="checkout-card__content">
           <!-- Order Summary -->
           <div class="order-summary">
-            <div class="summary-row" v-for="item in items" :key="item.id">
-              <span class="body-sm">{{ item.name }} x{{ item.quantity }}</span>
-              <span class="body-sm">€{{ item.price * item.quantity }}</span>
+            <div class="summary-row" v-for="item in items" :key="item.cartItemId || item.id">
+              <span class="body-sm">{{ item.name }} x{{ item.qty }}</span>
+              <span class="body-sm">€{{ item.price * item.qty }}</span>
             </div>
             <div class="divider"></div>
             <div class="summary-total">
