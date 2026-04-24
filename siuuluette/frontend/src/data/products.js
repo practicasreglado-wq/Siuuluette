@@ -230,6 +230,9 @@ export const products = [
 ]
 
 export const categories = [
-  { id: 1, name: 'Urban',            count: 2,  image: '/img/cam_negra1.png' },
-  { id: 2, name: 'Urban-Sport',      count: 12, image: '/img/sud_negra1.png' },
+  { id: 1, name: 'Urban',      count: 1, image: '/img/coleccion-urban.png' },
+  { id: 2, name: 'Deporte',    count: 1, image: '/img/coleccion-deporte.png' },
+  { id: 3, name: 'Essentials', count: 2, image: '/img/coleccion-essentials.png' },
+  { id: 4, name: 'Casual',     count: 1, image: '/img/colecciones-casual.png' },
+  { id: 5, name: 'Tenis',      count: 0, image: '/img/coleccion-tenis.png' },
 ]

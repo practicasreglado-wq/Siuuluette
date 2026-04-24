@@ -91,7 +91,7 @@ export default {
   setup(props) {
     const activeType = ref('Todo')
     const showAll = ref(false)
-    const types = ['Todo', 'Camisetas', 'Sudaderas', 'Pantalones']
+    const types = ['Todo', 'Camisetas', 'Sudaderas', 'Pantalones', 'Chaquetas']
 
     const filteredProducts = computed(() => {
       // 1. Filtro por Colección (Ultra-robusto)
@@ -113,6 +113,7 @@ export default {
             if (normalized.startsWith('camiseta')) return 'camiseta'
             if (normalized.startsWith('sudadera')) return 'sudadera'
             if (normalized.startsWith('pantalon')) return 'pantalon'
+            if (normalized.startsWith('chaqueta')) return 'chaqueta'
 
             return normalized.endsWith('s') ? normalized.slice(0, -1) : normalized
           }
