@@ -80,6 +80,8 @@ function normalizeProduct(p) {
         id: v.id,
         color_name: v.color_name,
         color_hex: v.color_hex,
+        price_net_override: v.price_net_override,
+        price_gross_override: v.price_gross_override,
         ...vPrices,
         primary_image: imageUrls[0] || null,
         secondary_image: imageUrls[1] || null,
@@ -148,6 +150,24 @@ export default async function productsRoutes(fastify) {
 
     if (error) {
       request.log.error({ err: error }, 'Error listando productos')
+      return reply.status(500).send({ error: error.message })
+    }
+
+    const products = (data || []).map(normalizeProduct)
+    return { products }
+  })
+
+  // GET /api/products/admin — listar todos (incluyendo inactivos) para gestión
+  fastify.get('/admin', {
+    onRequest: [fastify.authenticateAdmin]
+  }, async (request, reply) => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(PRODUCT_SELECT)
+      .order('id', { ascending: true })
+
+    if (error) {
+      request.log.error({ err: error }, 'Error listando productos admin')
       return reply.status(500).send({ error: error.message })
     }
 
@@ -281,10 +301,8 @@ export default async function productsRoutes(fastify) {
   })
 
   // POST /api/products — crear producto (admin, JWT)
-  // Por ahora solo crea el padre. La creación de variantes/imágenes/stock
-  // se hará en endpoints separados o en un panel de admin.
   fastify.post('/', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticateAdmin],
     schema: {
       body: {
         type: 'object',
@@ -320,5 +338,41 @@ export default async function productsRoutes(fastify) {
 
     if (error) return reply.status(500).send({ error: error.message })
     return reply.status(201).send({ product: data })
+  })
+
+  // PATCH /api/products/:id — actualizar producto (admin)
+  fastify.patch('/:id', {
+    onRequest: [fastify.authenticateAdmin]
+  }, async (request, reply) => {
+    const { id } = request.params
+    const updates = request.body
+
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { product: data }
+  })
+
+  // PATCH /api/products/variants/:id — actualizar variante (admin)
+  fastify.patch('/variants/:id', {
+    onRequest: [fastify.authenticateAdmin]
+  }, async (request, reply) => {
+    const { id } = request.params
+    const updates = request.body
+
+    const { data, error } = await supabase
+      .from('product_variants')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { variant: data }
   })
 }

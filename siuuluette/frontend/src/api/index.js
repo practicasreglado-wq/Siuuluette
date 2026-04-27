@@ -12,9 +12,16 @@ async function request(path, options = {}) {
     ...(options.headers || {})
   }
 
+  // Si el body es un objeto, lo convertimos a JSON automáticamente
+  let body = options.body
+  if (body && typeof body === 'object') {
+    body = JSON.stringify(body)
+  }
+
   const res = await fetch(`${BASE}${path}`, {
     ...options,
-    headers
+    headers,
+    body
   })
 
   if (!res.ok) {
@@ -29,7 +36,10 @@ async function request(path, options = {}) {
 // --- API de productos ---
 export const productsApi = {
   getAll:     ()      => request('/api/products'),
+  getAdminAll:()      => request('/api/products/admin'),
   getOne:     (id)    => request(`/api/products/${id}`),
+  update:     (id, d) => request(`/api/products/${id}`, { method: 'PATCH', body: d }),
+  updateVariant:(id, d) => request(`/api/products/variants/${id}`, { method: 'PATCH', body: d }),
   getBySlug:  (slug)  => request(`/api/products/slug/${slug}`),
   getRelated: (id)    => request(`/api/products/${id}/related`),
   getVariants:(id)    => request(`/api/products/${id}/variants`),

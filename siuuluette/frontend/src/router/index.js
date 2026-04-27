@@ -15,6 +15,15 @@ const routes = [
     props: true,
     meta: { title: 'Producto — Le Siuuluette®' }
   },
+  {
+    path: '/admin/products',
+    name: 'admin-products',
+    component: () => import('../views/AdminProducts.vue'),
+    meta: { 
+      title: 'Panel Admin — Siuuluette®',
+      requiresAdmin: true 
+    }
+  },
   // Catch-all: cualquier ruta no reconocida vuelve a la home
   {
     path: '/:pathMatch(.*)*',

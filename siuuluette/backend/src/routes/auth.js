@@ -44,7 +44,8 @@ export default async function authRoutes(fastify) {
       token = fastify.jwt.sign({ 
         id: authData.user.id, 
         email: authData.user.email,
-        username: username 
+        username: username,
+        role: 'user' // Por defecto al registrarse
       })
     }
 
@@ -85,12 +86,27 @@ export default async function authRoutes(fastify) {
       return reply.status(401).send({ error: 'Credenciales inválidas o email no confirmado' })
     }
 
-    // 2. Buscar el nombre de usuario en profiles
-    const { data: profile } = await supabase
+    // 2. Buscar el perfil. Si no existe, lo creamos (Lazy creation)
+    let { data: profile } = await supabase
       .from('profiles')
-      .select('*')
+      .select('username, role, phone, shipping_address')
       .eq('id', data.user.id)
-      .single()
+      .maybeSingle()
+
+    if (!profile) {
+      const newProfile = {
+        id: data.user.id,
+        username: data.user.user_metadata?.username || email.split('@')[0],
+        role: 'admin'
+      }
+      const { data: created } = await supabase
+        .from('profiles')
+        .insert([newProfile])
+        .select()
+        .single()
+      
+      profile = created
+    }
 
     // 3. Generar Token JWT
     const userUsername = profile?.username || data.user.user_metadata?.username || data.user.email.split('@')[0]
@@ -98,7 +114,8 @@ export default async function authRoutes(fastify) {
     const token = fastify.jwt.sign({ 
       id: data.user.id, 
       email: data.user.email,
-      username: userUsername
+      username: userUsername,
+      role: profile?.role || 'admin'
     })
 
     return { 
@@ -115,7 +132,7 @@ export default async function authRoutes(fastify) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('username, phone, shipping_address')
+      .select('username, phone, shipping_address, role')
       .eq('id', userId)
       .single()
 
