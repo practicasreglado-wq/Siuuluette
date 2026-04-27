@@ -13,7 +13,7 @@
 
     <HeroSection id="inicio" />
     <CategoryGrid id="explora" @category-select="selectCategory" />
-    <SalesSection :products="products" @add-to-cart="addToCart" />
+    <SalesSection id="ofertas" :products="products" @add-to-cart="addToCart" />
     <BrandValues id="nosotros" />
 
     <!-- Overlay de exploración por estilo -->
@@ -75,9 +75,22 @@ export default {
       document.body.style.overflow = ''
     }
 
-    onMounted(() => {
-      fetchProducts()
+    onMounted(async () => {
+      await fetchProducts()
       document.title = 'Le Siuuluette | Viste la victoria'
+      
+      // Si venimos de otra página con un hash (ej: #ofertas), 
+      // re-calculamos el scroll tras cargar los productos.
+      const hash = window.location.hash
+      if (hash) {
+        setTimeout(() => {
+          const el = document.querySelector(hash)
+          if (el) {
+            const top = el.getBoundingClientRect().top + window.scrollY - 121
+            window.scrollTo({ top, behavior: 'smooth' })
+          }
+        }, 100) // Pequeño delay para dejar que el DOM respire
+      }
     })
 
     onUnmounted(() => {

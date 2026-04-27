@@ -3,7 +3,14 @@
        SIUULUETTE — Navbar Component
        Sticky header with logo, nav links & cart
        ========================================== -->
-  <header class="navbar" :class="{ 'navbar--scrolled': isScrolled, 'navbar--menu-open': menuOpen }">
+  <header 
+    class="navbar" 
+    :class="{ 
+      'navbar--scrolled': isScrolled, 
+      'navbar--menu-open': menuOpen,
+      'is-home': $route.path === '/'
+    }"
+  >
     <div class="navbar__inner">
 
       <!-- Brand Logo -->
@@ -135,9 +142,18 @@ export default {
   left: 0;
   right: 0;
   z-index: 1100;
+  /* Fondo translúcido entonado permanente */
+  background: rgba(226, 220, 207, 0.751); 
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: background var(--t-medium) var(--ease-standard),
-              box-shadow var(--t-medium) var(--ease-standard),
-              backdrop-filter var(--t-medium);
+              box-shadow var(--t-medium) var(--ease-standard);
+  border-bottom: 1px solid rgba(92, 82, 72, 0.05);
+}
+
+.navbar--scrolled {
+  background: rgba(221, 215, 204, 0.85); /* Un pelín más denso al hacer scroll */
+  box-shadow: 0 4px 30px rgba(92, 82, 72, 0.06);
 }
 
 .navbar::after {
@@ -153,13 +169,6 @@ export default {
 
 .navbar--scrolled::after {
   background: rgba(92, 82, 72, 0.12);
-}
-
-.navbar--scrolled {
-  background: rgba(229, 224, 216, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 4px 30px rgba(92, 82, 72, 0.15);
 }
 
 /* --- Inner Layout --- */

@@ -78,6 +78,11 @@ body {
   overflow-x: hidden;
 }
 
+main {
+  background-color: var(--c-black);
+  min-height: 100vh;
+}
+
 img {
   display: block;
   max-width: 100%;

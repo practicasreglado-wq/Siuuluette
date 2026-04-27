@@ -229,17 +229,16 @@ export default {
 
 <style scoped>
 .admin-products {
-  background-color: #f0ede8;
+  background-color: var(--c-black);
   min-height: 100vh;
-  padding-top: 100px;
   color: #3d362f;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
 /* --- Header Section --- */
 .admin-page-header {
-  background-color: #eae6d4;
-  border-bottom: 1px solid #d5cfc5;
+  background-color: var(--c-dark);
+  border-bottom: 1px solid var(--c-dark-2);
   padding: 2.5rem 0;
   margin-bottom: 2rem;
 }
@@ -265,9 +264,9 @@ export default {
 
 /* --- Premium Refresh Button --- */
 .premium-refresh-btn {
-  background: #3d362f;
-  color: #f0ede8;
-  border: 1px solid #3d362f;
+  background: var(--c-gold);
+  color: var(--c-black);
+  border: 1px solid var(--c-gold);
   padding: 0.7rem 1.4rem;
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -303,7 +302,7 @@ export default {
 }
 
 .inventory-table th {
-  background: #eae6d4;
+  background: var(--c-dark);
   padding: 1.2rem 1.5rem;
   text-align: left;
   font-size: 0.65rem;

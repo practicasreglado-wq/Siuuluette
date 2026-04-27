@@ -14,7 +14,7 @@
       @open-auth="isAuthOpen = true"
     />
 
-    <main :style="{ paddingTop: '36px' }">
+    <main :style="{ paddingTop: '121px', backgroundColor: 'var(--c-black)', minHeight: '100vh' }">
       <router-view />
     </main>
 
