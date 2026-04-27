@@ -13,7 +13,10 @@
   >
     <article
       class="product-card"
-      :class="{ 'product-card--added': justAdded }"
+      :class="{ 
+        'product-card--added': justAdded,
+        'has-secondary': product.image_secondary_url || product.imageSecondary 
+      }"
       @click="navigate"
     >
 
@@ -162,14 +165,16 @@ export default {
   opacity: 0;
 }
 
-.product-card:hover .product-card__image--primary {
-  opacity: 0;
+.product-card:hover .product-card__image {
   transform: scale(1.06);
 }
 
-.product-card:hover .product-card__image--secondary {
+.product-card.has-secondary:hover .product-card__image--primary {
+  opacity: 0;
+}
+
+.product-card.has-secondary:hover .product-card__image--secondary {
   opacity: 1;
-  transform: scale(1.06);
 }
 
 /* Badge */
