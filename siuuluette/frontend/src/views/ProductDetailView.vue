@@ -35,6 +35,19 @@
 
         <!-- LEFT: Gallery -->
         <section class="pdp__gallery">
+          <div v-if="gallery.length > 1" class="pdp__thumbs">
+            <button
+              v-for="(img, idx) in gallery"
+              :key="idx"
+              class="pdp__thumb"
+              :class="{ 'is-active': activeImageIdx === idx }"
+              @click="activeImageIdx = idx"
+              :aria-label="`Imagen ${idx + 1} de ${gallery.length}`"
+            >
+              <img :src="img" :alt="`${product.name} ${idx + 1}`" />
+            </button>
+          </div>
+
           <div
             class="pdp__main-img"
             :class="{ 'is-zooming': zoomActive }"
@@ -61,18 +74,6 @@
               aria-label="Imagen siguiente"
             >›</button>
           </div>
-          <div v-if="gallery.length > 1" class="pdp__thumbs">
-            <button
-              v-for="(img, idx) in gallery"
-              :key="idx"
-              class="pdp__thumb"
-              :class="{ 'is-active': activeImageIdx === idx }"
-              @click="activeImageIdx = idx"
-              :aria-label="`Imagen ${idx + 1} de ${gallery.length}`"
-            >
-              <img :src="img" :alt="`${product.name} ${idx + 1}`" />
-            </button>
-          </div>
         </section>
 
         <!-- RIGHT: Info -->
@@ -80,7 +81,12 @@
           <span class="pdp__collection">{{ product.collection }}</span>
           <h1 class="pdp__name">{{ product.name }}</h1>
           <div class="pdp__price-row">
-            <span class="pdp__price">€{{ displayPrice }}</span>
+            <div class="pdp__price-wrap">
+              <span class="pdp__price">€{{ displayPrice }}</span>
+              <span v-if="displayOriginalPrice && Math.round(displayOriginalPrice) > Math.round(displayPrice)" class="pdp__original">
+                €{{ Math.round(displayOriginalPrice) }}
+              </span>
+            </div>
             <span class="pdp__category">{{ product.category }}</span>
           </div>
 
@@ -226,7 +232,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { productsApi } from '../api/index.js'
 import { useCart } from '../composables/useCart.js'
@@ -340,7 +346,15 @@ export default {
       currentVariant.value?.color_name ?? product.value?.color ?? null
     )
 
-    const isFav = computed(() => product.value && isFavorite(product.value.id))
+    const displayOriginalPrice = computed(() => {
+      // Prioridad a la variante activa, luego al producto base
+      return currentVariant.value?.original_price_gross ?? product.value?.originalPrice ?? null
+    })
+
+    const isFav = computed(() => {
+      const targetId = currentVariant.value?.id || product.value?.id
+      return targetId && isFavorite(targetId)
+    })
 
     const hasSizeGuide = computed(() =>
       product.value?.size_guide && Object.keys(product.value.size_guide).length > 0
@@ -407,6 +421,7 @@ export default {
         ...product.value,
         // Sobrescribimos con datos de la variante activa
         price: v?.price_gross ?? product.value.price,
+        priceNet: v?.price_net_override ?? product.value.price_net ?? 0,
         image_url: v?.primary_image ?? product.value.image_url,
         image: v?.primary_image ?? product.value.image_url,
         color: v?.color_name ?? product.value.color,
@@ -418,9 +433,11 @@ export default {
     }
 
     async function handleToggleFav() {
-      if (!product.value) return
+      const targetId = currentVariant.value?.id || product.value?.id
+      if (!targetId) return
+      
       const wasFav = isFav.value
-      await toggleFavorite(product.value.id)
+      await toggleFavorite(targetId)
       showToast(wasFav ? 'Quitado de favoritos' : 'Añadido a favoritos')
     }
 
@@ -436,11 +453,27 @@ export default {
       zoomActive.value = false
 
       try {
+        console.log('[PDP] Cargando slug:', slug)
         const data = await productsApi.getBySlug(slug)
-        product.value = data.product
+        console.log('[PDP] Datos recibidos:', data)
+        
+        if (!data || !data.product) {
+          throw new Error('El servidor no ha devuelto los datos del producto')
+        }
 
-        // Meta tags dinámicos
-        document.title = `${product.value.name} — Siuuluette`
+        product.value = data.product
+        document.title = `${product.value.name} | Le Siuuluette®`
+
+        // Selección automática por color en URL (?color=...)
+        const queryColor = route.query.color
+        if (queryColor && product.value.variants) {
+          const vIdx = product.value.variants.findIndex(
+            v => v.color_name?.toLowerCase() === queryColor.toLowerCase()
+          )
+          if (vIdx !== -1) {
+            currentVariantIdx.value = vIdx
+          }
+        }
 
         // Las variantes ya vienen embebidas en product.variants — no hace
         // falta una llamada extra. Solo cargamos los relacionados.
@@ -465,6 +498,10 @@ export default {
       await loadProduct(route.params.slug)
     })
 
+    onUnmounted(() => {
+      // Limpieza si es necesaria
+    })
+
     // Si el usuario navega de una ficha a otra (por relacionados), recargar
     watch(() => route.params.slug, async (newSlug) => {
       if (newSlug && route.name === 'product-detail') {
@@ -483,7 +520,7 @@ export default {
       handleAdd, handleToggleFav, addToCart, selectVariant,
       // Variantes (colores)
       variants, currentVariant, currentVariantIdx,
-      displayPrice, displayColor,
+      displayPrice, displayOriginalPrice, displayColor,
     }
   }
 }
@@ -555,21 +592,56 @@ export default {
 /* Main 2-col */
 .pdp__main {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 3rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 4rem;
   align-items: start;
+  max-width: 1300px;
+  margin: 0 auto;
 }
 
 /* GALLERY */
 .pdp__gallery {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 1rem;
   position: sticky;
   top: 140px;
+  width: 100%;
 }
 
+.pdp__thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.pdp__thumb {
+  width: 100%;
+  aspect-ratio: 1/1.2;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid transparent;
+  transition: all var(--t-fast);
+  background: var(--c-dark-2);
+}
+
+.pdp__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  transition: opacity var(--t-fast);
+}
+
+.pdp__thumb:hover img { opacity: 1; }
+.pdp__thumb.is-active { border-color: var(--c-gold); }
+.pdp__thumb.is-active img { opacity: 1; }
+
 .pdp__main-img {
+  flex: 1;
   position: relative;
   aspect-ratio: 1/1.15;
   border-radius: var(--radius-lg);
@@ -672,10 +744,23 @@ export default {
   gap: 1rem;
 }
 
+.pdp__price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
 .pdp__price {
   font-size: 1.7rem;
   font-weight: 600;
   color: var(--c-off-white);
+}
+
+.pdp__original {
+  font-size: 1.1rem;
+  color: var(--c-grey);
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
 .pdp__category {

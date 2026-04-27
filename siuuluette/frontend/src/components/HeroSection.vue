@@ -44,8 +44,8 @@
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </a>
-        <a href="#drops" class="btn btn-outline hero__cta">
-          Ver limitados
+        <a href="#ofertas" class="btn btn-outline hero__cta">
+          Ver ofertas
         </a>
       </div>
 
@@ -198,11 +198,14 @@ export default { name: 'HeroSection' }
 .hero__headline-line--1 { animation-delay: 0.3s; color: var(--c-white); }
 .hero__headline-line--2 { 
   animation-delay: 0.45s; 
-  color: rgba(149, 148, 147, 0.559); 
+  color: rgba(149, 148, 147, 0.85); /* Mantengo la mejora de visibilidad */
   padding-left: 8vw;
-  letter-spacing: 0.05em; /* Add space between L and A */
+  letter-spacing: 0.05em; 
 }
-.hero__headline-line--3 { animation-delay: 0.6s; color: var(--c-gold); }
+.hero__headline-line--3 { 
+  animation-delay: 0.6s; 
+  color: var(--c-gold);
+}
 
 @keyframes heroLine {
   from { opacity: 0; transform: translateY(60px) skewY(3deg); }

@@ -7,27 +7,50 @@ export default async function cartRoutes(fastify) {
   }, async (request, reply) => {
     const userId = request.user.id
 
-    const { data: cartItems, error } = await supabase
+    // 1. Obtener los items del carrito básicos
+    const { data: cartItems, error: cartError } = await supabase
       .from('cart_items')
-      .select(`
-        id,
-        quantity,
-        size,
-        product_id,
-        products (
-          name,
-          price,
-          image_url,
-          collection
-        )
-      `)
+      .select('id, quantity, size, product_id')
       .eq('user_id', userId)
 
-    if (error) {
-      return reply.status(500).send({ error: error.message })
+    if (cartError) {
+      return reply.status(500).send({ error: cartError.message })
     }
 
-    return { cart: cartItems }
+    if (!cartItems || cartItems.length === 0) {
+      return { cart: [] }
+    }
+
+    // 2. Obtener los detalles de las variantes manualmente (bypass de falta de FK)
+    const variantIds = cartItems.map(i => i.product_id)
+    const { data: variants, error: varError } = await supabase
+      .from('product_variants')
+      .select(`
+        id,
+        color_name,
+        price_gross_override,
+        price_net_override,
+        product:products (
+          id, name, slug, price_gross, price_net, collection, discount_percent
+        ),
+        images:product_images (url)
+      `)
+      .in('id', variantIds)
+
+    if (varError) {
+      return reply.status(500).send({ error: varError.message })
+    }
+
+    // 3. Combinar los datos
+    const enrichedCart = cartItems.map(item => {
+      const v = variants.find(dv => dv.id === item.product_id)
+      return {
+        ...item,
+        variant: v || null
+      }
+    })
+
+    return { cart: enrichedCart }
   })
 
   // POST /api/cart/add — Añadir un producto al carrito
@@ -37,7 +60,7 @@ export default async function cartRoutes(fastify) {
         type: 'object',
         required: ['product_id'],
         properties: {
-          product_id: { type: ['number', 'string'] },
+          product_id: { type: 'integer' },
           quantity: { type: 'number', minimum: 1, default: 1 },
           size: { type: 'string' }
         }
@@ -57,6 +80,9 @@ export default async function cartRoutes(fastify) {
     }
 
     const { product_id, quantity = 1, size } = request.body
+    
+    // Log para depuración
+    console.log(`[CART_ADD] User: ${userId}, ProductID: ${product_id}, Size: ${size}`)
 
     const { data: existing, error: existingError } = await supabase
       .from('cart_items')
@@ -67,6 +93,7 @@ export default async function cartRoutes(fastify) {
       .maybeSingle()
 
     if (existingError) {
+      console.error('[CART_ADD] Error buscando existente:', existingError)
       return reply.status(400).send({ error: existingError.message })
     }
 
@@ -77,6 +104,7 @@ export default async function cartRoutes(fastify) {
         .eq('id', existing.id)
 
       if (error) {
+        console.error('[CART_ADD] Error actualizando:', error)
         return reply.status(400).send({ error: error.message })
       }
     } else {
@@ -90,6 +118,7 @@ export default async function cartRoutes(fastify) {
         }])
 
       if (error) {
+        console.error('[CART_ADD] Error insertando:', error)
         return reply.status(400).send({ error: error.message })
       }
     }
@@ -111,7 +140,7 @@ export default async function cartRoutes(fastify) {
               type: 'object',
               required: ['product_id', 'quantity'],
               properties: {
-                product_id: { type: ['number', 'string'] },
+                product_id: { type: 'integer' },
                 quantity: { type: 'number', minimum: 1 },
                 size: { type: 'string' }
               }
@@ -176,7 +205,7 @@ export default async function cartRoutes(fastify) {
         type: 'object',
         required: ['product_id'],
         properties: {
-          product_id: { type: ['number', 'string'] },
+          product_id: { type: 'integer' },
           size: { type: 'string' }
         }
       }
@@ -207,7 +236,7 @@ export default async function cartRoutes(fastify) {
         type: 'object',
         required: ['product_id', 'quantity'],
         properties: {
-          product_id: { type: ['number', 'string'] },
+          product_id: { type: 'integer' },
           quantity: { type: 'number', minimum: 1 },
           size: { type: 'string' }
         }
@@ -229,5 +258,79 @@ export default async function cartRoutes(fastify) {
     }
 
     return { message: 'Cantidad actualizada' }
+  })
+
+  // DELETE /api/cart/:id — Eliminar por ID de fila (Más preciso)
+  fastify.delete('/:id', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' }
+        },
+        required: ['id']
+      }
+    }
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { id } = request.params
+
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Item eliminado' }
+  })
+
+  // PATCH /api/cart/:id — Actualizar cantidad por ID de fila
+  fastify.patch('/:id', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' }
+        },
+        required: ['id']
+      },
+      body: {
+        type: 'object',
+        required: ['quantity'],
+        properties: {
+          quantity: { type: 'number', minimum: 1 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { id } = request.params
+    const { quantity } = request.body
+
+    const { error } = await supabase
+      .from('cart_items')
+      .update({ quantity })
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Cantidad actualizada' }
+  })
+
+  // DELETE /api/cart — Vaciar carrito completo
+  fastify.delete('/', {
+    onRequest: [fastify.authenticate]
+  }, async (request, reply) => {
+    const userId = request.user.id
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('user_id', userId)
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Carrito vaciado' }
   })
 }

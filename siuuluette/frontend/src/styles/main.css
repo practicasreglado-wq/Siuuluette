@@ -21,6 +21,10 @@
   --c-gold-light:#8a817c;
   --c-gold-dark: #3e3833;
 
+  /* Vibrant Accents for Dark UI */
+  --c-accent-vibrant: #d9b87a;
+  --c-accent-glow:    rgba(217, 184, 122, 0.4);
+
   /* Typography */
   --font-display: 'Bebas Neue', 'Impact', sans-serif;
   --font-body:    'DM Sans', 'Helvetica Neue', sans-serif;
@@ -275,6 +279,13 @@ input {
   background: var(--c-dark-3);
   color: var(--c-light);
   border: 1px solid var(--c-mid);
+}
+
+.badge-sale {
+  background: var(--c-gold);
+  color: var(--c-black);
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(92, 82, 72, 0.3);
 }
 
 /* --- 5. Scrollbar --- */

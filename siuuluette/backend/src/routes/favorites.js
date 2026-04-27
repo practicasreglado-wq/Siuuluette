@@ -3,29 +3,60 @@ import { supabase } from '../db/supabase.js'
 
 export default async function favoritesRoutes(fastify) {
 
-  // GET /api/favorites — Lista de favoritos del usuario logueado (con datos del producto)
+  // GET /api/favorites — Lista de favoritos (ahora basados en variantes/colores)
   fastify.get('/', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
     const userId = request.user.id
 
-    const { data, error } = await supabase
+    // 1. Obtener IDs de favoritos (que ahora son variant_ids)
+    const { data: favs, error: favError } = await supabase
       .from('favorites')
-      .select(`
-        product_id,
-        created_at,
-        products (
-          id, name, slug, price, image_url, image_secondary_url, collection, category, color
-        )
-      `)
+      .select('product_id, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      return reply.status(500).send({ error: error.message })
-    }
+    if (favError) return reply.status(500).send({ error: favError.message })
+    if (!favs || favs.length === 0) return { favorites: [] }
 
-    return { favorites: data || [] }
+    // 2. Obtener datos de las variantes específicas (incluyendo precios)
+    const variantIds = favs.map(f => f.product_id)
+    const { data: variantData, error: varError } = await supabase
+      .from('product_variants')
+      .select(`
+        id, color_name, color_hex,
+        price_net_override, price_gross_override,
+        product:products (
+          id, name, slug, collection, category, 
+          price_net, price_gross, discount_percent
+        ),
+        images:product_images (url)
+      `)
+      .in('id', variantIds)
+
+    if (varError) return reply.status(500).send({ error: varError.message })
+
+    // 3. Reconstruir para el frontend (calculando precios reales)
+    const enrichedFavs = favs.map(f => {
+      const v = variantData.find(vd => vd.id === f.product_id)
+      if (!v) return null
+      
+      const p = v.product || {}
+      // Lógica de precio: prioridad a la variante, luego al padre
+      const priceGross = v.price_gross_override ?? p.price_gross ?? 0
+
+      return {
+        ...f,
+        variant: v,
+        products: {
+          ...p,
+          price_gross: priceGross,
+          variants: [v]
+        }
+      }
+    }).filter(Boolean)
+
+    return { favorites: enrichedFavs }
   })
 
   // POST /api/favorites/:productId — Añadir un producto a favoritos
@@ -49,8 +80,6 @@ export default async function favoritesRoutes(fastify) {
       .insert([{ user_id: userId, product_id: productId }])
 
     if (error) {
-      // 23505 = unique_violation. El usuario ya tenía el producto en favoritos.
-      // No es un error real, devolvemos OK con flag.
       if (error.code === '23505') {
         return { message: 'El producto ya estaba en favoritos', alreadyExists: true }
       }

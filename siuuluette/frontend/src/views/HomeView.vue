@@ -13,7 +13,7 @@
 
     <HeroSection id="inicio" />
     <CategoryGrid id="explora" @category-select="selectCategory" />
-    <LimitedDrop id="drops" @add-to-cart="addToCart" />
+    <SalesSection :products="products" @add-to-cart="addToCart" />
     <BrandValues id="nosotros" />
 
     <!-- Overlay de exploración por estilo -->
@@ -33,14 +33,14 @@ import { useCart } from '../composables/useCart.js'
 
 import HeroSection       from '../components/HeroSection.vue'
 import CategoryGrid      from '../components/CategoryGrid.vue'
-import LimitedDrop       from '../components/LimitedDrop.vue'
+import SalesSection       from '../components/SalesSection.vue'
 import BrandValues       from '../components/BrandValues.vue'
 import CategoryExplore   from '../components/CategoryExplore.vue'
 
 export default {
   name: 'HomeView',
   components: {
-    HeroSection, CategoryGrid, LimitedDrop,
+    HeroSection, CategoryGrid, SalesSection,
     BrandValues, CategoryExplore
   },
   setup() {
@@ -75,7 +75,10 @@ export default {
       document.body.style.overflow = ''
     }
 
-    onMounted(fetchProducts)
+    onMounted(() => {
+      fetchProducts()
+      document.title = 'Le Siuuluette | Viste la victoria'
+    })
 
     onUnmounted(() => {
       document.body.style.overflow = ''

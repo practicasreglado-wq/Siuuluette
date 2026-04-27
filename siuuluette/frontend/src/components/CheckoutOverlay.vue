@@ -16,13 +16,19 @@
         <div class="checkout-card__content">
           <!-- Order Summary -->
           <div class="order-summary">
-            <div class="summary-row" v-for="item in items" :key="item.id">
-              <span class="body-sm">{{ item.name }} x{{ item.quantity }}</span>
-              <span class="body-sm">€{{ item.price * item.quantity }}</span>
+            <div class="summary-row" v-for="item in items" :key="item.cartItemId || item.id">
+              <div class="summary-item-details">
+                <span class="body-sm">{{ item.name }} x{{ item.qty }}</span>
+                <p class="summary-item-meta label-xs opacity-60">{{ item.selectedSize }} | {{ item.color }}</p>
+              </div>
+              <span class="body-sm">€{{ item.price * item.qty }}</span>
             </div>
             <div class="divider"></div>
             <div class="summary-total">
-              <span class="label">Total a pagar</span>
+              <div class="summary-total-info">
+                <span class="label-highlight">Total a pagar</span>
+                <p class="summary-net label-xs opacity-60">Base imponible (sin IVA): €{{ netTotal }}</p>
+              </div>
               <span class="total-price">€{{ total }}</span>
             </div>
           </div>
@@ -33,14 +39,14 @@
             
             <!-- Stripe Address Element (Autocomplete & Validation) -->
             <div class="shipping-section">
-              <h3 class="label-xs uppercase tracking-widest mb-4 opacity-60">Dirección de Envío</h3>
+              <h3 class="section-label">Dirección de Envío</h3>
               <div id="address-element"></div>
             </div>
 
             <div class="divider"></div>
 
             <div class="payment-section">
-              <h3 class="label-xs uppercase tracking-widest mb-4 opacity-60">Método de Pago</h3>
+              <h3 class="section-label">Método de Pago</h3>
               <div id="payment-element"></div>
             </div>
             
@@ -83,6 +89,7 @@ export default {
     isOpen: Boolean,
     items: { type: Array, default: () => [] },
     total: { type: [String, Number], default: 0 },
+    netTotal: { type: [String, Number], default: 0 },
     currentUser: { type: Object, default: null }
   },
   emits: ['close', 'success'],
@@ -116,6 +123,7 @@ export default {
               colorPrimary: '#c5a36a',
               colorBackground: '#1c1917',
               colorText: '#f5f5f4',
+              colorTextSecondary: '#d1d1d1',
               colorDanger: '#ef4444',
               fontFamily: 'Outfit, sans-serif',
               borderRadius: '12px',
@@ -349,21 +357,57 @@ export default {
 .summary-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-  color: var(--c-grey);
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.summary-row span {
+  color: var(--c-black) !important; /* Forzamos el crema claro */
+  font-weight: 500;
+}
+
+.summary-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-item-meta {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-black) !important; /* Cambiado a crema claro para máxima visibilidad */
+  font-weight: 600;
+  font-size: 0.7rem;
+  opacity: 0.8;
 }
 
 .summary-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 0.5rem;
+}
+
+.summary-total-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.summary-net {
+  font-size: 0.65rem;
+  color: var(--c-grey);
+  letter-spacing: 0.05em;
+  opacity: 0.7;
 }
 
 .total-price {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  color: var(--c-gold);
+  font-size: 2.2rem;
+  color: var(--c-black) !important;
+  letter-spacing: 0.02em;
 }
 
 .payment-form {
@@ -392,11 +436,28 @@ export default {
   width: 100%;
 }
 
+.section-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1.25rem;
+  color: var(--c-accent-vibrant);
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--c-accent-glow);
+}
+
+.label-highlight {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-black);
+}
+
 .mb-4 { margin-bottom: 1rem; }
 .mb-6 { margin-bottom: 1.5rem; }
 .uppercase { text-transform: uppercase; }
 .tracking-widest { letter-spacing: 0.1em; }
-.opacity-60 { opacity: 0.6; }
 
 .error-message {
   color: #ef4444;

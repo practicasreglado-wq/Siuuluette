@@ -13,24 +13,43 @@ import { ref, computed } from 'vue'
 import { cartApi } from '../api/index.js'
 
 // --- Estado compartido ---
-const cartItems   = ref([])
-const isCartOpen  = ref(false)
-const toastMsg    = ref('')
+const cartItems = ref([])
+const isCartOpen = ref(false)
+const toastMsg = ref('')
 const toastVisible = ref(false)
 
 // --- Helpers ---
 function formatCartFromBackend(cart) {
-  return cart.map(i => ({
-    cartItemId:   i.id, // PK del cart_items, usada para PATCH/DELETE
-    id:           i.product_id,
-    name:         i.products?.name,
-    price:        i.products?.price,
-    image:        i.products?.image_url,
-    image_url:    i.products?.image_url,
-    category:     i.products?.category,
-    qty:          i.quantity,
-    selectedSize: i.size || 'M'
-  }))
+  console.log('[useCart] Datos brutos del backend:', cart)
+  return cart.map(i => {
+    const v = i.variant || {}
+    const p = v.product || {}
+    
+    // Cálculo de precio final (Bruto)
+    const basePrice = v.price_gross_override ?? p.price_gross ?? 0
+    const discount  = p.discount_percent || 0
+    const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
+
+    // Cálculo de precio final (Neto)
+    const baseNetPrice = v.price_net_override ?? p.price_net ?? 0
+    const finalNetPrice = +(baseNetPrice * (1 - discount / 100)).toFixed(2)
+
+    console.log(`[useCart] Item: ${p.name}, Neto: ${finalNetPrice}, Bruto: ${finalPrice}`)
+
+    return {
+      cartItemId:   i.id,
+      id:           i.product_id, 
+      parentId:     p.id,
+      name:         p.name,
+      price:        finalPrice,
+      priceNet:     finalNetPrice,
+      image:        v.images?.[0]?.url || null,
+      image_url:    v.images?.[0]?.url || null,
+      color:        v.color_name,
+      qty:          i.quantity,
+      selectedSize: i.size || 'M'
+    }
+  })
 }
 
 function showToast(msg) {
@@ -42,7 +61,7 @@ function showToast(msg) {
 // --- Acciones ---
 async function fetchCart() {
   const token = localStorage.getItem('token')
-  if (!token) return // invitado: el carrito vive solo en memoria
+  if (!token) return
   try {
     const { cart } = await cartApi.get()
     cartItems.value = formatCartFromBackend(cart)
@@ -52,49 +71,45 @@ async function fetchCart() {
 }
 
 async function addToCart(product) {
+  // Siempre usamos el ID de la variante como identificador principal en el carrito
+  const targetId = product.variant_id || product.id
+  
   const existing = cartItems.value.find(
-    i => i.id === product.id && i.selectedSize === product.selectedSize
+    i => i.id === targetId && i.selectedSize === product.selectedSize
   )
 
-  // Optimista: sumamos local primero
   if (existing) {
     existing.qty += 1
   } else {
-    cartItems.value.push({ ...product, qty: 1 })
+    // Aseguramos que el item en memoria tenga la estructura correcta
+    cartItems.value.push({
+      ...product,
+      id: targetId, // Forzamos que 'id' sea el de la variante
+      qty: 1
+    })
   }
 
-  // Si está logueado, sincroniza con backend
   const token = localStorage.getItem('token')
   if (token) {
     try {
       await cartApi.add({
-        product_id: product.id,
+        product_id: targetId,
         quantity:   1,
         size:       product.selectedSize
       })
-      // Refetch para obtener el cartItemId real del nuevo registro
-      const { cart } = await cartApi.get()
-      cartItems.value = formatCartFromBackend(cart)
+      // Refetch para sincronizar IDs de base de datos
+      await fetchCart()
     } catch (err) {
       console.error('Error añadiendo al carrito:', err)
-      showToast('No se pudo añadir. Reintenta.')
-      // Rollback
-      if (existing) existing.qty -= 1
-      else cartItems.value = cartItems.value.filter(
-        i => !(i.id === product.id && i.selectedSize === product.selectedSize)
-      )
-      return
+      showToast('Error al guardar en el servidor')
     }
   }
-
   showToast(`${product.name} añadido`)
 }
 
-async function removeFromCart(productId, size) {
-  const item = cartItems.value.find(
-    i => i.id === productId && i.selectedSize === size
-  )
+async function removeFromCart(item) {
   if (!item) return
+  const { id: productId, selectedSize: size } = item
 
   // Optimista
   cartItems.value = cartItems.value.filter(
@@ -122,7 +137,7 @@ async function updateQty(productId, size, delta) {
   const newQty = item.qty + delta
 
   if (newQty <= 0) {
-    await removeFromCart(productId, size)
+    await removeFromCart(item)
     return
   }
 
@@ -146,7 +161,7 @@ async function mergeGuestCart() {
   if (!cartItems.value.length) return
   try {
     await cartApi.merge(cartItems.value.map(i => ({
-      product_id: i.id,
+      product_id: i.variant_id || i.id,
       quantity:   i.qty,
       size:       i.selectedSize
     })))
@@ -156,14 +171,41 @@ async function mergeGuestCart() {
   }
 }
 
+async function clearCart() {
+  cartItems.value = []
+  localStorage.removeItem('cart')
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      await cartApi.clear()
+    } catch (err) {
+      console.error('Error vaciando carrito en backend:', err)
+    }
+  }
+}
+
 // --- Computeds ---
 const cartCount = computed(() =>
   cartItems.value.reduce((sum, i) => sum + i.qty, 0)
 )
 
 const cartSubtotal = computed(() =>
-  cartItems.value.reduce((sum, i) => sum + (i.price * i.qty), 0)
+  cartItems.value.reduce((sum, i) => {
+    const price = Number(i.price) || 0
+    const qty = Number(i.qty) || 0
+    return sum + (price * qty)
+  }, 0)
 )
+
+const cartNetTotal = computed(() => {
+  const total = cartItems.value.reduce((sum, i) => {
+    const pNet = Number(i.priceNet) || 0
+    const qty = Number(i.qty) || 0
+    return sum + (pNet * qty)
+  }, 0)
+  console.log('[useCart] Calculando Total Neto:', total, 'Items:', cartItems.value)
+  return total.toFixed(2)
+})
 
 // --- Composable público ---
 export function useCart() {
@@ -175,6 +217,7 @@ export function useCart() {
     toastVisible,
     cartCount,
     cartSubtotal,
+    cartNetTotal,
 
     // acciones
     fetchCart,
@@ -182,6 +225,7 @@ export function useCart() {
     removeFromCart,
     updateQty,
     mergeGuestCart,
+    clearCart,
     showToast,
   }
 }
