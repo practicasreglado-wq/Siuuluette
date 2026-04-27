@@ -97,7 +97,8 @@ fastify.decorate('authenticateAdmin', async (request, reply) => {
 })
 
 // 5. Routes
-await fastify.register(import('./routes/products.js'), { prefix: '/api/products' })
+await fastify.register(import('./routes/products.js'),    { prefix: '/api/products' })
+await fastify.register(import('./routes/collections.js'), { prefix: '/api/collections' })
 await fastify.register(import('./routes/drops.js'),    { prefix: '/api/drops' })
 await fastify.register(import('./routes/auth.js'),     { prefix: '/api/auth' })
 await fastify.register(import('./routes/cart.js'),      { prefix: '/api/cart' })

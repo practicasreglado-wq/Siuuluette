@@ -17,7 +17,7 @@
           v-for="cat in categories"
           :key="cat.id"
           class="cat-card"
-          :style="{ '--cat-img': `url(${cat.image})` }"
+          :style="{ '--cat-img': `url(${cat.image_url})` }"
           @click="$emit('category-select', cat.name)"
         >
           <!-- Hover shimmer line -->
@@ -39,11 +39,26 @@
 </template>
 
 <script>
-import { categories } from '../data/products.js'
+import { ref, onMounted } from 'vue'
+import { collectionsApi } from '../api/index.js'
+
 export default {
   name: 'CategoryGrid',
   emits: ['category-select'],
-  setup() { return { categories } }
+  setup() {
+    const categories = ref([])
+
+    onMounted(async () => {
+      try {
+        const data = await collectionsApi.getAll()
+        categories.value = data.collections || []
+      } catch (err) {
+        console.error('Error cargando colecciones:', err)
+      }
+    })
+
+    return { categories }
+  }
 }
 </script>
 
