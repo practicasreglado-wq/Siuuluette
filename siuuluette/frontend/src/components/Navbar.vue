@@ -19,10 +19,11 @@
 
       <!-- Primary Navigation (desktop) -->
       <nav class="navbar__nav" aria-label="Navegación principal">
-        <router-link :to="{ path: '/', hash: '#inicio' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'inicio' }" @click="goToSection($event, '#inicio')">Inicio</router-link>
-        <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'explora' }" @click="goToSection($event, '#explora')">Explora</router-link>
-        <router-link :to="{ path: '/', hash: '#drops' }" class="navbar__link navbar__link--accent" :class="{ 'navbar__link--active': activeSection === 'drops' }" @click="goToSection($event, '#drops')">Drops</router-link>
-        <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" :class="{ 'navbar__link--active': activeSection === 'nosotros' }" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
+        <router-link :to="{ path: '/', hash: '#inicio' }" class="navbar__link" @click="goToSection($event, '#inicio')">Inicio</router-link>
+        <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" @click="goToSection($event, '#explora')">Explora</router-link>
+        <router-link :to="{ path: '/', hash: '#ofertas' }" class="navbar__link navbar__link--accent" @click="goToSection($event, '#ofertas')">Descuentos</router-link>
+        <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
+        <router-link v-if="currentUser?.role === 'admin'" to="/admin/products" class="navbar__link navbar__link--admin">Admin</router-link>
       </nav>
 
       <!-- Actions -->
@@ -80,7 +81,7 @@
         <nav class="mobile-nav">
           <router-link :to="{ path: '/', hash: '#inicio' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#inicio')">Inicio</router-link>
           <router-link :to="{ path: '/', hash: '#explora' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#explora')">Explora</router-link>
-          <router-link :to="{ path: '/', hash: '#drops' }" class="mobile-nav__link mobile-nav__link--accent" @click="closeMenuAndScroll($event, '#drops')">Drops</router-link>
+          <router-link :to="{ path: '/', hash: '#ofertas' }" class="mobile-nav__link mobile-nav__link--accent" @click="closeMenuAndScroll($event, '#ofertas')">Descuentos</router-link>
           <router-link :to="{ path: '/', hash: '#nosotros' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#nosotros')">Nosotros</router-link>
           <button class="mobile-nav__link" @click="menuOpen = false; $emit('open-auth')">Mi cuenta</button>
         </nav>
@@ -100,44 +101,13 @@ export default {
   },
   data() {
     return {
-      menuOpen: false,
-      activeSection: 'inicio'
+      menuOpen: false
     }
   },
-  mounted() {
-    this.initScrollSpy()
-  },
   methods: {
-    initScrollSpy() {
-      const options = {
-        root: null,
-        rootMargin: '-20% 0px -70% 0px', // Detect when section is in top part of screen
-        threshold: 0
-      }
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            this.activeSection = entry.target.id
-          }
-        })
-      }, options)
-
-      const sections = ['inicio', 'drops', 'explora', 'nosotros']
-      sections.forEach(id => {
-        const el = document.getElementById(id)
-        if (el) observer.observe(el)
-      })
-    },
     handleUserClick() {
       this.$emit('open-auth')
     },
-    /**
-     * Si ya estamos en "/", hacemos scroll suave al id sin navegar
-     * (el router-link a la misma ruta no dispararía scrollBehavior).
-     * Si estamos en otra ruta (p. ej. /producto/:slug), dejamos que
-     * el router-link navegue y el scrollBehavior global haga el scroll.
-     */
     goToSection(event, hash) {
       this.$emit('nav-click')
       if (this.$route.path === '/') {
@@ -226,6 +196,19 @@ export default {
   color: var(--c-white);
   text-transform: uppercase;
   line-height: 1;
+  position: relative;
+  display: flex;
+  align-items: baseline;
+}
+
+.navbar__logo-text::after {
+  content: '®';
+  font-size: 0.8rem;
+  margin-left: 0.2rem;
+  font-weight: 400;
+  color: var(--c-light);
+  position: relative;
+  top: 0.25rem; /* Ajuste para bajarlo */
 }
 
 /* --- Desktop Nav --- */
@@ -257,16 +240,15 @@ export default {
   transition: width var(--t-medium) var(--ease-standard);
 }
 
-.navbar__link:hover::after,
-.navbar__link--active::after {
+.navbar__link:hover::after {
   width: 100%;
 }
 
-.navbar__link:hover,
-.navbar__link--active {
+.navbar__link:hover {
   color: var(--c-white);
 }
-.navbar__link--accent       { color: var(--c-gold); }
+.navbar__link--accent       { color: var(--c-accent-vibrant); font-weight: 600; }
+.navbar__link--admin        { color: var(--c-gold); font-weight: 600; }
 
 /* --- Actions --- */
 .navbar__actions {

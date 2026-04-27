@@ -21,9 +21,10 @@
           </div>
           <div v-else class="auth-tabs">
             <span v-if="view === 'profile'" class="tab-btn active">Mi Perfil</span>
-            <span v-else class="tab-btn active">Mis Pedidos</span>
+            <span v-else-if="view === 'orders'" class="tab-btn active">Mis Pedidos</span>
+            <span v-else class="tab-btn active">Mis Favoritos</span>
             
-            <button v-if="view === 'orders'" class="back-link-btn" @click="view = 'profile'">
+            <button v-if="view !== 'profile'" class="back-link-btn" @click="view = 'profile'">
               Volver
             </button>
           </div>
@@ -47,6 +48,9 @@
             <div class="profile-actions">
               <button class="profile-btn w-full" @click="fetchOrders">
                 Mis Pedidos
+              </button>
+              <button class="profile-btn w-full" @click="goToFavorites">
+                Mis Favoritos
               </button>
               <button class="profile-btn w-full logout-btn" @click="$emit('logout')">
                 Cerrar Sesión
@@ -77,16 +81,25 @@
                 
                 <div class="order-items">
                   <div v-for="item in order.order_items" :key="item.id" class="order-item">
-                    <img :src="item.products.image_url" :alt="item.products.name" class="item-thumb">
+                    <img :src="item.variant?.images?.[0]?.url || '/placeholder.jpg'" class="item-thumb">
                     <div class="item-details">
-                      <p class="item-name">{{ item.products.name }}</p>
-                      <p class="item-meta">Talla: {{ item.size }} | Cant: {{ item.quantity }}</p>
+                      <p class="item-name">{{ item.variant?.product?.name || 'Producto' }}</p>
+                      <p class="item-meta">
+                        {{ item.variant?.color_name ? `Color: ${item.variant.color_name} | ` : '' }}
+                        Talla: {{ item.size }} | {{ item.unit_price }}€
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <!-- BUY AGAIN BUTTON -->
+                <!-- FOOTER ACTIONS -->
                 <div class="order-card__footer">
+                  <button class="invoice-btn" @click="downloadInvoice(order.id)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Factura PDF
+                  </button>
                   <button class="buy-again-btn" @click="$emit('buy-again', order.order_items)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
@@ -94,7 +107,44 @@
                       <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
                       <path d="M3 21v-5h5"/>
                     </svg>
-                    Comprar de nuevo
+                    Repetir pedido
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- FAVORITES VIEW -->
+          <div v-else-if="currentUser && view === 'favorites'" class="favorites-view">
+            <div v-if="loadingFavorites" class="orders-loading">
+              <div class="spinner"></div>
+            </div>
+            
+            <div v-else-if="fullFavorites.length === 0" class="no-orders">
+              <p class="body-md">No tienes productos en favoritos.</p>
+              <button class="btn btn-outline btn-sm" @click="$emit('close')">Explorar Tienda</button>
+            </div>
+
+            <div v-else class="favorites-list">
+              <div v-for="fav in fullFavorites" :key="fav.product_id" class="favorite-card">
+                <div class="favorite-card__content">
+                  <img :src="fav.variant?.images?.[0]?.url || fav.products?.variants?.[0]?.images?.[0]?.url || '/placeholder.jpg'" class="item-thumb">
+                  <div class="item-details">
+                    <p class="item-name">{{ fav.products?.name }}</p>
+                    <p class="item-meta">
+                      {{ fav.variant?.color_name ? `${fav.variant.color_name} | ` : '' }}
+                      €{{ fav.products?.price_gross }}
+                    </p>
+                  </div>
+                </div>
+                
+                <div class="favorite-card__actions">
+                  <button class="buy-btn" @click="goToProduct(fav.products.slug, fav.variant?.color_name)">
+                    Comprar
+                  </button>
+                  <button class="remove-fav-btn" @click="toggleFavorite(fav.product_id)" title="Quitar de favoritos">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -173,7 +223,6 @@
             </div>
           </template>
         </div>
-        <div class="brand-bg">SIU</div>
       </div>
     </div>
   </Transition>
@@ -181,7 +230,9 @@
 
 <script>
 import { ref, reactive, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { authApi, checkoutApi } from '../api/index.js'
+import { useFavorites } from '../composables/useFavorites.js'
 import { loadStripe } from '@stripe/stripe-js'
 
 export default {
@@ -207,6 +258,29 @@ export default {
       username: '',
       phone: ''
     })
+
+    const router = useRouter()
+    const { fullFavorites, fetchFavorites: refreshFavs, toggleFavorite } = useFavorites()
+    const loadingFavorites = ref(false)
+
+    const goToFavorites = async () => {
+      view.value = 'favorites'
+      loadingFavorites.value = true
+      try {
+        await refreshFavs()
+      } finally {
+        loadingFavorites.value = false
+      }
+    }
+
+    const goToProduct = (slug, color) => {
+      emit('close')
+      router.push({ 
+        name: 'product-detail', 
+        params: { slug },
+        query: color ? { color } : {}
+      })
+    }
 
     const fetchOrders = async () => {
       view.value = 'orders'
@@ -273,9 +347,38 @@ export default {
       error.value = ''
     })
 
+    const downloadInvoice = async (orderId) => {
+      try {
+        const token = localStorage.getItem('token')
+        const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        
+        const res = await fetch(`${BASE}/api/checkout/orders/${orderId}/invoice`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (!res.ok) throw new Error('No se pudo generar la factura')
+        
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `Factura_Siuuluette_${orderId}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        alert(err.message)
+      }
+    }
+
     return {
       mode, view, form, loading, loadingOrders, error, isRegistered, orders, 
-      handleSubmit, resetToLogin, fetchOrders, formatDate
+      fullFavorites, loadingFavorites,
+      handleSubmit, resetToLogin, fetchOrders, formatDate,
+      goToFavorites, goToProduct, toggleFavorite, downloadInvoice
     }
   }
 }
@@ -340,9 +443,10 @@ export default {
 }
 
 .logout-btn {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   color: #ef4444;
+  font-weight: 600;
 }
 .logout-btn:hover {
   background: #ef4444;
@@ -466,7 +570,7 @@ export default {
   transition: color 0.3s;
 }
 
-.tab-btn.active { color: var(--c-gold); }
+.tab-btn.active { color: var(--c-accent-vibrant); }
 .tab-btn.active::after {
   content: '';
   position: absolute;
@@ -474,7 +578,8 @@ export default {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--c-gold);
+  background: var(--c-accent-vibrant);
+  box-shadow: 0 0 10px var(--c-accent-glow);
 }
 
 .close-btn {
@@ -553,18 +658,6 @@ export default {
   text-underline-offset: 4px;
 }
 .text-link:hover { color: var(--c-white); }
-
-.brand-bg {
-  position: absolute;
-  top: 50%;
-  right: -20px;
-  transform: translateY(-50%);
-  font-family: var(--font-display);
-  font-size: 10rem;
-  color: rgba(255, 255, 255, 0.02);
-  pointer-events: none;
-  z-index: -1;
-}
 
 /* Transitions */
 .auth-fade-enter-active,
@@ -647,6 +740,28 @@ export default {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: flex-end;
+  gap: 1rem;
+}
+
+.invoice-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #d4af37;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.invoice-btn:hover {
+  background: #d4af37;
+  color: #1c1917;
+  transform: translateY(-2px);
 }
 
 .buy-again-btn {
@@ -783,5 +898,87 @@ export default {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 1rem;
+}
+
+/* Favorites View Styles */
+.favorites-view {
+  max-height: 550px;
+  overflow-y: auto;
+  padding: 0.5rem 1rem 1rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-gold) transparent;
+}
+
+.favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.favorite-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.favorite-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(197, 163, 106, 0.3);
+  transform: translateX(4px);
+}
+
+.favorite-card__content {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.favorite-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.buy-btn {
+  background: var(--c-gold);
+  color: var(--c-black);
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buy-btn:hover {
+  background: #d4b47d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(197, 163, 106, 0.2);
+}
+
+.remove-fav-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.remove-fav-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
 }
 </style>

@@ -42,23 +42,24 @@
       <TransitionGroup name="cart-item" tag="div">
         <div
           v-for="item in cartItems"
-          :key="item.id"
+          :key="item.cartItemId || (item.id + item.selectedSize)"
           class="cart-item"
         >
           <img :src="item.image_url || item.image || '/placeholder.jpg'" :alt="item.name" class="cart-item__img" />
           <div class="cart-item__info">
             <span class="cart-item__cat body-sm">{{ item.category }}</span>
             <h3 class="cart-item__name">{{ item.name }}</h3>
-            <div class="cart-item__meta">
-              <span class="cart-item__size label">Talla: {{ item.selectedSize }}</span>
-              <span class="cart-item__price">€{{ item.price }}</span>
+            <div class="cart-item__details">
+              <span class="cart-item__tag" v-if="item.color">Color: {{ item.color }}</span>
+              <span class="cart-item__tag">Talla: {{ item.selectedSize }}</span>
             </div>
+            <span class="cart-item__price">€{{ item.price }}</span>
           </div>
           <div class="cart-item__controls">
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, -1)" aria-label="Quitar uno">−</button>
-            <span class="cart-item__qty">{{ item.qty ?? item.quantity }}</span>
+            <span class="cart-item__qty">{{ item.qty }}</span>
             <button class="qty-btn" @click="$emit('update-qty', item.id, item.selectedSize, 1)" aria-label="Añadir uno">+</button>
-            <button class="cart-item__remove" @click="$emit('remove-item', item.id, item.selectedSize)" aria-label="Eliminar">
+            <button class="cart-item__remove" @click="$emit('remove-item', item)" aria-label="Eliminar">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M18 6 6 18M6 6l12 12"/>
               </svg>
@@ -97,10 +98,14 @@ export default {
   },
   computed: {
     totalItems() {
-      return this.cartItems.reduce((sum, i) => sum + (i.qty ?? i.quantity ?? 0), 0)
+      return this.cartItems.reduce((sum, i) => sum + (Number(i.qty) || 0), 0)
     },
     subtotal() {
-      return this.cartItems.reduce((sum, i) => sum + i.price * (i.qty ?? i.quantity ?? 0), 0).toFixed(0)
+      return this.cartItems.reduce((sum, i) => {
+        const p = Number(i.price) || 0
+        const q = Number(i.qty) || 0
+        return sum + (p * q)
+      }, 0).toFixed(0)
     }
   }
 }
@@ -216,14 +221,33 @@ export default {
 .cart-item__info {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
-.cart-item__cat { font-size: 0.65rem; }
-.cart-item__name { font-size: 0.85rem; font-weight: 500; color: var(--c-white); line-height: 1.3; }
-.cart-item__meta { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.2rem; }
-.cart-item__size { font-size: 0.65rem; color: var(--c-gold); background: rgba(92, 82, 72, 0.12); padding: 0.1rem 0.4rem; border-radius: 4px; }
-.cart-item__price { font-size: 0.9rem; font-weight: 600; color: var(--c-off-white); }
+.cart-item__cat { font-size: 0.65rem; color: var(--c-grey); opacity: 0.7; }
+.cart-item__name { font-size: 0.85rem; font-weight: 500; color: var(--c-white); line-height: 1.2; }
+
+.cart-item__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.4rem 0;
+}
+
+.cart-item__tag {
+  font-size: 0.6rem;
+  color: var(--c-gold);
+  background: rgba(197, 163, 106, 0.08);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  border: 1px solid rgba(197, 163, 106, 0.15);
+}
+
+.cart-item__price { font-size: 0.95rem; font-weight: 600; color: var(--c-white); margin-top: 0.2rem; }
 
 .cart-item__controls {
   display: flex;

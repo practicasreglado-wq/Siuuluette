@@ -85,6 +85,17 @@ fastify.decorate('authenticate', async (request, reply) => {
   }
 })
 
+fastify.decorate('authenticateAdmin', async (request, reply) => {
+  try {
+    const user = await request.jwtVerify()
+    if (user.role !== 'admin') {
+      reply.status(403).send({ error: 'Acceso restringido: Se requiere rol de administrador' })
+    }
+  } catch (err) {
+    reply.status(401).send({ error: 'No autorizado' })
+  }
+})
+
 // 5. Routes
 await fastify.register(import('./routes/products.js'),    { prefix: '/api/products' })
 await fastify.register(import('./routes/collections.js'), { prefix: '/api/collections' })

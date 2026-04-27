@@ -6,14 +6,23 @@ const routes = [
     path: '/',
     name: 'home',
     component: () => import('../views/HomeView.vue'),
-    meta: { title: 'Siuuluette — Premium Sportswear & Lifestyle' }
+    meta: { title: 'Le Siuuluette® — Premium Sportswear & Lifestyle' }
   },
   {
     path: '/producto/:slug',
     name: 'product-detail',
     component: () => import('../views/ProductDetailView.vue'),
     props: true,
-    meta: { title: 'Producto — Siuuluette' }
+    meta: { title: 'Producto — Le Siuuluette®' }
+  },
+  {
+    path: '/admin/products',
+    name: 'admin-products',
+    component: () => import('../views/AdminProducts.vue'),
+    meta: { 
+      title: 'Panel Admin — Siuuluette®',
+      requiresAdmin: true 
+    }
   },
   // Catch-all: cualquier ruta no reconocida vuelve a la home
   {

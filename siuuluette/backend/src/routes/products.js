@@ -57,19 +57,14 @@ function isSizeAvailable(s) {
 function normalizeProduct(p) {
   if (!p) return null
 
-  // Filtrar variantes activas y ordenar
+  // 1. Mapeamos variantes (con seguridad)
   const variants = (p.variants || [])
     .filter(v => v.is_active !== false)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map(v => {
-      const prices = computePrices(p, v)
-
-      // Ordenar imágenes
-      const images = (v.images || [])
-        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      const vPrices = computePrices(p, v)
+      const images = (v.images || []).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
       const imageUrls = images.map(i => i.url)
-
-      // Ordenar tallas y marcar disponibilidad
       const sizes = (v.stock || [])
         .sort((a, b) => SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size))
         .map(s => ({
@@ -80,34 +75,30 @@ function normalizeProduct(p) {
           sku_code: s.sku_code,
           available: isSizeAvailable(s)
         }))
-      const sizeNames = sizes.map(s => s.size)
 
       return {
         id: v.id,
         color_name: v.color_name,
         color_hex: v.color_hex,
-        ...prices,
+        price_net_override: v.price_net_override,
+        price_gross_override: v.price_gross_override,
+        ...vPrices,
         primary_image: imageUrls[0] || null,
         secondary_image: imageUrls[1] || null,
-        images,
-        gallery: imageUrls,            // alias legacy
+        gallery: imageUrls,
         sizes,
-        size_names: sizeNames,         // array de strings ['S','M','L','XL']
+        size_names: sizes.map(s => s.size),
         in_stock: sizes.some(s => s.available),
-
-        // Alias legacy a nivel variante (por si algún componente lo usa así)
         image_url: imageUrls[0] || null,
-        image_secondary_url: imageUrls[1] || null,
-        price: prices.price_gross,
         color: v.color_name
       }
     })
 
-  // Defaults a nivel padre (lo que se ve en catálogo): primera variante
+  // 2. Extraemos defaults de la primera variante o del padre
   const firstVariant = variants[0] || {}
+  const prices = computePrices(p, firstVariant)
 
   return {
-    // === Modelo nuevo ===
     id: p.id,
     name: p.name,
     slug: p.slug,
@@ -119,21 +110,22 @@ function normalizeProduct(p) {
     size_guide: p.size_guide,
     discount_percent: p.discount_percent || 0,
 
-    // Precios base del padre
+    // Precios base
     price_net: p.price_net,
     price_gross: p.price_gross,
-
-    // Defaults para catálogo
-    default_image: firstVariant.primary_image,
-    default_color: firstVariant.color_name,
-    default_price_gross: firstVariant.price_gross ?? p.price_gross,
 
     variants,
     in_stock: variants.some(v => v.in_stock),
 
-    // === Compatibilidad con frontend actual (lee de la 1ª variante) ===
-    price: firstVariant.price_gross ?? p.price_gross,
-    originalPrice: firstVariant.original_price_gross ?? null,
+    // Defaults para catálogo
+    default_image: firstVariant.primary_image,
+    default_color: firstVariant.color_name,
+    default_price_gross: prices.price_gross,
+
+    // Compatibilidad frontend
+    price: prices.price_gross,
+    price_net: prices.price_net,
+    originalPrice: prices.original_price_gross,
     color: firstVariant.color_name ?? null,
     image_url: firstVariant.primary_image ?? null,
     image_secondary_url: firstVariant.secondary_image ?? null,
@@ -158,6 +150,24 @@ export default async function productsRoutes(fastify) {
 
     if (error) {
       request.log.error({ err: error }, 'Error listando productos')
+      return reply.status(500).send({ error: error.message })
+    }
+
+    const products = (data || []).map(normalizeProduct)
+    return { products }
+  })
+
+  // GET /api/products/admin — listar todos (incluyendo inactivos) para gestión
+  fastify.get('/admin', {
+    onRequest: [fastify.authenticateAdmin]
+  }, async (request, reply) => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(PRODUCT_SELECT)
+      .order('id', { ascending: true })
+
+    if (error) {
+      request.log.error({ err: error }, 'Error listando productos admin')
       return reply.status(500).send({ error: error.message })
     }
 
@@ -291,10 +301,8 @@ export default async function productsRoutes(fastify) {
   })
 
   // POST /api/products — crear producto (admin, JWT)
-  // Por ahora solo crea el padre. La creación de variantes/imágenes/stock
-  // se hará en endpoints separados o en un panel de admin.
   fastify.post('/', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticateAdmin],
     schema: {
       body: {
         type: 'object',
@@ -330,5 +338,41 @@ export default async function productsRoutes(fastify) {
 
     if (error) return reply.status(500).send({ error: error.message })
     return reply.status(201).send({ product: data })
+  })
+
+  // PATCH /api/products/:id — actualizar producto (admin)
+  fastify.patch('/:id', {
+    onRequest: [fastify.authenticateAdmin]
+  }, async (request, reply) => {
+    const { id } = request.params
+    const updates = request.body
+
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { product: data }
+  })
+
+  // PATCH /api/products/variants/:id — actualizar variante (admin)
+  fastify.patch('/variants/:id', {
+    onRequest: [fastify.authenticateAdmin]
+  }, async (request, reply) => {
+    const { id } = request.params
+    const updates = request.body
+
+    const { data, error } = await supabase
+      .from('product_variants')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) return reply.status(400).send({ error: error.message })
+    return { variant: data }
   })
 }
