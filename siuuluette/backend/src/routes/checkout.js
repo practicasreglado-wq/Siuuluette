@@ -1,5 +1,7 @@
 import Stripe from 'stripe'
 import { supabase } from '../db/supabase.js'
+import { generateInvoicePDF } from '../utils/invoice.js'
+import { PassThrough } from 'stream'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
@@ -196,5 +198,73 @@ export default async function checkoutRoutes(fastify) {
     }
 
     return { orders }
+  })
+
+  // GET /api/checkout/orders/:id/invoice — Descargar PDF de factura
+  fastify.get('/orders/:id/invoice', {
+    onRequest: [fastify.authenticate]
+  }, async (request, reply) => {
+    const { id } = request.params
+    const userId = request.user.id
+
+    try {
+      const orderId = Number(id)
+      console.log(`[INVOICE] Generando factura para pedido ID: ${orderId} (Original: ${id})`)
+
+      // 1. Obtener pedido con items
+      const { data: order, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (*)
+        `)
+        .eq('id', orderId)
+        .single()
+
+      if (error || !order) {
+        console.error('[INVOICE] Pedido no encontrado:', error)
+        return reply.status(404).send({ error: 'Pedido no encontrado' })
+      }
+
+      // 2. Seguridad: solo el dueño o un admin
+      if (order.user_id !== userId && request.user.role !== 'admin') {
+        return reply.status(403).send({ error: 'No tienes permiso para ver esta factura' })
+      }
+
+      // 3. Obtener el nombre del usuario por separado para evitar errores de JOIN
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', order.user_id)
+        .single()
+      
+      order.user = profile || { username: 'Cliente Siuuluette' }
+
+      // 4. Enriquecer items con nombres de productos
+      const variantIds = order.order_items.map(oi => oi.product_id)
+      const { data: variants } = await supabase
+        .from('product_variants')
+        .select(`
+          id, color_name,
+          product:products (name)
+        `)
+        .in('id', variantIds)
+
+      order.order_items.forEach(oi => {
+        oi.variant = variants?.find(v => v.id === oi.product_id)
+      })
+
+      // 5. Configurar headers y generar PDF vía Stream (Fastify compatible)
+      reply.type('application/pdf')
+      reply.header('Content-Disposition', `attachment; filename=Factura_Siuuluette_${id}.pdf`)
+      
+      const stream = new PassThrough()
+      generateInvoicePDF(order, stream)
+      
+      return stream
+    } catch (err) {
+      console.error('[INVOICE] Error crítico al generar PDF:', err)
+      return reply.status(500).send({ error: 'Error al generar la factura', details: err.message })
+    }
   })
 }

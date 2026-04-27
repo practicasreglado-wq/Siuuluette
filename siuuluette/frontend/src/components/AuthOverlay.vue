@@ -92,8 +92,14 @@
                   </div>
                 </div>
 
-                <!-- BUY AGAIN BUTTON -->
+                <!-- FOOTER ACTIONS -->
                 <div class="order-card__footer">
+                  <button class="invoice-btn" @click="downloadInvoice(order.id)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Factura PDF
+                  </button>
                   <button class="buy-again-btn" @click="$emit('buy-again', order.order_items)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
@@ -101,7 +107,7 @@
                       <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
                       <path d="M3 21v-5h5"/>
                     </svg>
-                    Comprar de nuevo
+                    Repetir pedido
                   </button>
                 </div>
               </div>
@@ -341,11 +347,38 @@ export default {
       error.value = ''
     })
 
+    const downloadInvoice = async (orderId) => {
+      try {
+        const token = localStorage.getItem('token')
+        const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        
+        const res = await fetch(`${BASE}/api/checkout/orders/${orderId}/invoice`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (!res.ok) throw new Error('No se pudo generar la factura')
+        
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `Factura_Siuuluette_${orderId}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        alert(err.message)
+      }
+    }
+
     return {
       mode, view, form, loading, loadingOrders, error, isRegistered, orders, 
       fullFavorites, loadingFavorites,
       handleSubmit, resetToLogin, fetchOrders, formatDate,
-      goToFavorites, goToProduct, toggleFavorite
+      goToFavorites, goToProduct, toggleFavorite, downloadInvoice
     }
   }
 }
@@ -707,6 +740,28 @@ export default {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: flex-end;
+  gap: 1rem;
+}
+
+.invoice-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #d4af37;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.invoice-btn:hover {
+  background: #d4af37;
+  color: #1c1917;
+  transform: translateY(-2px);
 }
 
 .buy-again-btn {
