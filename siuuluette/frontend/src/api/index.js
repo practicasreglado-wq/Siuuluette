@@ -23,6 +23,11 @@ async function request(path, options = {}) {
   return res.json()
 }
 
+// --- API de colecciones ---
+export const collectionsApi = {
+  getAll: () => request('/api/collections'),
+}
+
 // --- API de productos ---
 export const productsApi = {
   getAll:     ()      => request('/api/products'),
