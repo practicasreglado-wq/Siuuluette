@@ -21,7 +21,8 @@ async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers,
-    body
+    body,
+    credentials: 'include'
   })
 
   if (!res.ok) {
@@ -63,8 +64,16 @@ export const authApi = {
   login:    (creds) => request('/api/auth/login',    { method: 'POST', body: JSON.stringify(creds) }),
   register: (data)  => request('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   me:       ()      => request('/api/auth/me'),
-  updateProfile: (data) => request('/api/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }),
-  logout:   ()      => { localStorage.removeItem('token'); window.location.reload(); }
+  updateProfile: (data) => request('/api/auth/profile', { method: 'PATCH', body: data }),
+  recoverPassword: (email) => request('/api/auth/recover', { method: 'POST', body: { email } }),
+  updatePassword:  (password) => request('/api/auth/update-password', { method: 'POST', body: { password } }),
+  logout:   async () => { 
+    try { await request('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('token'); 
+    localStorage.removeItem('user');
+    window.location.reload(); 
+  }
 }
 
 // --- API de carrito ---

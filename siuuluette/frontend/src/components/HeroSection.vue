@@ -68,8 +68,6 @@ export default { name: 'HeroSection' }
   padding: 0 2rem 2rem;
   overflow: hidden;
   background: var(--c-black);
-  /* top padding for navbar */
-  padding-top: 70px;
 }
 
 /* --- Background --- */
@@ -237,7 +235,7 @@ export default { name: 'HeroSection' }
 /* --- Responsive --- */
 @media (max-width: 768px) {
   .hero {
-    padding: 70px 1.5rem 4rem;
+    padding: 0 1.5rem 4rem;
     align-items: flex-end;
   }
   .hero__isotipo-bg { width: 110%; right: -10%; opacity: 0.15; }

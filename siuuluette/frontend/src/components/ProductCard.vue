@@ -13,7 +13,10 @@
   >
     <article
       class="product-card"
-      :class="{ 'product-card--added': justAdded }"
+      :class="{ 
+        'product-card--added': justAdded,
+        'has-secondary': product.image_secondary_url || product.imageSecondary 
+      }"
       @click="navigate"
     >
 
@@ -162,14 +165,16 @@ export default {
   opacity: 0;
 }
 
-.product-card:hover .product-card__image--primary {
-  opacity: 0;
+.product-card:hover .product-card__image {
   transform: scale(1.06);
 }
 
-.product-card:hover .product-card__image--secondary {
+.product-card.has-secondary:hover .product-card__image--primary {
+  opacity: 0;
+}
+
+.product-card.has-secondary:hover .product-card__image--secondary {
   opacity: 1;
-  transform: scale(1.06);
 }
 
 /* Badge */
@@ -178,27 +183,6 @@ export default {
   top: 12px;
   left: 12px;
   z-index: 2;
-}
-
-/* Info */
-.product-card__info {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  transition: background var(--t-fast), border-color var(--t-fast);
-  cursor: pointer;
-}
-
-.product-card__size:hover,
-.product-card__size.is-selected {
-  background: var(--c-gold) !important;
-  color: var(--c-black) !important;
-  border-color: var(--c-gold) !important;
-  transform: scale(1.1);
 }
 
 /* Info */

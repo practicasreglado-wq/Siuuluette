@@ -24,6 +24,12 @@ const routes = [
       requiresAdmin: true 
     }
   },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('../views/ResetPasswordView.vue'),
+    meta: { title: 'Restablecer Contraseña — Le Siuuluette®' }
+  },
   // Catch-all: cualquier ruta no reconocida vuelve a la home
   {
     path: '/:pathMatch(.*)*',

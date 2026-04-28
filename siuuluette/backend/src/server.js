@@ -2,7 +2,10 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import cookie from '@fastify/cookie'
 import jwt from '@fastify/jwt'
+import helmet from '@fastify/helmet'
+import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import path from 'path'
@@ -43,6 +46,35 @@ await fastify.register(cors, {
 
 await fastify.register(jwt, {
   secret: process.env.JWT_SECRET,
+  cookie: {
+    cookieName: 'token',
+    signed: false
+  }
+})
+
+await fastify.register(cookie)
+
+// 1.5 Security: Helmet & Rate Limit
+await fastify.register(helmet, {
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+      frameSrc: ["'self'", "https://js.stripe.com"],
+      connectSrc: ["'self'", "https://api.stripe.com", "https://*.supabase.co"],
+      imgSrc: ["'self'", "data:", "https://*.supabase.co", "https://*.stripe.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+})
+
+await fastify.register(rateLimit, {
+  max: 1000,
+  timeWindow: '1 minute',
+  errorResponseBuilder: (request, context) => ({
+    error: 'Demasiadas peticiones',
+    message: `Has superado el límite de ${context.max} peticiones por minuto. Inténtalo más tarde.`
+  })
 })
 
 // 2. Swagger Specification 

@@ -168,11 +168,37 @@
               </svg>
               <span>{{ message }}</span>
             </div>
-            <h2 class="display-sm">{{ mode === 'login' ? 'Bienvenido de nuevo' : 'Únete a Siuuluette' }}</h2>
+            <h2 class="display-sm">
+              {{ mode === 'login' ? 'Bienvenido de nuevo' : (mode === 'forgot' ? 'Recuperar acceso' : 'Únete a Siuuluette') }}
+            </h2>
             <p class="body-sm subtitle">
-              {{ mode === 'login' ? 'Accede a tu cuenta para gestionar tus pedidos.' : 'Crea tu perfil para una experiencia personalizada.' }}
+              {{ mode === 'login' ? 'Accede a tu cuenta para gestionar tus pedidos.' : (mode === 'forgot' ? 'Introduce tu email para recuperar tu acceso.' : 'Crea tu perfil para una experiencia personalizada.') }}
             </p>
-            <form @submit.prevent="handleSubmit" class="auth-form">
+            
+            <!-- FORGOT PASSWORD FORM -->
+            <form v-if="mode === 'forgot'" @submit.prevent="handleRecover" class="auth-form">
+              <div class="form-group">
+                <label class="label-xs">Email de recuperación</label>
+                <input 
+                  v-model="form.email" 
+                  type="email" 
+                  placeholder="tu@email.com" 
+                  required 
+                  class="form-input"
+                >
+              </div>
+              <div v-if="error" class="error-msg">{{ error }}</div>
+              <div v-if="message" class="success-msg">{{ message }}</div>
+              <button type="submit" class="btn btn-primary w-full" :disabled="loading">
+                <span v-if="loading" class="loader"></span>
+                <span v-else>Enviar instrucciones</span>
+              </button>
+              <button type="button" class="text-link label-xs" @click="mode = 'login'">
+                Volver al inicio de sesión
+              </button>
+            </form>
+
+            <form v-else @submit.prevent="handleSubmit" class="auth-form">
               <div v-if="mode === 'register'" class="form-group">
                 <label class="label-xs">Nombre de usuario</label>
                 <input 
@@ -219,7 +245,7 @@
               </button>
             </form>
             <div class="auth-footer" v-if="mode === 'login'">
-              <button class="text-link label-xs">¿Has olvidado tu contraseña?</button>
+              <button class="text-link label-xs" @click="mode = 'forgot'">¿Has olvidado tu contraseña?</button>
             </div>
           </template>
         </div>
@@ -314,6 +340,8 @@ export default {
             email: form.email, 
             password: form.password 
           })
+          // El token se guarda automáticamente en la cookie HttpOnly por el backend
+          localStorage.setItem('isLoggedIn', 'true')
           localStorage.setItem('token', data.token)
           emit('login-success', data.user)
           emit('close')
@@ -321,7 +349,7 @@ export default {
           const data = await authApi.register({ ...form })
           
           if (data.token) {
-            // Auto-login si no hace falta confirmar email
+            localStorage.setItem('isLoggedIn', 'true')
             localStorage.setItem('token', data.token)
             emit('login-success', data.user)
             emit('close')
@@ -332,6 +360,20 @@ export default {
         }
       } catch (err) {
         error.value = err.message || 'Ocurrió un error en la autenticación'
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const handleRecover = async () => {
+      loading.value = true
+      error.value = ''
+      try {
+        await authApi.recoverPassword(form.email)
+        emit('close')
+        alert('Se han enviado instrucciones a tu correo electrónico.')
+      } catch (err) {
+        error.value = err.message || 'Error al enviar el correo de recuperación'
       } finally {
         loading.value = false
       }
@@ -353,9 +395,7 @@ export default {
         const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
         
         const res = await fetch(`${BASE}/api/checkout/orders/${orderId}/invoice`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          credentials: 'include'
         })
         
         if (!res.ok) throw new Error('No se pudo generar la factura')
@@ -377,7 +417,7 @@ export default {
     return {
       mode, view, form, loading, loadingOrders, error, isRegistered, orders, 
       fullFavorites, loadingFavorites,
-      handleSubmit, resetToLogin, fetchOrders, formatDate,
+      handleSubmit, handleRecover, resetToLogin, fetchOrders, formatDate,
       goToFavorites, goToProduct, toggleFavorite, downloadInvoice
     }
   }
@@ -657,7 +697,7 @@ export default {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.text-link:hover { color: var(--c-white); }
+.text-link:hover { color: var(--c-accent-vibrant); }
 
 /* Transitions */
 .auth-fade-enter-active,
