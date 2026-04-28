@@ -49,10 +49,21 @@ export default async function authRoutes(fastify) {
       })
     }
 
+    // 2. Set Cookie if token generated
+    if (token) {
+      reply.setCookie('token', token, {
+        path: '/',
+        httpOnly: true,
+        secure: true, // Requerido para SameSite=None
+        sameSite: 'none',
+        maxAge: 30 * 24 * 60 * 60 // 30 días
+      })
+    }
+    
     return { 
       message: 'Usuario registrado.',
       user: { ...authData.user, username, phone: phone || '', shipping_address: null },
-      token: token
+      token: token // Enviamos el token todavía por compatibilidad mientras migramos el frontend
     }
 
     return { 
@@ -118,6 +129,15 @@ export default async function authRoutes(fastify) {
       role: profile?.role || 'user'
     })
 
+    // 4. Set Cookie
+    reply.setCookie('token', token, {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 30 * 24 * 60 * 60 // 30 días
+    })
+
     return { 
       user: { ...data.user, ...profile, username: userUsername }, 
       token 
@@ -169,5 +189,58 @@ export default async function authRoutes(fastify) {
     }
 
     return { message: 'Perfil actualizado', profile: data }
+  })
+
+  // POST /api/auth/recover — Solicitar recuperación de contraseña
+  fastify.post('/recover', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['email'],
+        properties: { email: { type: 'string', format: 'email' } }
+      }
+    }
+  }, async (request, reply) => {
+    const { email } = request.body
+    const redirectTo = `${request.headers.origin}/reset-password`
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+    
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Correo de recuperación enviado' }
+  })
+
+  // POST /api/auth/update-password — Establecer nueva contraseña (vía token)
+  fastify.post('/update-password', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      body: {
+        type: 'object',
+        required: ['password'],
+        properties: { password: { type: 'string', minLength: 6 } }
+      }
+    }
+  }, async (request, reply) => {
+    const { password } = request.body
+    const userId = request.user.id
+    
+    // Al usar la Service Role Key, debemos usar la API de admin para actualizar por ID
+    const { error } = await supabase.auth.admin.updateUserById(userId, {
+      password: password
+    })
+    
+    if (error) return reply.status(400).send({ error: error.message })
+    return { message: 'Contraseña actualizada con éxito' }
+  })
+
+  // POST /api/auth/logout — Cerrar sesión
+  fastify.post('/logout', async (request, reply) => {
+    reply.clearCookie('token', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    })
+    return { message: 'Sesión cerrada' }
   })
 }

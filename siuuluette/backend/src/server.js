@@ -2,6 +2,7 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import cookie from '@fastify/cookie'
 import jwt from '@fastify/jwt'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
@@ -45,7 +46,13 @@ await fastify.register(cors, {
 
 await fastify.register(jwt, {
   secret: process.env.JWT_SECRET,
+  cookie: {
+    cookieName: 'token',
+    signed: false
+  }
 })
+
+await fastify.register(cookie)
 
 // 1.5 Security: Helmet & Rate Limit
 await fastify.register(helmet, {
@@ -62,7 +69,7 @@ await fastify.register(helmet, {
 })
 
 await fastify.register(rateLimit, {
-  max: 100,
+  max: 1000,
   timeWindow: '1 minute',
   errorResponseBuilder: (request, context) => ({
     error: 'Demasiadas peticiones',

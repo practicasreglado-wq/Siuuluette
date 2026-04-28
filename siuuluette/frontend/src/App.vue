@@ -138,8 +138,8 @@ export default {
     const isSuccessOpen = ref(false)
 
     async function checkAuth() {
-      const token = localStorage.getItem('token')
-      if (!token) return
+      // Usamos 'isLoggedIn' como pista para evitar errores 401 innecesarios en la consola
+      if (localStorage.getItem('isLoggedIn') !== 'true') return
 
       try {
         const data = await authApi.me()
@@ -147,6 +147,8 @@ export default {
         await mergeGuestCart()
         await fetchCart()
       } catch (err) {
+        // Si falla (ej: 401), nos aseguramos de limpiar rastros
+        localStorage.removeItem('isLoggedIn')
         localStorage.removeItem('token')
         currentUser.value = null
       }
