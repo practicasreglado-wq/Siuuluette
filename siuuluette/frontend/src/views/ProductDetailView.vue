@@ -453,10 +453,7 @@ export default {
       zoomActive.value = false
 
       try {
-        console.log('[PDP] Cargando slug:', slug)
         const data = await productsApi.getBySlug(slug)
-        console.log('[PDP] Datos recibidos:', data)
-        
         if (!data || !data.product) {
           throw new Error('El servidor no ha devuelto los datos del producto')
         }
@@ -1051,7 +1048,11 @@ export default {
 }
 
 /* RELATED */
-.pdp__related { margin-top: 4rem; }
+.pdp__related { 
+  margin-top: 6rem;
+  padding-top: 4rem;
+  border-top: 1px solid rgba(92, 82, 72, 0.15);
+}
 
 .pdp__related-title {
   font-family: var(--font-display);
@@ -1065,8 +1066,9 @@ export default {
 
 .pdp__related-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 320px));
+  gap: 2.5rem;
+  justify-content: center;
 }
 
 /* RESPONSIVE */

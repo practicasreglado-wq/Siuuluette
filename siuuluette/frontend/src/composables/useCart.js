@@ -20,7 +20,6 @@ const toastVisible = ref(false)
 
 // --- Helpers ---
 function formatCartFromBackend(cart) {
-  console.log('[useCart] Datos brutos del backend:', cart)
   return cart.map(i => {
     const v = i.variant || {}
     const p = v.product || {}
@@ -34,7 +33,6 @@ function formatCartFromBackend(cart) {
     const baseNetPrice = v.price_net_override ?? p.price_net ?? 0
     const finalNetPrice = +(baseNetPrice * (1 - discount / 100)).toFixed(2)
 
-    console.log(`[useCart] Item: ${p.name}, Neto: ${finalNetPrice}, Bruto: ${finalPrice}`)
 
     return {
       cartItemId:   i.id,
@@ -203,7 +201,6 @@ const cartNetTotal = computed(() => {
     const qty = Number(i.qty) || 0
     return sum + (pNet * qty)
   }, 0)
-  console.log('[useCart] Calculando Total Neto:', total, 'Items:', cartItems.value)
   return total.toFixed(2)
 })
 

@@ -97,7 +97,7 @@ export default async function authRoutes(fastify) {
       const newProfile = {
         id: data.user.id,
         username: data.user.user_metadata?.username || email.split('@')[0],
-        role: 'admin'
+        role: 'user'
       }
       const { data: created } = await supabase
         .from('profiles')
@@ -115,7 +115,7 @@ export default async function authRoutes(fastify) {
       id: data.user.id, 
       email: data.user.email,
       username: userUsername,
-      role: profile?.role || 'admin'
+      role: profile?.role || 'user'
     })
 
     return { 
