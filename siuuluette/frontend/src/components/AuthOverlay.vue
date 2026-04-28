@@ -697,7 +697,7 @@ export default {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.text-link:hover { color: var(--c-white); }
+.text-link:hover { color: var(--c-accent-vibrant); }
 
 /* Transitions */
 .auth-fade-enter-active,
