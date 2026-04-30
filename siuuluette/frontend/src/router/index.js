@@ -30,6 +30,30 @@ const routes = [
     component: () => import('../views/ResetPasswordView.vue'),
     meta: { title: 'Restablecer Contraseña — Le Siuuluette®' }
   },
+  {
+    path: '/aviso-legal',
+    name: 'legal-notice',
+    component: () => import('../views/LegalNotice.vue'),
+    meta: { title: 'Aviso Legal — Le Siuuluette®' }
+  },
+  {
+    path: '/privacidad',
+    name: 'privacy-policy',
+    component: () => import('../views/PrivacyPolicy.vue'),
+    meta: { title: 'Política de Privacidad — Le Siuuluette®' }
+  },
+  {
+    path: '/terminos',
+    name: 'terms-conditions',
+    component: () => import('../views/TermsConditions.vue'),
+    meta: { title: 'Términos y Condiciones — Le Siuuluette®' }
+  },
+  {
+    path: '/cookies',
+    name: 'cookies-policy',
+    component: () => import('../views/CookiesPolicy.vue'),
+    meta: { title: 'Política de Cookies — Le Siuuluette®' }
+  },
   // Catch-all: cualquier ruta no reconocida vuelve a la home
   {
     path: '/:pathMatch(.*)*',

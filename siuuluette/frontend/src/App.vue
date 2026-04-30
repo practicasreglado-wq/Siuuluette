@@ -45,6 +45,8 @@
       @close="isSuccessOpen = false"
     />
 
+    <CookieBanner />
+
     <Transition name="slide-right">
       <CartSidebar
         v-if="isCartOpen"
@@ -82,6 +84,7 @@ import CartSidebar from './components/CartSidebar.vue'
 import AuthOverlay from './components/AuthOverlay.vue'
 import CheckoutOverlay from './components/CheckoutOverlay.vue'
 import SuccessOverlay from './components/SuccessOverlay.vue'
+import CookieBanner from './components/CookieBanner.vue'
 
 export default {
   name: 'App',
@@ -91,7 +94,8 @@ export default {
     CartSidebar,
     AuthOverlay,
     CheckoutOverlay,
-    SuccessOverlay
+    SuccessOverlay,
+    CookieBanner
   },
   setup() {
     const {

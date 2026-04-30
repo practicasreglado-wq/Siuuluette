@@ -67,8 +67,10 @@
           © {{ year }} Siuuluette Brand. Todos los derechos reservados.
         </p>
         <div class="footer__legal">
-          <a href="#" class="footer__legal-link">Términos, Privacidad y Accesibilidad</a>
-          <a href="#" class="footer__legal-link">Cookies</a>
+          <router-link to="/terminos" class="footer__legal-link">Términos</router-link>
+          <router-link to="/privacidad" class="footer__legal-link">Privacidad</router-link>
+          <router-link to="/aviso-legal" class="footer__legal-link">Aviso Legal</router-link>
+          <router-link to="/cookies" class="footer__legal-link">Cookies</router-link>
         </div>
 
       </div>
