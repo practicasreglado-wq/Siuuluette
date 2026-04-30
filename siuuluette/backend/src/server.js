@@ -136,6 +136,7 @@ await fastify.register(import('./routes/auth.js'),     { prefix: '/api/auth' })
 await fastify.register(import('./routes/cart.js'),      { prefix: '/api/cart' })
 await fastify.register(import('./routes/favorites.js'), { prefix: '/api/favorites' })
 await fastify.register(import('./routes/checkout.js'),  { prefix: '/api/checkout' })
+await fastify.register(import('./routes/admin.js'),     { prefix: '/api/admin' })
 
 fastify.get('/', async (request, reply) => {
   reply.type('text/html').send('<h1>Siuuluette API is running</h1><p>Documentation at <a href="/documentation/">/documentation/</a></p>')

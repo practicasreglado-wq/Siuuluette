@@ -96,3 +96,10 @@ export const checkoutApi = {
   confirmOrder: (data) => request('/api/checkout/confirm', { method: 'POST', body: JSON.stringify(data) }),
   getHistory:   ()     => request('/api/checkout/orders'),
 }
+
+// --- API de administración (Solo Admin) ---
+export const adminApi = {
+  getOrders:    ()          => request('/api/admin/orders'),
+  updateOrder:  (id, status) => request(`/api/admin/orders/${id}`, { method: 'PATCH', body: { status } }),
+  getInvoiceUrl:(id)         => `${BASE}/api/checkout/orders/${id}/invoice`
+}

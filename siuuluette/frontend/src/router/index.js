@@ -16,6 +16,12 @@ const routes = [
     meta: { title: 'Producto — Le Siuuluette®' }
   },
   {
+    path: '/admin/orders',
+    name: 'admin-orders',
+    component: () => import('../views/AdminOrders.vue'),
+    meta: { title: 'Gestión de Pedidos — Le Siuuluette®' }
+  },
+  {
     path: '/admin/products',
     name: 'admin-products',
     component: () => import('../views/AdminProducts.vue'),
