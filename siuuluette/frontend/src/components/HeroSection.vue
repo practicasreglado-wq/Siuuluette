@@ -245,4 +245,5 @@ export default { name: 'HeroSection' }
   .hero__ctas { flex-direction: column; }
   .hero__ctas .btn { width: 100%; }
 }
+
 </style>

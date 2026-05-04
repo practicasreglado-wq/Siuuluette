@@ -73,7 +73,7 @@
               <div v-for="order in orders" :key="order.id" class="order-card">
                 <div class="order-card__header">
                   <div class="order-info">
-                    <span class="label-xs">PEDIDO #{{ order.id }}</span>
+                    <span class="label-xs">PEDIDO</span>
                     <span class="order-date">{{ formatDate(order.created_at) }}</span>
                   </div>
                   <span class="order-total">€{{ order.total_amount }}</span>
