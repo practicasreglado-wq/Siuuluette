@@ -213,7 +213,31 @@ export default async function authRoutes(fastify) {
 
   // POST /api/auth/update-password — Establecer nueva contraseña (vía token)
   fastify.post('/update-password', {
-    onRequest: [fastify.authenticate],
+    onRequest: async (request, reply) => {
+      // 1. Intentar verificar con el JWT interno del backend
+      try {
+        await request.jwtVerify()
+      } catch (err) {
+        // 2. Si falla, podría ser un token de recuperación de Supabase
+        const authHeader = request.headers.authorization
+        const token = authHeader ? authHeader.split(' ')[1] : request.cookies.token
+        
+        if (!token) {
+          return reply.status(401).send({ error: 'No autorizado' })
+        }
+
+        // Validar el token directamente con Supabase (vía Service Role Key)
+        const { data, error } = await supabase.auth.getUser(token)
+        
+        if (error || !data.user) {
+          console.error('Error validando token de Supabase:', error)
+          return reply.status(401).send({ error: 'No autorizado o token de recuperación expirado' })
+        }
+
+        // Inyectar el usuario en el request para que el handler lo use
+        request.user = data.user
+      }
+    },
     schema: {
       body: {
         type: 'object',

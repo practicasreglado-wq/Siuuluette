@@ -24,6 +24,19 @@ export default async function adminRoutes(fastify) {
 
       if (error) throw error
 
+      // Enriquecer con perfiles de usuario manualmente (para evitar error de relación FK)
+      const userIds = [...new Set(orders.map(o => o.user_id).filter(Boolean))]
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', userIds)
+
+        orders.forEach(order => {
+          order.profile = profiles?.find(p => p.id === order.user_id) || null
+        })
+      }
+
       return { orders }
     } catch (err) {
       fastify.log.error(err)

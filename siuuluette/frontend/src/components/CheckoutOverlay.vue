@@ -200,7 +200,11 @@ export default {
         } else if (paymentIntent.status === 'succeeded') {
           const confirmRes = await checkoutApi.confirmOrder({
             paymentIntentId: paymentIntent.id,
-            shippingAddress: value.address,
+            shippingAddress: {
+              ...value.address,
+              name: value.name || props.currentUser?.username || '',
+              email: props.currentUser?.email || ''
+            },
             items: props.items,
             totalAmount: props.total
           })

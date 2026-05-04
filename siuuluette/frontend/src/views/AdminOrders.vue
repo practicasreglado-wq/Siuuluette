@@ -65,10 +65,13 @@
               <td class="td-id">#{{ order.id }}</td>
               <td class="td-date">{{ formatDate(order.created_at) }}</td>
               <td class="td-customer">
-                <div class="customer-info" v-if="order.shipping_address">
-                  <!-- Parseamos el JSON de shipping_address para sacar el nombre -->
-                  <span class="customer-name">{{ parseShipping(order.shipping_address).name || 'Invitado' }}</span>
-                  <span class="customer-email">{{ parseShipping(order.shipping_address).email || '-' }}</span>
+                <div class="customer-info">
+                  <span class="customer-name">
+                    {{ order.profile?.username || parseShipping(order.shipping_address).name || 'Invitado' }}
+                  </span>
+                  <span class="customer-email">
+                    {{ parseShipping(order.shipping_address).email || '-' }}
+                  </span>
                 </div>
               </td>
               <td class="td-total">{{ order.total_amount.toFixed(2) }}€</td>
