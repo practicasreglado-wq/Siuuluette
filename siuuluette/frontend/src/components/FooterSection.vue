@@ -1,7 +1,7 @@
 <template>
   <!-- ==========================================
        SIUULUETTE — Footer Section
-       Full footer with links, social, newsletter mini
+       Redesigned premium footer - Compact & Refined
        ========================================== -->
   <footer class="footer">
 
@@ -14,45 +14,40 @@
       </div>
     </div>
 
-    <!-- Main Footer -->
+    <!-- Highlights Bar -->
+    <div class="footer__highlights">
+      <div class="footer__highlights-inner">
+        <div v-for="(item, idx) in highlights" :key="idx" class="highlight-item">
+          <component :is="item.icon" class="highlight-icon" />
+          <span class="highlight-text">{{ item.text }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Footer Content -->
     <div class="footer__main">
-      <div class="footer__inner">
-
-        <!-- Brand Column -->
-        <div class="footer__brand">
-          <div class="footer__logo">
-            <img src="/Siu_white.png" alt="Siuuluette" class="footer__logo-icon" />
-            <span class="footer__logo-text">Le Siuuluette</span>
+      <div class="footer__grid">
+        
+        <!-- Brand & Social Column -->
+        <div class="footer__brand-col">
+          <div class="footer__large-logo">
+            <img src="/img/Logotipo_f.png" alt="Le Siuuluette" class="brand-logo-img" />
           </div>
-          <p class="footer__tagline">
-            No sigas tendencias.<br />Créalas.
-          </p>
-
+          
+          <div class="footer__social-links">
+            <a v-for="social in socials" :key="social.name" :href="social.url" class="social-link" target="_blank" rel="noopener">
+              <component :is="social.icon" class="social-icon-svg" />
+              <span class="social-name">{{ social.name }}</span>
+            </a>
+          </div>
         </div>
 
         <!-- Links Columns -->
-        <div
-          v-for="col in linkColumns"
-          :key="col.title"
-          class="footer__col"
-        >
-          <h3 class="footer__col-title">{{ col.title }}</h3>
-          <ul class="footer__links">
+        <div v-for="col in columns" :key="col.title" class="footer__links-col">
+          <h4 class="col-title">{{ col.title }}</h4>
+          <ul class="col-list">
             <li v-for="link in col.links" :key="link.label">
-              <a :href="link.href" class="footer__link">{{ link.label }}</a>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Contact -->
-        <div class="footer__col">
-          <h3 class="footer__col-title">Contacto</h3>
-          <ul class="footer__links">
-            <li>
-              <a href="mailto:hola@lesiuuluette.com" class="footer__link">hola@lesiuuluette.com</a>
-            </li>
-            <li>
-              <a href="tel:+34000000000" class="footer__link">+34 000 000 000</a>
+              <a :href="link.href" class="footer-link">{{ link.label }}</a>
             </li>
           </ul>
         </div>
@@ -63,272 +58,297 @@
     <!-- Bottom Bar -->
     <div class="footer__bottom">
       <div class="footer__bottom-inner">
-        <p class="footer__copyright">
-          © {{ year }} Siuuluette Brand. Todos los derechos reservados.
-        </p>
-        <div class="footer__legal">
-          <router-link to="/terminos" class="footer__legal-link">Términos</router-link>
-          <router-link to="/privacidad" class="footer__legal-link">Privacidad</router-link>
-          <router-link to="/aviso-legal" class="footer__legal-link">Aviso Legal</router-link>
-          <router-link to="/cookies" class="footer__legal-link">Cookies</router-link>
+        <div class="footer__copyright">
+          © {{ year }} SIUULUETTE BRAND. TODOS LOS DERECHOS RESERVADOS.
         </div>
-
       </div>
     </div>
 
   </footer>
 </template>
 
-<script>
-export default {
-  name: 'FooterSection',
-  data() {
-    return {
-      year: new Date().getFullYear(),
-      socials: [],
-      linkColumns: [
-        {
-          title: 'Navegación',
-          links: [
-            { label: 'Inicio', href: '#inicio' },
-            { label: 'Explora', href: '#explora' },
-            { label: 'Descuentos', href: '#ofertas' },
-            { label: 'Nosotros', href: '#nosotros' },
-          ],
-        },
-      ],
-    }
+<script setup>
+import { ref, defineComponent, h } from 'vue';
+
+const year = new Date().getFullYear();
+
+// Simple SVG Icons as components
+const IconHelp = defineComponent({
+  render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('circle', { cx: '12', cy: '12', r: '10' }),
+    h('path', { d: 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3' }),
+    h('line', { x1: '12', y1: '17', x2: '12.01', y2: '17' })
+  ])
+});
+
+const IconShipping = defineComponent({
+  render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('rect', { x: '1', y: '3', width: '15', height: '13' }),
+    h('polygon', { points: '16 8 20 8 23 11 23 16 16 16 16 8' }),
+    h('circle', { cx: '5.5', cy: '18.5', r: '2.5' }),
+    h('circle', { cx: '18.5', cy: '18.5', r: '2.5' })
+  ])
+});
+
+const IconReturns = defineComponent({
+  render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('path', { d: 'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8' }),
+    h('path', { d: 'M3 3v5h5' })
+  ])
+});
+
+const IconSecurity = defineComponent({
+  render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('rect', { x: '3', y: '11', width: '18', height: '11', rx: '2', ry: '2' }),
+    h('path', { d: 'M7 11V7a5 5 0 0 1 10 0v4' })
+  ])
+});
+
+const IconInstagram = defineComponent({
+  render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('rect', { x: '2', y: '2', width: '20', height: '20', rx: '5', ry: '5' }),
+    h('path', { d: 'M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z' }),
+    h('line', { x1: '17.5', y1: '6.5', x2: '17.51', y2: '6.5' })
+  ])
+});
+
+const IconTikTok = defineComponent({
+  render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('path', { d: 'M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5' })
+  ])
+});
+
+const IconYouTube = defineComponent({
+  render: () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('path', { d: 'M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z' }),
+    h('polygon', { points: '9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02' })
+  ])
+});
+
+const highlights = [
+  { text: 'Resolvemos tus dudas', icon: IconHelp },
+  { text: 'Entrega gratis a partir de 100€', icon: IconShipping },
+  { text: 'Devoluciones gratis en 30 días', icon: IconReturns },
+  { text: 'Pago 100% seguro', icon: IconSecurity },
+];
+
+const socials = [
+  { name: 'Instagram', url: '#', icon: IconInstagram },
+  { name: 'TikTok', url: '#', icon: IconTikTok },
+  { name: 'YouTube', url: '#', icon: IconYouTube },
+];
+
+const columns = [
+  {
+    title: 'AYUDA',
+    links: [
+      { label: 'FAQs', href: '/ayuda/faqs' },
+      { label: 'Contacto', href: '/ayuda/contacto' },
+      { label: 'Envíos', href: '/ayuda/envios' },
+      { label: 'Devoluciones', href: '/ayuda/devoluciones' },
+      { label: 'Seguimiento de pedido', href: '/ayuda/seguimiento' },
+    ]
   },
-  methods: {}
-}
+  {
+    title: 'LEGAL',
+    links: [
+      { label: 'Aviso Legal', href: '/aviso-legal' },
+      { label: 'Privacidad', href: '/privacidad' },
+      { label: 'Cookies', href: '/cookies' },
+      { label: 'Condiciones Generales', href: '/terminos' },
+      { label: 'Marca Registrada', href: '/marca-registrada' },
+    ]
+  },
+  {
+    title: 'COMUNIDAD',
+    links: [
+      { label: 'Lista VIP', href: '/lista-vip' },
+      { label: 'Sostenibilidad', href: '/sostenibilidad' },
+    ]
+  }
+];
 </script>
 
 <style scoped>
 .footer {
   background: var(--c-dark);
-  border-top: 1px solid rgba(92, 82, 72, 0.1);
+  color: var(--c-white);
+  border-top: 1px solid rgba(0,0,0,0.05);
 }
 
-/* --- Marquee Strip --- */
+/* --- Marquee --- */
 .footer__marquee {
   background: var(--c-gold);
   overflow: hidden;
-  padding: 0.65rem 0;
+  padding: 0.35rem 0;
   white-space: nowrap;
 }
-
 .footer__marquee-track {
   display: inline-flex;
-  animation: marquee 28s linear infinite;
-  will-change: transform;
+  animation: marquee 30s linear infinite;
 }
-
 .footer__marquee-item {
   font-family: var(--font-display);
-  font-size: 0.85rem;
-  letter-spacing: 0.18em;
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
   color: var(--c-black);
-  padding-right: 1rem;
-  flex-shrink: 0;
+  padding-right: 2rem;
 }
-
 @keyframes marquee {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
 
-/* --- Main Footer --- */
-.footer__main {
-  padding: 5rem 2rem 4rem;
+/* --- Highlights Bar --- */
+.footer__highlights {
+  padding: 0.4rem 2rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
 }
-
-.footer__inner {
+.footer__highlights-inner {
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.5fr;
-  gap: 4rem;
-  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+}
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.highlight-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--c-gold);
+  flex-shrink: 0;
+}
+.highlight-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-/* Brand column */
-.footer__brand {
+/* --- Main Footer --- */
+.footer__main {
+  padding: 1rem 2rem;
+}
+.footer__grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Brand Col */
+.footer__brand-col {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+.brand-logo-img {
+  max-width: 180px;
+  height: auto;
+  opacity: 0.95;
+}
+.footer__social-links {
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
 }
-
-.footer__logo {
+.social-link {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  color: var(--c-grey);
+  font-size: 0.8rem;
+  transition: color var(--t-fast);
+}
+.social-link:hover {
+  color: var(--c-gold);
+}
+.social-icon-svg {
+  width: 18px;
+  height: 18px;
+}
+.social-name {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.footer__logo-icon {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  opacity: 0.8;
-  filter: invert(1);
-}
-
-.footer__logo-text {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 0.1em;
+/* Links Cols */
+.col-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.75rem;
   text-transform: uppercase;
   color: var(--c-white);
-  display: flex;
-  align-items: baseline;
 }
-
-.footer__logo-text::after {
-  content: '®';
-  font-size: 0.65rem;
-  margin-left: 0.15rem;
-  color: var(--c-grey);
-  position: relative;
-  top: 0.2rem; /* Ajuste para bajarlo */
-}
-
-.footer__tagline {
-  font-size: 1.1rem;
-  font-weight: 300;
-  color: var(--c-grey);
-  line-height: 1.6;
-}
-
-/* Social */
-.footer__social {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.footer__social-link {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(92, 82, 72, 0.15);
-  color: var(--c-grey);
-  background: transparent;
-  transition: all var(--t-fast);
-}
-
-.footer__social-link:hover {
-  border-color: var(--c-gold);
-  color: var(--c-gold);
-  background: rgba(92, 82, 72, 0.08);
-}
-
-/* Link Columns */
-.footer__col-title {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--c-off-white);
-  margin-bottom: 1.5rem;
-}
-
-.footer__links {
+.col-list {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.35rem;
 }
-
-.footer__link {
-  font-size: 0.875rem;
+.footer-link {
+  font-size: 0.85rem;
   color: var(--c-grey);
-  transition: color var(--t-fast), padding-left var(--t-fast);
-  display: inline-block;
+  transition: all var(--t-fast);
 }
-
-.footer__link:hover {
-  color: var(--c-off-white);
-  padding-left: 4px;
+.footer-link:hover {
+  color: var(--c-gold);
+  transform: translateX(3px);
 }
-
-
 
 /* --- Bottom Bar --- */
 .footer__bottom {
-  border-top: 1px solid rgba(92, 82, 72, 0.1);
-  padding: 1.5rem 2rem;
+  padding: 0.5rem 2rem;
+  border-top: 1px solid rgba(0,0,0,0.05);
 }
-
 .footer__bottom-inner {
   max-width: 1400px;
   margin: 0 auto;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.footer__copyright {
-  font-size: 0.75rem;
-  color: var(--c-grey);
-  letter-spacing: 0.04em;
-}
-
-.footer__legal {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.footer__legal-link {
-  font-size: 0.72rem;
-  color: var(--c-grey);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: color var(--t-fast);
-}
-
-.footer__legal-link:hover { color: var(--c-off-white); }
-
-.footer__payments {
-  display: flex;
   align-items: center;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
-
-.footer__payment-icon {
-  padding: 0.25rem 0.6rem;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 4px;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+.footer__copyright {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
   color: var(--c-grey);
 }
 
 /* --- Responsive --- */
 @media (max-width: 1100px) {
-  .footer__inner {
-    grid-template-columns: 1fr 1fr 1fr;
+  .footer__grid {
+    grid-template-columns: 1fr 1fr;
     gap: 3rem;
   }
-  .footer__brand { grid-column: span 3; }
-  .footer__newsletter { grid-column: span 3; }
-}
-
-@media (max-width: 700px) {
-  .footer__inner {
-    grid-template-columns: 1fr 1fr;
-    gap: 2.5rem;
+  .footer__brand-col {
+    grid-column: span 2;
+    align-items: center;
+    text-align: center;
   }
-  .footer__brand { grid-column: span 2; }
-  .footer__newsletter { grid-column: span 2; }
+  .footer__social-links {
+    justify-content: center;
+  }
 }
-
-@media (max-width: 480px) {
-  .footer__inner  { grid-template-columns: 1fr; }
-  .footer__brand  { grid-column: span 1; }
-  .footer__newsletter { grid-column: span 1; }
-  .footer__bottom-inner { flex-direction: column; align-items: flex-start; }
+@media (max-width: 600px) {
+  .footer__grid {
+    grid-template-columns: 1fr;
+  }
+  .footer__brand-col {
+    grid-column: span 1;
+  }
+  .footer__bottom-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+  .footer__highlights-inner {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
