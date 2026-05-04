@@ -70,7 +70,7 @@
                     {{ order.profile?.username || parseShipping(order.shipping_address).name || 'Invitado' }}
                   </span>
                   <span class="customer-email">
-                    {{ parseShipping(order.shipping_address).email || '-' }}
+                    {{ order.profile?.email || parseShipping(order.shipping_address).email || '-' }}
                   </span>
                 </div>
               </td>

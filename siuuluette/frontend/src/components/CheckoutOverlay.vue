@@ -101,6 +101,8 @@ export default {
     let elements = null
     let paymentElement = null
     let addressElement = null
+    let linkAuthenticationElement = null
+    const guestEmail = ref('')
 
     async function initStripe() {
       if (!props.isOpen) return
@@ -131,6 +133,16 @@ export default {
           }
         })
 
+        // 1. Link Authentication (Email)
+        linkAuthenticationElement = elements.create('linkAuthentication', {
+          defaultValues: { email: props.currentUser?.email || '' }
+        })
+        linkAuthenticationElement.mount('#link-authentication-element')
+        linkAuthenticationElement.on('change', (e) => {
+          guestEmail.value = e.value.email
+        })
+
+        // 2. Payment Element
         paymentElement = elements.create('payment', {
           layout: 'tabs',
         })
@@ -142,7 +154,7 @@ export default {
           try { savedAddr = JSON.parse(savedAddr) } catch (e) { savedAddr = null }
         }
 
-        // Address Element
+        // 3. Address Element
         addressElement = elements.create('address', {
           mode: 'shipping',
           allowedCountries: ['ES', 'FR', 'IT', 'PT', 'DE', 'GB', 'US'],
@@ -198,12 +210,14 @@ export default {
         if (error) {
           errorMessage.value = error.message
         } else if (paymentIntent.status === 'succeeded') {
+          const finalEmail = props.currentUser?.email || guestEmail.value
+
           const confirmRes = await checkoutApi.confirmOrder({
             paymentIntentId: paymentIntent.id,
             shippingAddress: {
               ...value.address,
               name: value.name || props.currentUser?.username || '',
-              email: props.currentUser?.email || ''
+              email: finalEmail
             },
             items: props.items,
             totalAmount: props.total

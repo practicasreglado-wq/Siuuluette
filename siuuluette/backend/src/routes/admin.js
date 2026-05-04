@@ -24,16 +24,31 @@ export default async function adminRoutes(fastify) {
 
       if (error) throw error
 
-      // Enriquecer con perfiles de usuario manualmente (para evitar error de relación FK)
+      // Enriquecer con perfiles de usuario y EMAILS manualmente
       const userIds = [...new Set(orders.map(o => o.user_id).filter(Boolean))]
       if (userIds.length > 0) {
+        // 1. Obtener perfiles (username, etc)
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, username')
           .in('id', userIds)
+        
+        // 2. Obtener emails desde Supabase Auth (Admin API)
+        const { data: authData } = await supabase.auth.admin.listUsers()
+        const authUsers = authData?.users || []
 
         orders.forEach(order => {
-          order.profile = profiles?.find(p => p.id === order.user_id) || null
+          const profile = profiles?.find(p => p.id === order.user_id) || null
+          const authUser = authUsers.find(u => u.id === order.user_id)
+          
+          if (profile || authUser) {
+            order.profile = {
+              ...(profile || {}),
+              email: authUser?.email || null
+            }
+          } else {
+            order.profile = null
+          }
         })
       }
 
