@@ -67,6 +67,29 @@ export default {
   background: var(--c-dark);
   padding-top: var(--space-xl);
   padding-bottom: var(--space-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.categories::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url('/img/Logotipo.png');
+  background-repeat: repeat;
+  background-size: 180px;
+  opacity: 0.15;
+  transform: rotate(-30deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.categories > div {
+  position: relative;
+  z-index: 1;
 }
 
 /* Header */
@@ -77,7 +100,12 @@ export default {
   margin-bottom: 3rem;
 }
 
-.categories__title { color: var(--c-white); }
+.categories__title { 
+  color: var(--c-white); 
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 0 30px var(--c-dark), 0 0 10px var(--c-dark);
+}
 
 /* Grid */
 .categories__grid {

@@ -70,7 +70,25 @@ export default {
   overflow: hidden;
 }
 
+.sales::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url('/img/Logotipo.png');
+  background-repeat: repeat;
+  background-size: 180px;
+  opacity: 0.15;
+  transform: rotate(-30deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .sales__inner {
+  position: relative;
+  z-index: 2;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 var(--space-md);
@@ -103,6 +121,9 @@ export default {
   text-transform: uppercase;
   color: var(--c-white);
   margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 0 30px var(--c-dark), 0 0 10px var(--c-dark);
 }
 
 .sales__title em {
