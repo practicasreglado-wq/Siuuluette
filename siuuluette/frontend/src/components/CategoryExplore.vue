@@ -30,13 +30,19 @@
         </div>
       </div>
 
+      <!-- Loading state -->
+      <div v-if="loading" class="explore-view__loading">
+        <div class="spinner"></div>
+        <p class="label">Cargando selección {{ styleName }}...</p>
+      </div>
+
       <!-- Results Info -->
-      <div class="explore-view__meta">
+      <div v-else-if="filteredProducts.length > 0" class="explore-view__meta">
         <span class="label">{{ filteredProducts.length }} productos encontrados</span>
       </div>
 
       <!-- Grid -->
-      <div v-if="filteredProducts.length === 0" class="explore-view__empty">
+      <div v-if="!loading && filteredProducts.length === 0" class="explore-view__empty">
         <div class="empty-state">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -85,7 +91,8 @@ export default {
   components: { ProductCard },
   props: {
     styleName: { type: String, default: '' },
-    products: { type: Array, required: true }
+    products: { type: Array, required: true },
+    loading: { type: Boolean, default: false }
   },
   emits: ['close', 'add-to-cart'],
   setup(props) {
@@ -254,6 +261,26 @@ export default {
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
+
+.explore-view__loading {
+  padding: 8rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  color: var(--c-grey);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(197, 163, 106, 0.1);
+  border-top-color: var(--c-gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .explore-view__empty {
   padding: 6rem 0;

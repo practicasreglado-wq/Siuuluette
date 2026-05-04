@@ -23,9 +23,12 @@
 
       <!-- Breadcrumb -->
       <nav class="pdp__breadcrumb">
+        <svg class="pdp__breadcrumb-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
         <router-link :to="{ name: 'home' }">Inicio</router-link>
         <span class="sep">/</span>
-        <span class="muted">{{ product.collection }}</span>
+        <router-link :to="{ name: 'home', query: { style: product.collection } }" class="muted">{{ product.collection }}</router-link>
         <span class="sep">/</span>
         <span>{{ product.name }}</span>
       </nav>
@@ -568,23 +571,72 @@ export default {
 .pdp__breadcrumb {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.72rem;
   color: var(--c-grey);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  font-weight: 500;
 }
 
 .pdp__breadcrumb a {
   color: var(--c-grey);
   text-decoration: none;
-  transition: color var(--t-fast);
+  transition: all var(--t-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+  padding-bottom: 2px;
 }
 
-.pdp__breadcrumb a:hover { color: var(--c-gold); }
-.pdp__breadcrumb .sep    { opacity: 0.4; }
-.pdp__breadcrumb .muted  { color: var(--c-light); }
+.pdp__breadcrumb a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--c-gold);
+  transition: width var(--t-fast) ease;
+}
+
+.pdp__breadcrumb a:hover {
+  color: var(--c-white);
+}
+
+.pdp__breadcrumb a:hover::after {
+  width: 100%;
+}
+
+.pdp__breadcrumb-arrow {
+  transition: all var(--t-fast);
+  margin-top: -2px;
+  color: var(--c-grey);
+  margin-right: 0.2rem;
+}
+
+/* Si pasamos el ratón por cualquier parte del breadcrumb, la flecha reacciona */
+.pdp__breadcrumb:hover .pdp__breadcrumb-arrow {
+  transform: translateX(-3px);
+  color: var(--c-gold);
+}
+
+.pdp__breadcrumb .sep {
+  opacity: 0.25;
+  margin: 0 0.4rem;
+}
+
+.pdp__breadcrumb .muted {
+  color: var(--c-grey);
+}
+
+.pdp__breadcrumb span:last-child {
+  color: var(--c-light);
+  opacity: 0.8;
+}
 
 /* Main 2-col */
 .pdp__main {

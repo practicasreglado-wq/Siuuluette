@@ -20,6 +20,7 @@
     <CategoryExplore
       :style-name="selectedStyle"
       :products="products"
+      :loading="loadingProducts"
       @close="closeExplore"
       @add-to-cart="addToCart"
     />
@@ -27,7 +28,8 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { productsApi } from '../api/index.js'
 import { useCart } from '../composables/useCart.js'
 
@@ -44,14 +46,17 @@ export default {
     BrandValues, CategoryExplore
   },
   setup() {
+    const route = useRoute()
     const { addToCart } = useCart()
 
-    const products      = ref([])
-    const productsError = ref('')
-    const selectedStyle = ref('')
+    const products        = ref([])
+    const productsError   = ref('')
+    const selectedStyle   = ref('')
+    const loadingProducts = ref(false)
 
     async function fetchProducts() {
       try {
+        loadingProducts.value = true
         productsError.value = ''
         const data = await productsApi.getAll()
         products.value = Array.isArray(data.products) ? data.products : []
@@ -62,6 +67,8 @@ export default {
         console.error('Error cargando productos:', err)
         products.value = []
         productsError.value = 'No hemos podido cargar el catálogo. Revisa tu conexión o inténtalo más tarde.'
+      } finally {
+        loadingProducts.value = false
       }
     }
 
@@ -73,14 +80,24 @@ export default {
     function closeExplore() {
       selectedStyle.value = ''
       document.body.style.overflow = ''
+      // Limpiamos el query param al cerrar para que no se re-abra al navegar
+      window.history.replaceState({}, '', '/')
     }
 
+    // Al montar, verificamos si hay un estilo en la URL
     onMounted(async () => {
-      await fetchProducts()
       document.title = 'Le Siuuluette | Viste la victoria'
       
-      // Si venimos de otra página con un hash (ej: #ofertas), 
-      // re-calculamos el scroll tras cargar los productos.
+      // Abrimos instantáneamente si hay un estilo en el query
+      const style = route.query.style
+      if (style) {
+        selectCategory(style)
+      }
+
+      // Cargamos productos en segundo plano
+      await fetchProducts()
+
+      // Scroll a secciones por hash
       const hash = window.location.hash
       if (hash) {
         setTimeout(() => {
@@ -89,7 +106,16 @@ export default {
             const top = el.getBoundingClientRect().top + window.scrollY - 121
             window.scrollTo({ top, behavior: 'smooth' })
           }
-        }, 100) // Pequeño delay para dejar que el DOM respire
+        }, 100)
+      }
+    })
+
+    // Observamos cambios en el query param (por si el usuario navega entre breadcrumbs)
+    watch(() => route.query.style, (newStyle) => {
+      if (newStyle) {
+        selectCategory(newStyle)
+      } else {
+        closeExplore()
       }
     })
 
@@ -98,7 +124,7 @@ export default {
     })
 
     return {
-      products, productsError, selectedStyle,
+      products, productsError, selectedStyle, loadingProducts,
       fetchProducts, addToCart,
       selectCategory, closeExplore,
     }
