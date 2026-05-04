@@ -2,7 +2,7 @@
   <LegalLayout
     title="Marca Registrada"
     section="Legal"
-    last-updated="2025"
+    last-updated="2026"
   >
     <h2>Le Siuuluette<sup>®</sup>: una marca protegida</h2>
     <p>
