@@ -2,7 +2,7 @@
   <LegalLayout
     title="Aviso Legal"
     section="Legal"
-    last-updated="2025"
+    last-updated="2026"
   >
     <h2>1. Información del titular del sitio web</h2>
     <p>

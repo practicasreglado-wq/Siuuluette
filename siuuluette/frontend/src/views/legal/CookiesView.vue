@@ -2,7 +2,7 @@
   <LegalLayout
     title="Política de Cookies"
     section="Legal"
-    last-updated="2025"
+    last-updated="2026"
   >
     <h2>1. ¿Qué son las cookies?</h2>
     <p>

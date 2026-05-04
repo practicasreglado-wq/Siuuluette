@@ -2,7 +2,7 @@
   <LegalLayout
     title="Política de Privacidad"
     section="Legal"
-    last-updated="2025"
+    last-updated="2026"
   >
     <p>
       En cumplimiento del Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo,

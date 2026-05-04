@@ -36,27 +36,27 @@
 
 export const COMPANY = {
   // Nombre legal del emisor (sale en grande en la factura)
-  legalName:     process.env.COMPANY_LEGAL_NAME     || '[RAZÓN SOCIAL PENDIENTE]',
+  legalName: process.env.COMPANY_LEGAL_NAME || 'Le Siuuluette Trademark, S.L.',
 
   // Nombre comercial / marca (puede coincidir con legalName)
-  tradeName:     process.env.COMPANY_TRADE_NAME     || '[NOMBRE COMERCIAL PENDIENTE]',
+  tradeName: process.env.COMPANY_TRADE_NAME || 'Le Siuuluette',
 
   // NIF / CIF
-  taxId:         process.env.COMPANY_TAX_ID         || '[NIF PENDIENTE]',
+  taxId: process.env.COMPANY_TAX_ID || 'B22738512',
 
   // Domicilio fiscal completo
-  addressLine1:  process.env.COMPANY_ADDRESS_LINE1  || '[DIRECCIÓN PENDIENTE]',
-  postalCode:    process.env.COMPANY_POSTAL_CODE    || '[CP]',
-  city:          process.env.COMPANY_CITY           || '[CIUDAD PENDIENTE]',
-  province:      process.env.COMPANY_PROVINCE       || '[PROVINCIA PENDIENTE]',
-  country:       process.env.COMPANY_COUNTRY        || 'España',
+  addressLine1: process.env.COMPANY_ADDRESS_LINE1 || 'C Ausias March 30 5 9',
+  postalCode: process.env.COMPANY_POSTAL_CODE || '12540',
+  city: process.env.COMPANY_CITY || 'Villarreal',
+  province: process.env.COMPANY_PROVINCE || 'Castellón',
+  country: process.env.COMPANY_COUNTRY || 'España',
 
   // Contacto fiscal / comercial
-  email:         process.env.COMPANY_EMAIL          || '[EMAIL FISCAL PENDIENTE]',
-  phone:         process.env.COMPANY_PHONE          || '',
+  email: process.env.COMPANY_EMAIL || 'lesiuuluette@gmail.com',
+  phone: process.env.COMPANY_PHONE || '+34 123456789',
 
   // Tipo de IVA aplicado (régimen general España = 21)
-  vatRate:       Number(process.env.COMPANY_VAT_RATE || 21),
+  vatRate: Number(process.env.COMPANY_VAT_RATE || 21),
 
   // Serie de facturación (en España conviene numerar por serie + año)
   invoiceSeries: process.env.COMPANY_INVOICE_SERIES || 'SIU',
@@ -64,7 +64,7 @@ export const COMPANY = {
   // Inscripción en Registro Mercantil — solo aplicable a sociedades.
   // Cuando el cliente nos confirme su sociedad, rellenar (formato
   // habitual: "Inscrita en el Reg. Mercantil de Valencia, T.X F.Y H.Z").
-  registryInfo:  process.env.COMPANY_REGISTRY_INFO  || '',
+  registryInfo: process.env.COMPANY_REGISTRY_INFO || '',
 }
 
 /**
@@ -75,18 +75,18 @@ export const COMPANY = {
  */
 export function getIssuerSnapshot() {
   return {
-    legal_name:    COMPANY.legalName,
-    trade_name:    COMPANY.tradeName,
-    tax_id:        COMPANY.taxId,
+    legal_name: COMPANY.legalName,
+    trade_name: COMPANY.tradeName,
+    tax_id: COMPANY.taxId,
     address_line1: COMPANY.addressLine1,
-    postal_code:   COMPANY.postalCode,
-    city:          COMPANY.city,
-    province:      COMPANY.province,
-    country:       COMPANY.country,
-    email:         COMPANY.email,
-    phone:         COMPANY.phone,
-    vat_rate:      COMPANY.vatRate,
+    postal_code: COMPANY.postalCode,
+    city: COMPANY.city,
+    province: COMPANY.province,
+    country: COMPANY.country,
+    email: COMPANY.email,
+    phone: COMPANY.phone,
+    vat_rate: COMPANY.vatRate,
     registry_info: COMPANY.registryInfo,
-    snapshot_at:   new Date().toISOString(),
+    snapshot_at: new Date().toISOString(),
   }
 }

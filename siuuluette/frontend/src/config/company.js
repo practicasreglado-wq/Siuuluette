@@ -24,42 +24,42 @@
 
 export const COMPANY = {
   // Nombre legal del emisor (razón social)
-  legalName:    '[RAZÓN SOCIAL PENDIENTE]',
+  legalName: 'Le Siuuluette Trademark, SL',
 
   // Nombre comercial / marca
-  tradeName:    'Le Siuuluette',
+  tradeName: 'Le Siuuluette',
 
   // Símbolo de marca registrada
   registeredMark: 'Le Siuuluette®',
 
   // NIF / CIF
-  taxId:        '[NIF PENDIENTE]',
+  taxId: 'B22738512',
 
   // Domicilio fiscal completo
-  addressLine1: '[DIRECCIÓN PENDIENTE]',
-  postalCode:   '[CP]',
-  city:         '[CIUDAD PENDIENTE]',
-  province:     '[PROVINCIA PENDIENTE]',
-  country:      'España',
+  addressLine1: 'C Ausias March 30 5 9',
+  postalCode: '12540',
+  city: 'Villarreal',
+  province: 'Castellón',
+  country: 'España',
 
   // Contacto
-  email:        '[EMAIL PENDIENTE]',
-  phone:        '',
+  email: 'lesiuuluette@gmail.com',
+  phone: '+34 123456789', //provisional
 
   // URL del sitio (cuando esté en producción será p.ej. https://siuuluette.com)
-  websiteUrl:   'https://www.siuuluette.com',
+  websiteUrl: 'https://Lesiuuluette.com',
 
   // Inscripción Registro Mercantil (sólo si es sociedad)
   registryInfo: '',
 
   // Datos de protección de datos
-  dpoEmail:     '[EMAIL DPO PENDIENTE]', // Email del responsable de protección de datos
+  dpoEmail: 'lesiuuluette@gmail.com', // Email del responsable de protección de datos
 
   // Tipo de IVA
-  vatRate:      21,
+  vatRate: 21,
 
-  // Año de fundación (para textos del tipo "Desde 2025")
-  foundingYear: 2025,
+  // Año de fundación
+  foundingYear: 2026,
 }
 
 /**

@@ -2,7 +2,7 @@
   <LegalLayout
     title="Condiciones Generales de Venta"
     section="Legal"
-    last-updated="2025"
+    last-updated="2026"
   >
     <p>
       Las presentes Condiciones Generales de Venta (en adelante, "CGV") regulan las relaciones
