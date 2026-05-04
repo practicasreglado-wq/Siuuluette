@@ -30,7 +30,8 @@
         <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" @click="goToSection($event, '#explora')">Explora</router-link>
         <router-link :to="{ path: '/', hash: '#ofertas' }" class="navbar__link navbar__link--accent" @click="goToSection($event, '#ofertas')">Descuentos</router-link>
         <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
-        <router-link v-if="currentUser?.role === 'admin'" to="/admin/products" class="navbar__link navbar__link--admin">Admin</router-link>
+        <router-link v-if="currentUser?.role === 'admin'" to="/admin/products" class="navbar__link navbar__link--admin" title="Gestión de Precios">Admin: Precios</router-link>
+        <router-link v-if="currentUser?.role === 'admin'" to="/admin/orders" class="navbar__link navbar__link--admin" title="Gestión de Pedidos">Admin: Pedidos</router-link>
       </nav>
 
       <!-- Actions -->

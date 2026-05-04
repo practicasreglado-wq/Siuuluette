@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 import { supabase } from '../db/supabase.js'
-import { generateInvoicePDF } from '../utils/invoice.js'
-import { PassThrough } from 'stream'
+import { issueInvoiceForOrder, fetchOrRegenerateInvoicePDF } from '../utils/invoiceService.js'
+import { sendOrderConfirmationEmail } from '../utils/mailer.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
@@ -147,14 +147,63 @@ export default async function checkoutRoutes(fastify) {
           .eq('user_id', userId)
       }
 
-      return { message: 'Pedido guardado con éxito', orderId: order.id }
+      // 4. Emitir factura (best-effort: si falla NO abortamos el pedido,
+      //    el cliente ya pagó. Logueamos y se podrá reintentar despues
+      //    desde un panel admin o un job de retry).
+      let invoiceInfo = null
+      try {
+        const result = await issueInvoiceForOrder(order.id, {
+          shippingAddress
+        })
+        invoiceInfo = {
+          invoice_number: result.invoice.invoice_number,
+          issue_date:     result.invoice.issue_date,
+        }
+        fastify.log.info(
+          { orderId: order.id, invoice: invoiceInfo.invoice_number },
+          'Factura emitida correctamente'
+        )
+
+        // Enviar email de confirmacion con la factura
+        if (result.isNew) {
+          try {
+            const mailRes = await sendOrderConfirmationEmail({
+              invoice: result.invoice,
+              customer: result.customer,
+              items: result.items,
+              pdfBuffer: result.pdfBuffer,
+              orderId: order.id
+            })
+            
+            if (!mailRes.success && !mailRes.skipped) {
+              fastify.log.error({ err: mailRes.error }, 'Fallo el envio del email de confirmacion')
+            } else if (mailRes.success) {
+              fastify.log.info({ messageId: mailRes.messageId }, 'Email de confirmacion enviado')
+            }
+          } catch (mailErr) {
+            fastify.log.error({ err: mailErr }, 'Error inesperado al enviar el email')
+          }
+        }
+
+      } catch (invErr) {
+        fastify.log.error(
+          { orderId: order.id, err: invErr },
+          'Pedido guardado pero la emisión de factura ha fallado'
+        )
+      }
+
+      return {
+        message: 'Pedido guardado con éxito',
+        orderId: order.id,
+        invoice: invoiceInfo,
+      }
 
     } catch (err) {
       console.error('[CHECKOUT_CONFIRM] Error crítico:', err)
-      return reply.status(500).send({ 
-        error: 'Error al guardar el pedido', 
+      return reply.status(500).send({
+        error: 'Error al guardar el pedido',
         message: err.message,
-        details: err.details || null 
+        details: err.details || null
       })
     }
   })
@@ -206,65 +255,66 @@ export default async function checkoutRoutes(fastify) {
   }, async (request, reply) => {
     const { id } = request.params
     const userId = request.user.id
+    const orderId = Number(id)
 
     try {
-      const orderId = Number(id)
-      console.log(`[INVOICE] Generando factura para pedido ID: ${orderId} (Original: ${id})`)
-
-      // 1. Obtener pedido con items
-      const { data: order, error } = await supabase
+      // 1. Comprobar que el pedido existe y pertenece al usuario (o es admin)
+      const { data: order, error: orderErr } = await supabase
         .from('orders')
-        .select(`
-          *,
-          order_items (*)
-        `)
+        .select('id, user_id')
         .eq('id', orderId)
         .single()
 
-      if (error || !order) {
-        console.error('[INVOICE] Pedido no encontrado:', error)
+      if (orderErr || !order) {
         return reply.status(404).send({ error: 'Pedido no encontrado' })
       }
-
-      // 2. Seguridad: solo el dueño o un admin
       if (order.user_id !== userId && request.user.role !== 'admin') {
         return reply.status(403).send({ error: 'No tienes permiso para ver esta factura' })
       }
 
-      // 3. Obtener el nombre del usuario por separado para evitar errores de JOIN
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', order.user_id)
-        .single()
-      
-      order.user = profile || { username: 'Cliente Siuuluette' }
+      // 2. Buscar la factura ya emitida para este pedido
+      let { data: invoice } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('order_id', orderId)
+        .maybeSingle()
 
-      // 4. Enriquecer items con nombres de productos
-      const variantIds = order.order_items.map(oi => oi.product_id)
-      const { data: variants } = await supabase
-        .from('product_variants')
-        .select(`
-          id, color_name,
-          product:products (name)
-        `)
-        .in('id', variantIds)
+      // 3. Si el pedido es antiguo y no tiene factura, la emitimos ahora
+      //    (compatibilidad con pedidos pre-existentes a este sistema).
+      if (!invoice) {
+        fastify.log.warn(
+          { orderId },
+          'Pedido sin factura: emitiendo retroactivamente'
+        )
+        const result = await issueInvoiceForOrder(orderId)
+        invoice = result.invoice
+        // Si la emision acaba de generar el buffer, lo aprovechamos
+        if (result.pdfBuffer) {
+          reply.type('application/pdf')
+          reply.header(
+            'Content-Disposition',
+            `attachment; filename=${invoice.invoice_number}.pdf`
+          )
+          return reply.send(result.pdfBuffer)
+        }
+      }
 
-      order.order_items.forEach(oi => {
-        oi.variant = variants?.find(v => v.id === oi.product_id)
-      })
+      // 4. Recuperar el PDF (de Storage o regenerándolo desde snapshots)
+      const pdfBuffer = await fetchOrRegenerateInvoicePDF(invoice)
 
-      // 5. Configurar headers y generar PDF vía Stream (Fastify compatible)
       reply.type('application/pdf')
-      reply.header('Content-Disposition', `attachment; filename=Factura_Siuuluette_${id}.pdf`)
-      
-      const stream = new PassThrough()
-      generateInvoicePDF(order, stream)
-      
-      return stream
+      reply.header(
+        'Content-Disposition',
+        `attachment; filename=${invoice.invoice_number}.pdf`
+      )
+      return reply.send(pdfBuffer)
+
     } catch (err) {
-      console.error('[INVOICE] Error crítico al generar PDF:', err)
-      return reply.status(500).send({ error: 'Error al generar la factura', details: err.message })
+      fastify.log.error({ err, orderId }, 'Error al servir la factura')
+      return reply.status(500).send({
+        error: 'Error al obtener la factura',
+        details: err.message
+      })
     }
   })
 }

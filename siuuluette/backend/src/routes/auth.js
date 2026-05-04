@@ -171,11 +171,12 @@ export default async function authRoutes(fastify) {
     const userId = request.user.id
     const { username, phone, shipping_address } = request.body
     
-    // Construir objeto de actualización dinámicamente
+    // Construir objeto de actualización dinámicamente (solo campos permitidos)
     const updates = { id: userId }
     if (username !== undefined) updates.username = username
     if (phone !== undefined) updates.phone = phone
     if (shipping_address !== undefined) updates.shipping_address = shipping_address
+    // NOTA: El campo 'role' NO se permite actualizar desde aquí por seguridad.
 
     const { data, error } = await supabase
       .from('profiles')

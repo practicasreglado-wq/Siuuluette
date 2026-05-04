@@ -21,15 +21,15 @@
                 <span class="body-sm">{{ item.name }} x{{ item.qty }}</span>
                 <p class="summary-item-meta label-xs opacity-60">{{ item.selectedSize }} | {{ item.color }}</p>
               </div>
-              <span class="body-sm">€{{ item.price * item.qty }}</span>
+              <span class="body-sm">€{{ Number(item.price * item.qty).toFixed(2) }}</span>
             </div>
             <div class="divider"></div>
             <div class="summary-total">
               <div class="summary-total-info">
                 <span class="label-highlight">Total a pagar</span>
-                <p class="summary-net label-xs opacity-60">Base imponible (sin IVA): €{{ netTotal }}</p>
+                <p class="summary-net label-xs opacity-60">Base imponible (sin IVA): €{{ Number(netTotal).toFixed(2) }}</p>
               </div>
-              <span class="total-price">€{{ total }}</span>
+              <span class="total-price">€{{ Number(total).toFixed(2) }}</span>
             </div>
           </div>
 
@@ -60,7 +60,7 @@
               :disabled="loading || !stripeLoaded"
             >
               <span v-if="loading" class="loader"></span>
-              <span v-else>Pagar ahora €{{ total }}</span>
+              <span v-else>Pagar ahora €{{ Number(total).toFixed(2) }}</span>
             </button>
           </form>
           
