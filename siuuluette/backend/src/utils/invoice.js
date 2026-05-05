@@ -42,7 +42,7 @@ export function generateInvoicePDF({ invoice, items, issuer, customer, logoPath 
       if (logoPath) {
         try {
           if (fs.existsSync(logoPath)) {
-            doc.image(logoPath, 30, 10, { fit: [220, 100] })
+            doc.image(logoPath, 30, 20, { fit: [260, 120] })
             logoDrawn = true
           }
         } catch (e) {
@@ -60,18 +60,18 @@ export function generateInvoicePDF({ invoice, items, issuer, customer, logoPath 
       }
 
       // Datos del emisor (debajo del logo o nombre)
-      const issuerY = headerY + 75
+      const issuerY = headerY + 85
       doc
         .fillColor('#3d362f')
         .font('Helvetica-Bold')
-        .fontSize(10)
-        .text(issuer.legal_name || '[RAZÓN SOCIAL PENDIENTE]', 50, issuerY)
+        .fontSize(11)
+        .text(issuer.legal_name || 'Le Siuuluette Trademark, S.L.', 50, issuerY)
         .font('Helvetica')
         .fontSize(9)
-        .text(`NIF: ${issuer.tax_id || '[NIF PENDIENTE]'}`, 50, issuerY + 13)
-        .text(issuer.address_line1 || '', 50, issuerY + 26)
-        .text(`${issuer.postal_code || ''} ${issuer.city || ''}, ${issuer.province || ''}`, 50, issuerY + 39)
-        .text(`${issuer.country || 'España'} · ${issuer.email || ''}`, 50, issuerY + 52)
+        .text(`NIF: ${issuer.tax_id || ''}`, 50, issuerY + 16)
+        .text(issuer.address_line1 || '', 50, issuerY + 30)
+        .text(`${issuer.postal_code || ''} ${issuer.city || ''}, ${issuer.province || ''}`, 50, issuerY + 44)
+        .text(`${issuer.country || 'España'} · ${issuer.email || ''}`, 50, issuerY + 58)
 
       // ---- HEADER (derecha): bloque FACTURA ---------------------------
       doc
@@ -88,36 +88,39 @@ export function generateInvoicePDF({ invoice, items, issuer, customer, logoPath 
         .fillColor('#3d362f')
         .font('Helvetica')
         .fontSize(10)
-        .text(`Nº: ${invoice.invoice_number}`, 400, headerY + 28, { align: 'right' })
-        .text(`Fecha: ${issueDate.toLocaleDateString('es-ES')}`, 400, headerY + 43, { align: 'right' })
+        .text(`Nº: ${invoice.invoice_number}`, 400, headerY + 32, { align: 'right' })
+        .text(`Fecha: ${issueDate.toLocaleDateString('es-ES')}`, 400, headerY + 48, { align: 'right' })
 
-      // Linea separadora
-      doc.moveTo(50, 175).lineTo(550, 175).stroke('#d5cfc5')
+      // Linea separadora principal
+      doc.moveTo(50, 205).lineTo(550, 205).lineWidth(1).stroke('#d5cfc5')
 
       // ---- CLIENTE ----------------------------------------------------
       const addr = customer.address || {}
+      const customerY = 230
       doc
         .fillColor('#3d362f')
         .font('Helvetica-Bold')
-        .fontSize(10)
-        .text('FACTURAR / ENVIAR A:', 50, 195)
+        .fontSize(11)
+        .text('DATOS DEL CLIENTE:', 50, customerY)
+        .font('Helvetica-Bold')
+        .fontSize(11)
+        .text(customer.name || 'Cliente Siuuluette', 50, customerY + 16)
         .font('Helvetica')
         .fontSize(10)
-        .text(customer.name || 'Cliente Siuuluette', 50, 210)
-        .text(addr.line1 || '', 50, 224)
-        .text(`${addr.postal_code || ''} ${addr.city || ''}, ${addr.state || ''}`, 50, 238)
-        .text(addr.country || 'España', 50, 252)
+        .text(addr.line1 || '', 50, customerY + 32)
+        .text(`${addr.postal_code || ''} ${addr.city || ''}, ${addr.state || ''}`, 50, customerY + 47)
+        .text(addr.country || 'España', 50, customerY + 62)
       if (customer.email) {
-        doc.text(customer.email, 50, 266)
+        doc.text(customer.email, 50, customerY + 77)
       }
 
       // ---- TABLA DE ITEMS --------------------------------------------
-      const tableTop = 310
-      doc.font('Helvetica-Bold').fontSize(10)
+      const tableTop = 360
+      doc.font('Helvetica-Bold').fontSize(10).fillColor('#3d362f')
       drawRow(doc, tableTop, 'Producto', 'Cant.', 'Neto', `IVA ${invoice.tax_rate}%`, 'Total')
-      doc.moveTo(50, tableTop + 18).lineTo(550, tableTop + 18).stroke('#d5cfc5')
+      doc.moveTo(50, tableTop + 20).lineTo(550, tableTop + 20).lineWidth(1).stroke('#d4af37')
 
-      let cursorY = tableTop + 28
+      let cursorY = tableTop + 35
       doc.font('Helvetica').fontSize(10)
 
       const taxFactor = 1 + Number(invoice.tax_rate) / 100
@@ -142,7 +145,7 @@ export function generateInvoicePDF({ invoice, items, issuer, customer, logoPath 
           `${vat.toFixed(2)} €`,
           `${lineTotal.toFixed(2)} €`
         )
-        cursorY += 22
+        cursorY += 28
 
         // Salto de pagina si nos pasamos
         if (cursorY > 700) {
@@ -154,19 +157,21 @@ export function generateInvoicePDF({ invoice, items, issuer, customer, logoPath 
       // ---- TOTALES ----------------------------------------------------
       doc.moveTo(50, cursorY + 8).lineTo(550, cursorY + 8).stroke('#d5cfc5')
 
-      const summaryY = cursorY + 24
+      const summaryY = cursorY + 30
       doc
         .font('Helvetica')
         .fontSize(10)
         .text('Base imponible:', 350, summaryY)
         .text(`${Number(invoice.total_net).toFixed(2)} €`, 480, summaryY, { align: 'right' })
-        .text(`IVA (${invoice.tax_rate}%):`, 350, summaryY + 18)
-        .text(`${Number(invoice.total_tax).toFixed(2)} €`, 480, summaryY + 18, { align: 'right' })
+        .text(`IVA (${invoice.tax_rate}%):`, 350, summaryY + 22)
+        .text(`${Number(invoice.total_tax).toFixed(2)} €`, 480, summaryY + 22, { align: 'right' })
+        
+        .rect(345, summaryY + 45, 210, 30).fill('#f9f7f2')
         .font('Helvetica-Bold')
-        .fontSize(12)
+        .fontSize(13)
         .fillColor('#3d362f')
-        .text('TOTAL:', 350, summaryY + 42)
-        .text(`${Number(invoice.total_gross).toFixed(2)} €`, 480, summaryY + 42, { align: 'right' })
+        .text('TOTAL:', 355, summaryY + 54)
+        .text(`${Number(invoice.total_gross).toFixed(2)} €`, 480, summaryY + 54, { align: 'right' })
 
       // ---- PIE DE PÁGINA ---------------------------------------------
       const footerY = 760
