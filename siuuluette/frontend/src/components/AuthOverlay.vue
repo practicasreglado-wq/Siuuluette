@@ -259,6 +259,7 @@ import { ref, reactive, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi, checkoutApi } from '../api/index.js'
 import { useFavorites } from '../composables/useFavorites.js'
+import { useCart } from '../composables/useCart.js'
 import { loadStripe } from '@stripe/stripe-js'
 
 export default {
@@ -287,6 +288,7 @@ export default {
 
     const router = useRouter()
     const { fullFavorites, fetchFavorites: refreshFavs, toggleFavorite } = useFavorites()
+    const { mergeGuestCart } = useCart()
     const loadingFavorites = ref(false)
 
     const goToFavorites = async () => {
@@ -343,6 +345,7 @@ export default {
           // El token se guarda automáticamente en la cookie HttpOnly por el backend
           localStorage.setItem('isLoggedIn', 'true')
           localStorage.setItem('token', data.token)
+          await mergeGuestCart() // Sincronizamos el carrito de invitado
           emit('login-success', data.user)
           emit('close')
         } else {
@@ -351,6 +354,7 @@ export default {
           if (data.token) {
             localStorage.setItem('isLoggedIn', 'true')
             localStorage.setItem('token', data.token)
+            await mergeGuestCart() // Sincronizamos el carrito de invitado
             emit('login-success', data.user)
             emit('close')
           } else {
@@ -413,6 +417,11 @@ export default {
         alert(err.message)
       }
     }
+    watch(() => props.isOpen, (newVal) => {
+      if (newVal) {
+        view.value = 'profile'
+      }
+    })
 
     return {
       mode, view, form, loading, loadingOrders, error, isRegistered, orders, 

@@ -161,11 +161,11 @@ export default {
     function handleLoginSuccess(user) {
       currentUser.value = user
       isAuthOpen.value = false
-      fetchCart()
+      // No hace falta fetchCart aquí porque mergeGuestCart ya lo hace
     }
 
-    function handleLogout() {
-      authApi.logout()
+    async function handleLogout() {
+      await authApi.logout()
       currentUser.value = null
       cartItems.value = []
       isAuthOpen.value = false

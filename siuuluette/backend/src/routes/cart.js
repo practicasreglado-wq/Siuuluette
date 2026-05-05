@@ -159,11 +159,11 @@ export default async function cartRoutes(fastify) {
         .select('id, quantity')
         .eq('user_id', userId)
         .eq('product_id', item.product_id)
-        .eq('size', item.size || 'M') // Fallback a M si no hay talla
+        .eq('size', item.size || 'M')
         .maybeSingle()
 
       if (existingError) {
-        console.error('Error buscando item existente:', existingError)
+        console.error('[CART_MERGE] Error buscando item existente:', existingError)
         return reply.status(400).send({ error: existingError.message })
       }
 
@@ -174,7 +174,6 @@ export default async function cartRoutes(fastify) {
           .eq('id', existing.id)
 
         if (error) {
-          console.error('Error actualizando cantidad:', error)
           return reply.status(400).send({ error: error.message })
         }
       } else {
@@ -188,7 +187,7 @@ export default async function cartRoutes(fastify) {
           }])
 
         if (error) {
-          console.error('Error insertando nuevo item:', error)
+          console.error('[CART_MERGE] Error insertando nuevo item:', error)
           return reply.status(400).send({ error: error.message })
         }
       }

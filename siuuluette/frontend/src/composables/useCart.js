@@ -9,11 +9,21 @@
 // así todos los componentes que importen useCart() comparten el mismo
 // estado reactivo.
 
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { cartApi } from '../api/index.js'
 
 // --- Estado compartido ---
-const cartItems = ref([])
+// Intentamos cargar del localStorage al inicio para invitados
+const savedCart = localStorage.getItem('cart')
+const cartItems = ref(savedCart ? JSON.parse(savedCart) : [])
+
+// Vigilante para persistir cambios locales (solo si NO hay token de sesión)
+watch(cartItems, (newItems) => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    localStorage.setItem('cart', JSON.stringify(newItems))
+  }
+}, { deep: true })
 const isCartOpen = ref(false)
 const toastMsg = ref('')
 const toastVisible = ref(false)
@@ -155,17 +165,24 @@ async function updateQty(productId, size, delta) {
 }
 
 async function mergeGuestCart() {
-  // Cuando un invitado hace login, sincroniza su carrito local con el backend
-  if (!cartItems.value.length) return
+  const saved = localStorage.getItem('cart')
+  if (!saved) return
+  
+  const localItems = JSON.parse(saved)
+  if (!localItems.length) return
+
   try {
-    await cartApi.merge(cartItems.value.map(i => ({
+    const mergeData = localItems.map(i => ({
       product_id: i.variant_id || i.id,
       quantity:   i.qty,
       size:       i.selectedSize
-    })))
+    }))
+
+    await cartApi.merge(mergeData)
+    localStorage.removeItem('cart')
     await fetchCart()
   } catch (err) {
-    console.error('Error fusionando carrito:', err)
+    console.error('[useCart] Error al fusionar carrito:', err)
   }
 }
 
