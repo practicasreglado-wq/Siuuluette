@@ -73,10 +73,10 @@ export default {
 .sales::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
   background-image: url('/img/Logotipo.png');
   background-repeat: repeat;
   background-size: 180px;
@@ -198,5 +198,11 @@ export default {
   .sales__header { text-align: center; margin: 0 auto 3rem; }
   .sales__eyebrow { justify-content: center; }
   .sales__grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  
+  .sales::before {
+    background-size: 110px;
+    opacity: 0.12;
+    transform: rotate(-25deg) scale(1.2);
+  }
 }
 </style>

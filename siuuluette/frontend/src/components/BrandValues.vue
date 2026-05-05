@@ -146,10 +146,10 @@ export default {
 .values::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
   background-image: url('/img/Logotipo.png');
   background-repeat: repeat;
   background-size: 180px;
@@ -298,6 +298,16 @@ export default {
 @media (max-width: 900px) {
   .values__grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .values { padding: 4rem 0; }
+  .values__title { font-size: 2.2rem; }
+  .values::before {
+    background-size: 110px;
+    opacity: 0.12;
+    transform: rotate(-25deg) scale(1.2);
   }
 }
 

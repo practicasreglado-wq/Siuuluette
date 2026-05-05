@@ -74,10 +74,10 @@ export default {
 .categories::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
   background-image: url('/img/Logotipo.png');
   background-repeat: repeat;
   background-size: 180px;
@@ -262,5 +262,11 @@ export default {
 @media (max-width: 480px) {
   .cat-card { height: 320px; }
   .cat-card__name { font-size: 1.75rem; }
+  
+  .categories::before {
+    background-size: 110px;
+    opacity: 0.12;
+    transform: rotate(-25deg) scale(1.2);
+  }
 }
 </style>

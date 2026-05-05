@@ -6,7 +6,6 @@
     </div>
 
     <Navbar
-      :style="{ top: '36px' }"
       :cart-count="cartCount"
       :is-scrolled="isScrolled"
       :current-user="currentUser"
@@ -14,7 +13,7 @@
       @open-auth="isAuthOpen = true"
     />
 
-    <main :style="{ paddingTop: '121px', backgroundColor: 'var(--c-black)', minHeight: '100vh' }">
+    <main class="main-content">
       <router-view />
     </main>
 
@@ -234,6 +233,16 @@ export default {
 
 <style scoped>
 /* Estilos extraídos por brevedad para mantener la limpieza */
+.navbar {
+  top: 36px !important;
+}
+
+.main-content {
+  padding-top: 121px; /* 36px (announcement) + 85px (navbar) */
+  background-color: var(--c-black);
+  min-height: 100vh;
+}
+
 .announcement-bar {
   position: fixed; top: 0; left: 0; right: 0; height: 36px;
   display: flex; align-items: center; justify-content: center;

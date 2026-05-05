@@ -228,6 +228,12 @@ export default {
   gap: 3.5rem; /* Wider gap between links */
 }
 
+@media (max-width: 1366px) {
+  .navbar__nav {
+    gap: 2rem;
+  }
+}
+
 .navbar__link {
   font-size: 0.8rem;
   font-weight: 500;
@@ -421,7 +427,7 @@ export default {
 .mobile-menu-leave-to     { max-height: 0; opacity: 0; }
 
 /* --- Responsive --- */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .navbar__nav       { display: none; }
   .navbar__hamburger { display: flex; }
 }

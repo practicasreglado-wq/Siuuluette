@@ -7,8 +7,10 @@
       <div class="hero__grain"></div>
     </div>
 
-    <!-- Efecto Linterna (Ahora detrás de los isotipos) -->
-    <div class="hero__flashlight"></div>
+    <!-- Flashlight Wrapper (Rastrea a la figura grande por CSS) -->
+    <div class="hero__flashlight-wrapper hero__isotipo-bg--large">
+      <div class="hero__flashlight"></div>
+    </div>
 
     <!-- Isotipo Backgrounds (Layered) -->
     <div class="hero__isotipo-bg hero__isotipo-bg--large">
@@ -17,8 +19,8 @@
       </video>
     </div>
 
-    <div class="hero__isotipo-bg">
-      <video autoplay muted loop playsinline class="hero__isotipo-video">
+    <div class="hero__isotipo-bg hero__isotipo-bg--small">
+      <video autoplay muted loop playsinline class="hero__isotipo-video hero__isotipo-video--solid">
         <source src="/SiuuTipo2.webm" type="video/webm" />
       </video>
     </div>
@@ -113,20 +115,28 @@ export default {
   background: radial-gradient(circle at 70% 30%, rgba(197, 163, 106, 0.08) 0%, transparent 70%);
 }
 
-.hero__flashlight {
+.hero__flashlight-wrapper {
   position: absolute;
-  inset: 0;
   pointer-events: none;
-  z-index: 0; /* Detrás de los videos */
-  /* Linterna ajustada para rodear la figura grande */
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero__flashlight {
+  width: 80%; /* Más grande relativo a la figura */
+  aspect-ratio: 1;
   background: radial-gradient(
-    circle at 77% 43%, 
+    circle at center, 
     rgb(255, 255, 255) 0%, 
-    rgb(255, 255, 255) 15%, 
-    rgba(255, 255, 255, 0.831) 18%, /* Borde del halo */
-    transparent 20%
+    rgb(255, 255, 255) 35%, 
+    rgba(255, 255, 255, 0.836) 38%, /* Borde definido */
+    transparent 40%
   );
+  filter: blur(5px);
   opacity: 0.8;
+  transform: translate(0%, -12%); /* Centrado en la figura (pecho/torso) */
 }
 
 .hero__grain {
@@ -164,27 +174,94 @@ export default {
   width: 95%;
   max-width: 1350px;
   z-index: 1; /* Detrás */
-  opacity: 0.75; /* Ajustado por el usuario */
+  opacity: 0.75;
 }
 
 .hero__isotipo-video {
   width: 100%;
   height: auto;
   display: block;
-  opacity: 0.7;
-  /* Hardware acceleration hacks to force blend-mode support */
+  opacity: 0.8;
+  /* Hardware acceleration hacks */
   transform: translateZ(0);
   backface-visibility: hidden;
-  /* Push any off-white to pure white for better multiply blending */
-  filter: contrast(1.4) brightness(1.1);
+  /* AGRESIVE FILTERS to kill the gray box */
+  filter: contrast(2.5) brightness(1.4) saturate(0);
+}
+
+.hero__isotipo-video--solid {
+  filter: contrast(10) brightness(1.1) saturate(0) !important; /* Silueta negra profunda sin romper el fondo blanco */
+  opacity: 1 !important;
+}
+
+/* --- Responsive Adjustments for Desktop Mid-range --- */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .hero__isotipo-bg {
+    right: 5%;
+    width: 60%;
+    top: 35%;
+  }
+  .hero__isotipo-bg--large {
+    right: -15%;
+    width: 85%;
+    top: 5%;
+  }
+}
+
+/* --- Responsive Adjustments for Short Viewports (Laptops) --- */
+@media (max-height: 850px) {
+  .hero__isotipo-bg {
+    width: 45%;
+    top: 35%;
+  }
+  .hero__isotipo-bg--large {
+    width: 65%;
+    top: 10%;
+  }
+}
+
+/* --- Ultra-wide Desktop Optimization --- */
+@media (min-width: 1441px) {
+  .hero__title-line {
+    font-size: clamp(4rem, 11vw, 12rem); /* Más grande en monitores Pro */
+  }
+  .hero__isotipo-bg {
+    right: 18%; /* Más al centro */
+    width: 75%;
+  }
+  .hero__isotipo-bg--large {
+    right: -8%;
+    width: 100%;
+  }
 }
 
 @media (max-width: 1024px) {
+  .hero__isotipo-bg--large { display: none; } /* Solo una figura en responsive */
+  
   .hero__isotipo-bg {
     width: 90%;
     right: -20%;
     top: 30%;
-    opacity: 0.2;
+    opacity: 0.45; /* Igualado al móvil */
+  }
+
+  .hero__isotipo-video {
+    opacity: 1;
+    /* Mantenemos el fondo blanco puro para que el multiply funcione y no se vea el recuadro gris */
+    filter: contrast(1.8) brightness(1.2);
+  }
+
+  .hero__flashlight-wrapper {
+    display: none; /* Lo quitamos si quitamos la figura grande */
+  }
+}
+
+@media (max-width: 768px) {
+  .hero__isotipo-bg {
+    width: 120%;
+    right: -10%;
+    top: 40%;
+    opacity: 0.45; /* Menos negro en móvil */
   }
 }
 
@@ -227,12 +304,21 @@ export default {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 1.5rem; /* Base padding for mobile */
   z-index: 5;
+}
+
+@media (min-width: 768px) {
+  .hero__container {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
 }
 
 @media (min-width: 1024px) {
   .hero__container {
     padding-left: 6rem;
+    padding-right: 2rem;
   }
 }
 
@@ -276,10 +362,16 @@ export default {
 
 .hero__title-line {
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 10vw, 8.5rem);
+  font-size: clamp(3rem, 8vw, 7.5rem); /* Reducido para portátiles */
   line-height: 0.85;
   text-transform: uppercase;
   animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (max-height: 850px) {
+  .hero__title-line {
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+  }
 }
 
 .hero__title-line--1 { color: var(--c-white); animation-delay: 0.2s; }

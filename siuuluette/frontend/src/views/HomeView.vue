@@ -155,6 +155,12 @@ export default {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+@media (max-width: 900px) {
+  .products-error {
+    top: 110px;
+  }
+}
+
 .products-error__retry {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.6);

@@ -92,7 +92,7 @@ export default {
     netTotal: { type: [String, Number], default: 0 },
     currentUser: { type: Object, default: null }
   },
-  emits: ['close', 'success'],
+  emits: ['close', 'success', 'order-complete'],
   setup(props, { emit }) {
     const stripeLoaded = ref(false)
     const loading = ref(false)

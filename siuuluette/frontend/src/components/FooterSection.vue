@@ -336,9 +336,22 @@ const columns = [
     justify-content: center;
   }
 }
+
+@media (max-width: 768px) {
+  .footer__marquee-item {
+    font-size: 0.75rem;
+    padding-right: 1.5rem;
+  }
+  .footer__highlights-inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 600px) {
   .footer__grid {
     grid-template-columns: 1fr;
+    gap: 2rem;
   }
   .footer__brand-col {
     grid-column: span 1;
@@ -346,6 +359,7 @@ const columns = [
   .footer__bottom-inner {
     flex-direction: column;
     text-align: center;
+    gap: 1rem;
   }
   .footer__highlights-inner {
     grid-template-columns: 1fr;

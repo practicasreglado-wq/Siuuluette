@@ -1136,6 +1136,8 @@ export default {
   .pdp__name { font-size: 1.7rem; }
   .pdp__price { font-size: 1.4rem; }
 
+  .pdp__nav { display: none; }
+
   .pdp__related-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;

@@ -1030,4 +1030,79 @@ export default {
   opacity: 1;
   transform: scale(1.1);
 }
+
+@media (max-width: 640px) {
+  .auth-overlay {
+    padding: 1rem;
+  }
+  
+  .auth-card {
+    border-radius: 16px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .auth-card__content {
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+  
+  .auth-card__header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .auth-tabs {
+    gap: 1rem;
+  }
+  
+  .tab-btn {
+    font-size: 0.75rem;
+  }
+  
+  .order-card {
+    padding: 1.25rem;
+  }
+  
+  .order-card__header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .order-total {
+    font-size: 1.25rem;
+  }
+  
+  .order-card__footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+  
+  .invoice-btn, .buy-again-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .item-thumb {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .favorite-card {
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+  
+  .favorite-card__actions {
+    justify-content: space-between;
+  }
+  
+  .buy-btn {
+    flex: 1;
+    text-align: center;
+  }
+}
 </style>
