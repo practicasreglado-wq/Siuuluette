@@ -8,6 +8,7 @@ import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import csrf from '@fastify/csrf-protection'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -53,6 +54,14 @@ await fastify.register(jwt, {
 })
 
 await fastify.register(cookie)
+await fastify.register(csrf, {
+  cookieOpts: { 
+    path: '/',
+    httpOnly: false, // Permitimos lectura por JS para enviarlo en cabecera
+    secure: true,
+    sameSite: 'none'
+  }
+})
 
 // 1.5 Security: Helmet & Rate Limit
 await fastify.register(helmet, {

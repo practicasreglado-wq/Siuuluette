@@ -5,10 +5,14 @@ export default async function adminRoutes(fastify) {
   // Middleware para verificar que el usuario es admin
   fastify.addHook('onRequest', fastify.authenticateAdmin)
 
-  // GET /api/admin/orders — Listar todos los pedidos de la tienda
+  // GET /api/admin/orders — Listar todos los pedidos de la tienda con paginación
   fastify.get('/orders', async (request, reply) => {
+    const { page = 1, limit = 20 } = request.query
+    const start = (page - 1) * limit
+    const end = start + Number(limit) - 1
+
     try {
-      const { data: orders, error } = await supabase
+      const { data: orders, error, count } = await supabase
         .from('orders')
         .select(`
           *,
@@ -19,8 +23,9 @@ export default async function adminRoutes(fastify) {
               product:products (name)
             )
           )
-        `)
+        `, { count: 'exact' })
         .order('created_at', { ascending: false })
+        .range(start, end)
 
       if (error) throw error
 
@@ -52,7 +57,15 @@ export default async function adminRoutes(fastify) {
         })
       }
 
-      return { orders }
+      return { 
+        orders,
+        pagination: {
+          total: count,
+          page: Number(page),
+          limit: Number(limit),
+          pages: Math.ceil(count / (limit || 20))
+        }
+      }
     } catch (err) {
       fastify.log.error(err)
       return reply.status(500).send({ error: 'Error al obtener los pedidos' })

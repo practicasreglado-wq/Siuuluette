@@ -1,13 +1,26 @@
 // frontend/src/api/index.js
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+let csrfToken = null
 
 // Helper base — maneja errores y token JWT automáticamente
 async function request(path, options = {}) {
   const token = localStorage.getItem('token')
 
+  // Obtener CSRF token si es una petición de escritura y no lo tenemos
+  if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(options.method) && !csrfToken && path !== '/api/auth/csrf') {
+    try {
+      const res = await fetch(`${BASE}/api/auth/csrf`, { credentials: 'include' })
+      const data = await res.json()
+      csrfToken = data.csrfToken
+    } catch (e) {
+      console.error('Error fetching CSRF token:', e)
+    }
+  }
+
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers || {})
   }
@@ -26,6 +39,13 @@ async function request(path, options = {}) {
   })
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      // No recargamos inmediatamente para evitar bucles infinitos en rutas públicas
+      // pero el estado queda limpio para la próxima acción del usuario
+    }
     const data = await res.json().catch(() => ({}))
     const msg = data.error || data.detail || data.message || `Error ${res.status}`
     throw new Error(msg)
@@ -67,6 +87,7 @@ export const authApi = {
   updateProfile: (data) => request('/api/auth/profile', { method: 'PATCH', body: data }),
   recoverPassword: (email) => request('/api/auth/recover', { method: 'POST', body: { email } }),
   updatePassword:  (password) => request('/api/auth/update-password', { method: 'POST', body: { password } }),
+  getCsrf:  ()      => request('/api/auth/csrf'),
   logout:   async () => { 
     try { await request('/api/auth/logout', { method: 'POST' }); } catch (e) {}
     localStorage.removeItem('isLoggedIn');

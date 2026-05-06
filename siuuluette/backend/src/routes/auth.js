@@ -4,6 +4,9 @@ export default async function authRoutes(fastify) {
 
   // POST /api/auth/register — Registro de nuevo usuario
   fastify.post('/register', {
+    config: { 
+      rateLimit: { max: 5, timeWindow: '1 minute' } 
+    },
     schema: {
       body: {
         type: 'object',
@@ -74,6 +77,9 @@ export default async function authRoutes(fastify) {
 
   // POST /api/auth/login — Inicio de sesión
   fastify.post('/login', {
+    config: { 
+      rateLimit: { max: 5, timeWindow: '1 minute' } 
+    },
     schema: {
       body: {
         type: 'object',
@@ -194,6 +200,9 @@ export default async function authRoutes(fastify) {
 
   // POST /api/auth/recover — Solicitar recuperación de contraseña
   fastify.post('/recover', {
+    config: { 
+      rateLimit: { max: 3, timeWindow: '1 minute' } 
+    },
     schema: {
       body: {
         type: 'object',
@@ -267,5 +276,11 @@ export default async function authRoutes(fastify) {
       sameSite: 'none'
     })
     return { message: 'Sesión cerrada' }
+  })
+
+  // GET /api/auth/csrf — Obtener token CSRF
+  fastify.get('/csrf', async (request, reply) => {
+    const token = await reply.generateCsrf()
+    return { csrfToken: token }
   })
 }
