@@ -145,7 +145,25 @@ export default async function checkoutRoutes(fastify) {
     const { paymentIntentId, shippingAddress, items, totalAmount } = request.body
 
     try {
-      // 0. Idempotencia inicial: si ya existe un order con este
+      // 0. Validación con Stripe: Comprobar que el pago realmente se completó
+      if (!paymentIntentId) {
+        return reply.status(400).send({ error: 'El paymentIntentId es obligatorio' })
+      }
+
+      let paymentIntent;
+      try {
+        paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+      } catch (stripeErr) {
+        fastify.log.warn({ paymentIntentId, err: stripeErr.message }, 'Intento de confirmar con ID inválido')
+        return reply.status(400).send({ error: 'ID de pago no válido o no encontrado' })
+      }
+
+      if (paymentIntent.status !== 'succeeded') {
+        fastify.log.warn({ paymentIntentId, status: paymentIntent.status }, 'Intento de confirmar pedido sin pago exitoso')
+        return reply.status(400).send({ error: 'El pago no ha sido procesado o completado con éxito por Stripe' })
+      }
+
+      // 1. Idempotencia inicial: si ya existe un order con este
       //    paymentIntentId, no insertamos uno nuevo. Solo lo confirmamos.
       const { data: existingOrder } = await supabase
         .from('orders')
