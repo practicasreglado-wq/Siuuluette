@@ -1,8 +1,15 @@
 <template>
   <div id="siuuluette-app" :class="{ 'cart-open': isCartOpen }">
 
-    <div class="announcement-bar">
-      <span class="label">Envío gratuito en pedidos superiores a 100€ — Nuevos drops cada mes</span>
+    <div class="announcement-bar" :class="{ 'announcement-bar--marquee': hasDiscounts }">
+      <div v-if="hasDiscounts" class="announcement-bar__marquee">
+        <div class="marquee-track">
+          <span v-for="n in 10" :key="n" class="marquee-item">
+            ACCESO EXCLUSIVO: DESCUENTOS ACTIVOS EN SELECCIÓN OFF-SEASON &nbsp;·&nbsp; VISTE LA VICTORIA CON PRECIOS ESPECIALES &nbsp;·&nbsp; EXPLORA LAS OFERTAS &nbsp;·&nbsp;
+          </span>
+        </div>
+      </div>
+      <span v-else class="label">Envío gratuito en pedidos superiores a 100€ — Nuevos drops cada mes</span>
     </div>
 
     <Navbar
@@ -73,8 +80,9 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { authApi } from './api/index.js'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { authApi, productsApi } from './api/index.js'
 import { useCart } from './composables/useCart.js'
 
 import Navbar from './components/Navbar.vue'
@@ -139,6 +147,19 @@ export default {
     const isAuthOpen = ref(false)
     const isCheckoutOpen = ref(false)
     const isSuccessOpen = ref(false)
+    const hasDiscounts = ref(false)
+    const route = useRoute()
+    let discountInterval = null
+
+    async function checkDiscounts() {
+      try {
+        const data = await productsApi.getAll()
+        const prods = Array.isArray(data.products) ? data.products : []
+        hasDiscounts.value = prods.some(p => p.discount_percent > 0)
+      } catch (err) {
+        console.error('Error checking discounts:', err)
+      }
+    }
 
     async function checkAuth() {
       // Usamos 'isLoggedIn' como pista para evitar errores 401 innecesarios en la consola
@@ -199,10 +220,20 @@ export default {
     onMounted(async () => {
       window.addEventListener('scroll', handleScroll)
       await checkAuth()
+      await checkDiscounts()
+      
+      // Verificamos descuentos cada 30 segundos para mantener el tablón actualizado
+      discountInterval = setInterval(checkDiscounts, 30000)
+    })
+
+    // Re-verificar al cambiar de página por si acaso
+    watch(() => route.path, () => {
+      checkDiscounts()
     })
 
     onUnmounted(() => {
       window.removeEventListener('scroll', handleScroll)
+      if (discountInterval) clearInterval(discountInterval)
     })
 
     return {
@@ -225,7 +256,8 @@ export default {
       handleLogout,
       handleCheckout,
       handlePaymentSuccess,
-      handleBuyAgain
+      handleBuyAgain,
+      hasDiscounts
     }
   }
 }
@@ -248,6 +280,32 @@ export default {
   display: flex; align-items: center; justify-content: center;
   background: var(--c-gold); color: var(--c-black);
   z-index: 1200; font-size: 0.75rem; letter-spacing: 0.12em;
+  overflow: hidden;
+}
+
+.announcement-bar--marquee {
+  justify-content: flex-start;
+}
+
+.announcement-bar__marquee {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.marquee-track {
+  display: inline-flex;
+  animation: marquee-header 40s linear infinite;
+}
+
+.marquee-item {
+  font-weight: 700;
+  text-transform: uppercase;
+  padding-right: 2rem;
+}
+
+@keyframes marquee-header {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 .overlay {
   position: fixed; inset: 0; background: rgba(58, 52, 45, 0.7);
