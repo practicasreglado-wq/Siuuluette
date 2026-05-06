@@ -219,6 +219,21 @@ export async function issueInvoiceForOrder(orderId, opts = {}) {
     .single()
 
   if (insertErr) {
+    // 23505 = unique_violation. Si dos procesos (p.ej. /confirm + webhook)
+    // pasan a la vez el chequeo "no hay factura" e intentan insertar
+    // simultaneamente, uno gana y el otro choca aqui. La factura ya esta
+    // emitida correctamente por el ganador: la recuperamos y devolvemos
+    // como existente para no enviar email duplicado.
+    if (insertErr.code === '23505' || /duplicate key/i.test(insertErr.message || '')) {
+      const { data: existing } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('order_id', orderId)
+        .single()
+      if (existing) {
+        return { invoice: existing, pdfBuffer: null, isNew: false, customer, items }
+      }
+    }
     throw new Error(`Error guardando la factura en BD: ${insertErr.message}`)
   }
 
