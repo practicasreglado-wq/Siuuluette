@@ -1,5 +1,6 @@
 <template>
   <section class="hero">
+    <!-- CAPA DE FONDO: Maneja el color base, el brillo dinámico y el efecto de grano tipo película -->
     
     <!-- Background Layers -->
     <div class="hero__bg">
@@ -12,7 +13,7 @@
       <div class="hero__flashlight"></div>
     </div>
 
-    <!-- Isotipo Backgrounds (Layered) -->
+    <!-- ISOTIPOS (LOGOS EN VIDEO): Capas de video que muestran la figura de la marca con efectos de silueta -->
     <div class="hero__isotipo-bg hero__isotipo-bg--large">
       <video ref="videoLarge" :src="videoUrl" autoplay muted loop playsinline class="hero__isotipo-video"></video>
     </div>
@@ -21,14 +22,14 @@
       <video ref="videoSmall" :src="videoUrl" autoplay muted loop playsinline class="hero__isotipo-video hero__isotipo-video--solid"></video>
     </div>
 
-    <!-- Decorative Sidebar (Desktop only) -->
+    <!-- BARRA LATERAL DECORATIVA: Información de marca (solo visible en escritorio) -->
     <div class="hero__sidebar">
       <div class="hero__sidebar-line"></div>
       <span class="hero__sidebar-text">LE SIUULUETTE · BRAND · 2026</span>
       <div class="hero__sidebar-line"></div>
     </div>
 
-    <!-- Main Container -->
+    <!-- CONTENIDO PRINCIPAL: Título, subtítulo y botones de acción -->
     <div class="hero__container">
       <div class="hero__content">
         
@@ -67,7 +68,7 @@
       </div>
     </div>
 
-    <!-- Scroll Indicator -->
+    <!-- INDICADOR DE SCROLL: Guía visual para invitar a bajar en la página -->
     <div class="hero__scroll">
       <span class="hero__scroll-text">Explora</span>
       <div class="hero__scroll-line">
@@ -88,8 +89,8 @@ export default {
     const videoSmall = ref(null)
     const videoUrl = ref('')
 
-    // Sincronización manual solo al inicio y cuando el video vuelve a empezar (loop)
-    // Esto evita los tirones constantes del setInterval
+    // --- LÓGICA DE SINCRONIZACIÓN DE VIDEOS ---
+    // Asegura que los dos videos (grande y pequeño) se reproduzcan exactamente al mismo tiempo
     const startVideosInSync = () => {
       const v1 = videoLarge.value
       const v2 = videoSmall.value
@@ -107,6 +108,7 @@ export default {
       })
     }
 
+    // Al montar el componente: Precargamos el video como Blob para evitar latencia de red
     onMounted(async () => {
       try {
         const response = await fetch('/SiuuTipo2.webm')

@@ -5,7 +5,7 @@
        ========================================== -->
   <aside class="cart" role="dialog" aria-modal="true" aria-label="Carrito de compra">
 
-    <!-- Header -->
+    <!-- CABECERA: Título y contador de artículos -->
     <div class="cart__header">
       <div class="cart__title-block">
         <h2 class="cart__title">Carrito</h2>
@@ -20,7 +20,7 @@
 
     <div class="divider"></div>
 
-    <!-- Empty state -->
+    <!-- ESTADO VACÍO: Mensaje y botón para explorar si no hay productos -->
     <div class="cart__empty" v-if="!cartItems.length">
       <div class="cart__empty-icon" aria-hidden="true">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -37,7 +37,7 @@
       >Explorar productos</router-link>
     </div>
 
-    <!-- Items -->
+    <!-- LISTA DE ARTÍCULOS: Renderiza cada producto con controles de cantidad y eliminación -->
     <div class="cart__items" v-else>
       <TransitionGroup name="cart-item" tag="div">
         <div
@@ -69,7 +69,7 @@
       </TransitionGroup>
     </div>
 
-    <!-- Footer -->
+    <!-- PIE DE CARRITO: Subtotal acumulado y botones para proceder al pago -->
     <div class="cart__footer" v-if="cartItems.length">
       <div class="divider"></div>
       <div class="cart__subtotal">
@@ -97,9 +97,11 @@ export default {
     cartItems: { type: Array, default: () => [] }
   },
   computed: {
+    // Calcula la cantidad total de prendas en el carrito
     totalItems() {
       return this.cartItems.reduce((sum, i) => sum + (Number(i.qty) || 0), 0)
     },
+    // Calcula la suma total de los precios multiplicados por su cantidad
     subtotal() {
       return this.cartItems.reduce((sum, i) => {
         const p = Number(i.price) || 0

@@ -3,7 +3,7 @@
     <div v-if="isOpen" class="auth-overlay" @click.self="$emit('close')">
       <div class="auth-card">
         
-        <!-- Header -->
+        <!-- Header: Gestión de pestañas (Login / Registro / Títulos de vista) -->
         <div class="auth-card__header">
           <div v-if="!currentUser" class="auth-tabs">
             <button 
@@ -36,6 +36,7 @@
         </div>
 
         <div class="auth-card__content">
+          <!-- VISTA DE PERFIL: Información básica del usuario y acciones principales -->
           <div v-if="currentUser && view === 'profile'" class="profile-view">
             <div class="profile-header">
               <div class="profile-avatar">
@@ -58,7 +59,7 @@
             </div>
           </div>
 
-          <!-- ORDERS VIEW -->
+          <!-- VISTA DE PEDIDOS: Historial de compras con opción de descargar factura -->
           <div v-else-if="currentUser && view === 'orders'" class="orders-view">
             <div v-if="loadingOrders" class="orders-loading">
               <div class="spinner"></div>
@@ -113,7 +114,7 @@
               </div>
             </div>
           </div>
-          <!-- FAVORITES VIEW -->
+          <!-- VISTA DE FAVORITOS: Lista de productos que el usuario ha marcado como preferidos -->
           <div v-else-if="currentUser && view === 'favorites'" class="favorites-view">
             <div v-if="loadingFavorites" class="orders-loading">
               <div class="spinner"></div>
@@ -150,6 +151,7 @@
               </div>
             </div>
           </div>
+          <!-- PANTALLA DE ÉXITO REGISTRO: Información post-registro (confirmación de email) -->
           <div v-else-if="isRegistered" class="registration-success">
             <div class="check-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -198,6 +200,7 @@
               </button>
             </form>
 
+            <!-- FORMULARIO DE ACCESO: Maneja Login, Registro y Recuperación de Contraseña -->
             <form v-else @submit.prevent="handleSubmit" class="auth-form">
               <div v-if="mode === 'register'" class="form-group">
                 <label class="label-xs">Nombre de usuario</label>
@@ -271,8 +274,8 @@ export default {
   },
   emits: ['close', 'login-success', 'logout', 'buy-again'],
   setup(props, { emit }) {
-    const mode = ref('login')
-    const view = ref('profile') // 'profile' or 'orders'
+    const mode = ref('login') // 'login', 'register' o 'forgot'
+    const view = ref('profile') // 'profile', 'orders' o 'favorites'
     const loading = ref(false)
     const loadingOrders = ref(false)
     const error = ref('')
@@ -332,6 +335,8 @@ export default {
       })
     }
 
+    // --- GESTIÓN DE FORMULARIO ---
+    // Maneja tanto el inicio de sesión como el registro con validaciones de seguridad
     const handleSubmit = async () => {
       loading.value = true
       error.value = ''
@@ -406,6 +411,8 @@ export default {
       error.value = ''
     })
 
+    // --- DESCARGA DE FACTURAS ---
+    // Solicita al backend el PDF de la factura y lo descarga en el navegador
     const downloadInvoice = async (orderId) => {
       try {
         const token = localStorage.getItem('token')

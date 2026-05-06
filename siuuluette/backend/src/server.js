@@ -12,9 +12,12 @@ import csrf from '@fastify/csrf-protection'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+// --- CONFIGURACIÓN INICIAL DEL SERVIDOR ---
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// Inicialización de Fastify con logger integrado
 const fastify = Fastify({
   logger: {
     transport: {
@@ -23,13 +26,7 @@ const fastify = Fastify({
   }
 })
 
-// Raw body parser para el webhook de Stripe.
-// Stripe firma el body crudo (HMAC) y si lo parseamos como JSON antes
-// de verificar, los bytes cambian y la firma falla. Por eso para esta
-// ruta concreta interceptamos el body como Buffer y lo dejamos en
-// request.rawBody para que el handler pueda verificarlo.
-//
-// Para el resto de endpoints mantenemos el parseo JSON normal.
+// Middleware especial para manejar Webhooks de Stripe (evita que el parseo JSON rompa la firma)
 fastify.addContentTypeParser(
   'application/json',
   { parseAs: 'buffer' },
@@ -59,7 +56,9 @@ const allowedOrigins = new Set([
   'http://127.0.0.1:5174',
 ].filter(Boolean))
 
-// 1. Plugins Globales
+// --- REGISTRO DE PLUGINS Y SEGURIDAD ---
+
+// Configuración de CORS (Control de acceso desde el Frontend)
 await fastify.register(cors, {
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.has(origin)) {
@@ -73,6 +72,7 @@ await fastify.register(cors, {
   credentials: true,
 })
 
+// Autenticación basada en JSON Web Tokens (JWT)
 await fastify.register(jwt, {
   secret: process.env.JWT_SECRET,
   cookie: {
@@ -81,6 +81,7 @@ await fastify.register(jwt, {
   }
 })
 
+// Manejo de Cookies y protección CSRF (evita ataques de suplantación)
 await fastify.register(cookie)
 await fastify.register(csrf, {
   cookieOpts: { 
@@ -91,7 +92,7 @@ await fastify.register(csrf, {
   }
 })
 
-// 1.5 Security: Helmet & Rate Limit
+// Helmet (cabeceras de seguridad) y Rate Limit (evita saturación por exceso de peticiones)
 await fastify.register(helmet, {
   contentSecurityPolicy: {
     directives: {
@@ -114,7 +115,7 @@ await fastify.register(rateLimit, {
   })
 })
 
-// 2. Swagger Specification 
+// --- DOCUMENTACIÓN API (SWAGGER) ---
 await fastify.register(swagger, {
   openapi: {
     info: {
@@ -145,7 +146,9 @@ await fastify.register(swaggerUi, {
   exposeRoute: true
 })
 
-// 4. Decorators
+// --- DECORADORES (MIDDLEWARES DE AUTENTICACIÓN) ---
+
+// Verifica que el usuario esté logueado
 fastify.decorate('authenticate', async (request, reply) => {
   try {
     await request.jwtVerify()
@@ -154,6 +157,7 @@ fastify.decorate('authenticate', async (request, reply) => {
   }
 })
 
+// Verifica que el usuario sea administrador
 fastify.decorate('authenticateAdmin', async (request, reply) => {
   try {
     const user = await request.jwtVerify()
@@ -165,7 +169,7 @@ fastify.decorate('authenticateAdmin', async (request, reply) => {
   }
 })
 
-// 5. Routes
+// --- REGISTRO DE RUTAS DEL SISTEMA ---
 await fastify.register(import('./routes/products.js'),    { prefix: '/api/products' })
 await fastify.register(import('./routes/collections.js'), { prefix: '/api/collections' })
 await fastify.register(import('./routes/drops.js'),    { prefix: '/api/drops' })
@@ -179,7 +183,7 @@ fastify.get('/', async (request, reply) => {
   reply.type('text/html').send('<h1>Siuuluette API is running</h1><p>Documentation at <a href="/documentation/">/documentation/</a></p>')
 })
 
-// 6. Start
+// --- ARRANQUE DEL SERVIDOR ---
 const start = async () => {
   try {
     await fastify.ready()

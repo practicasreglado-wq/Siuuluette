@@ -1,7 +1,8 @@
 import { supabase } from '../db/supabase.js'
 
 export default async function cartRoutes(fastify) {
-  // GET /api/cart — Listar productos del carrito (solo logueados)
+  // --- LISTAR CARRITO ---
+  // Obtiene los productos guardados en el carrito del usuario logueado
   fastify.get('/', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
@@ -53,7 +54,8 @@ export default async function cartRoutes(fastify) {
     return { cart: enrichedCart }
   })
 
-  // POST /api/cart/add — Añadir un producto al carrito
+  // --- AÑADIR AL CARRITO ---
+  // Si el usuario está logueado se guarda en la DB, si no, se maneja localmente
   fastify.post('/add', {
     schema: {
       body: {
@@ -126,7 +128,8 @@ export default async function cartRoutes(fastify) {
     return { message: 'Carrito actualizado' }
   })
 
-  // POST /api/cart/merge — Sincronizar carrito de invitado
+  // --- SINCRONIZAR CARRITO ---
+  // Pasa los productos del carrito local (invitado) a la cuenta del usuario al loguearse
   fastify.post('/merge', {
     onRequest: [fastify.authenticate],
     schema: {
@@ -196,7 +199,8 @@ export default async function cartRoutes(fastify) {
     return { message: 'Carrito sincronizado' }
   })
 
-  // POST /api/cart/remove — Eliminar un ítem del carrito
+  // --- ELIMINAR ÍTEM ---
+  // Borra un producto específico del carrito basándose en su ID y talla
   fastify.post('/remove', {
     onRequest: [fastify.authenticate],
     schema: {
@@ -227,7 +231,8 @@ export default async function cartRoutes(fastify) {
     return { message: 'Producto eliminado del carrito' }
   })
 
-  // POST /api/cart/update — Actualizar cantidad exacta de un ítem
+  // --- ACTUALIZAR CANTIDAD ---
+  // Cambia el número de unidades de un producto en el carrito
   fastify.post('/update', {
     onRequest: [fastify.authenticate],
     schema: {
@@ -319,7 +324,8 @@ export default async function cartRoutes(fastify) {
     return { message: 'Cantidad actualizada' }
   })
 
-  // DELETE /api/cart — Vaciar carrito completo
+  // --- VACIAR CARRITO ---
+  // Elimina todos los productos del carrito del usuario
   fastify.delete('/', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {

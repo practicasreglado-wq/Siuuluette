@@ -3,7 +3,9 @@
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 let csrfToken = null
 
-// Helper base — maneja errores y token JWT automáticamente
+// --- CLIENTE API CENTRALIZADO ---
+// Esta función maneja todas las peticiones al backend, añadiendo automáticamente
+// el token de sesión (JWT) y el token de seguridad CSRF.
 async function request(path, options = {}) {
   const token = localStorage.getItem('token')
 
@@ -54,12 +56,12 @@ async function request(path, options = {}) {
   return res.json()
 }
 
-// --- API de colecciones ---
+// --- SERVICIOS DE COLECCIONES ---
 export const collectionsApi = {
   getAll: () => request('/api/collections'),
 }
 
-// --- API de productos ---
+// --- SERVICIOS DE PRODUCTOS ---
 export const productsApi = {
   getAll:     ()      => request('/api/products'),
   getAdminAll:()      => request('/api/products/admin'),
@@ -72,14 +74,14 @@ export const productsApi = {
   create:     (data)  => request('/api/products', { method: 'POST', body: JSON.stringify(data) }),
 }
 
-// --- API de favoritos ---
+// --- SERVICIOS DE FAVORITOS ---
 export const favoritesApi = {
   list:   ()           => request('/api/favorites'),
   add:    (productId)  => request(`/api/favorites/${productId}`, { method: 'POST' }),
   remove: (productId)  => request(`/api/favorites/${productId}`, { method: 'DELETE' }),
 }
 
-// --- API de auth ---
+// --- SERVICIOS DE AUTENTICACIÓN ---
 export const authApi = {
   login:    (creds) => request('/api/auth/login',    { method: 'POST', body: JSON.stringify(creds) }),
   register: (data)  => request('/api/auth/register', { method: 'POST', body: JSON.stringify(data) }),
@@ -97,7 +99,7 @@ export const authApi = {
   }
 }
 
-// --- API de carrito ---
+// --- SERVICIOS DE CARRITO ---
 export const cartApi = {
   get:    ()      => request('/api/cart'),
   add:    (item)  => request('/api/cart/add', { method: 'POST', body: JSON.stringify(item) }),
@@ -111,7 +113,7 @@ export const cartApi = {
   update: (data) => request('/api/cart/update', { method: 'POST', body: JSON.stringify(data) }),
 }
 
-// --- API de checkout ---
+// --- SERVICIOS DE PAGO Y PEDIDOS (CHECKOUT) ---
 export const checkoutApi = {
   createIntent:   (cart) => request('/api/checkout/intent',  { method: 'POST', body: JSON.stringify(cart) }),
   // Adjunta shipping + items + userId al PaymentIntent (metadata) ANTES de confirmar el pago.
@@ -121,7 +123,7 @@ export const checkoutApi = {
   getHistory:     ()     => request('/api/checkout/orders'),
 }
 
-// --- API de administración (Solo Admin) ---
+// --- SERVICIOS DE ADMINISTRACIÓN ---
 export const adminApi = {
   getOrders:    ()          => request('/api/admin/orders'),
   updateOrder:  (id, status) => request(`/api/admin/orders/${id}`, { method: 'PATCH', body: { status } }),

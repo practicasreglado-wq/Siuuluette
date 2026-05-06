@@ -18,20 +18,11 @@ import { issueInvoiceForOrder } from './invoiceService.js'
 import { sendOrderConfirmationEmail } from './mailer.js'
 
 /**
- * Confirma un pedido a partir de su PaymentIntent de Stripe.
- * Idempotente: llamarla varias veces produce el mismo resultado.
- *
- * Comportamiento:
- *   - Si existe un order para ese paymentIntentId, lo confirma (paid + factura + email).
- *   - Si NO existe y se pasa el `paymentIntent` completo con metadata adjuntada
- *     por /attach, crea el order + items + vacia el carrito ANTES de confirmar.
- *
- * @param {Object} params
- * @param {string} params.paymentIntentId - ID del PaymentIntent (pi_...)
- * @param {Object} [params.paymentIntent] - PaymentIntent completo (con metadata). Necesario si el order aun no existe (caso webhook autonomo).
- * @param {Object} [params.shippingAddress] - Override puntual de la direccion (solo cuando lo pasa /confirm)
- * @param {Object} [params.logger] - logger fastify para trazas (opcional)
- * @returns {Promise<{ order: Object, invoice: Object|null, alreadyProcessed: boolean }>}
+ * CONFIRMAR PEDIDO PAGADO
+ * Esta es la función principal que se ejecuta cuando un pago tiene éxito.
+ * 1. Busca el pedido en la base de datos.
+ * 2. Si no existe, lo crea usando los datos de respaldo de Stripe (Metadata).
+ * 3. Emite la factura legal y envía el email de confirmación al cliente.
  */
 export async function confirmOrderByPaymentIntent({ paymentIntentId, paymentIntent, shippingAddress, logger }) {
   const log = logger || console
@@ -152,15 +143,10 @@ export async function confirmOrderByPaymentIntent({ paymentIntentId, paymentInte
 }
 
 /**
- * Crea un order + order_items en la DB a partir de la metadata que el
- * frontend adjunto al PaymentIntent via /attach.
- *
- * Solo se llama desde el webhook cuando llega payment_intent.succeeded
- * y NO existe un order para ese paymentIntent (caso "frontend cayo").
- *
- * @param {Object} paymentIntent - Objeto PaymentIntent completo de Stripe
- * @param {Object} log - logger
- * @returns {Promise<Object|null>} El order creado, o null si falta metadata.
+ * CREACIÓN DE EMERGENCIA DESDE STRIPE
+ * Si el usuario cierra la pestaña antes de que el frontend avise al servidor,
+ * esta función reconstruye el pedido completo usando la información que guardamos
+ * preventivamente en los servidores de Stripe.
  */
 async function createOrderFromPaymentIntentMetadata(paymentIntent, log) {
   const meta = paymentIntent?.metadata || {}

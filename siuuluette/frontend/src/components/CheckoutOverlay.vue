@@ -3,7 +3,7 @@
     <div v-if="isOpen" class="checkout-overlay" @click.self="handleClose">
       <div class="checkout-card">
         
-        <!-- Header -->
+        <!-- Cabecera del Checkout -->
         <div class="checkout-card__header">
           <h2 class="display-sm">Finalizar Pedido</h2>
           <button class="close-btn" @click="handleClose">
@@ -14,7 +14,7 @@
         </div>
 
         <div class="checkout-card__content">
-          <!-- Order Summary -->
+          <!-- RESUMEN DEL PEDIDO: Detalle de productos, cantidades y desglose de IVA -->
           <div class="order-summary">
             <div class="summary-row" v-for="item in items" :key="item.cartItemId || item.id">
               <div class="summary-item-details">
@@ -33,7 +33,7 @@
             </div>
           </div>
 
-          <!-- Stripe Form -->
+          <!-- FORMULARIO DE PAGO (STRIPE): Integra dirección de envío y pasarela de pago -->
           <form id="payment-form" @submit.prevent="handleSubmit" class="payment-form">
             <div id="link-authentication-element"></div>
             
@@ -64,6 +64,7 @@
             </button>
           </form>
           
+          <!-- SELLO DE SEGURIDAD: Informativo sobre la pasarela de pago -->
           <div class="secure-badge">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -105,6 +106,8 @@ export default {
     let currentPaymentIntentId = null // lo guardamos para poder llamarle a /attach despues
     const guestEmail = ref('')
 
+    // --- INICIALIZACIÓN DE STRIPE ---
+    // Carga los elementos de Stripe (Dirección, Email, Pago) y configura el diseño
     async function initStripe() {
       if (!props.isOpen) return
 
@@ -188,6 +191,8 @@ export default {
       }
     }
 
+    // --- PROCESAR EL PAGO ---
+    // Valida la dirección, adjunta metadata de seguridad y confirma el pago con Stripe
     async function handleSubmit() {
       if (!stripe || !elements) return
       loading.value = true

@@ -1,15 +1,15 @@
 import { supabase } from '../db/supabase.js'
 
 /* ============================================================
-   SIUULUETTE — Products Routes (modelo con variantes)
+   SIUULUETTE — Rutas de Productos (Modelo de Datos)
    ============================================================
-   - products: producto padre (Sudadera Sport, Camiseta Urban...)
-   - product_variants: cada color del producto
-   - product_images: imágenes por variante
-   - variant_stock: stock por SKU (variante + talla)
+   - products: Producto base (ej: Sudadera)
+   - product_variants: Variantes por color del producto
+   - product_images: Galería de fotos por variante
+   - variant_stock: Inventario por talla y SKU
    ============================================================ */
 
-// Selector reutilizable: producto padre + variantes anidadas + imágenes + stock
+// Consulta base para traer toda la información relacionada de un producto
 const PRODUCT_SELECT = `
   id, name, slug, description, collection, category, style,
   price_net, price_gross, discount_percent, materials, size_guide, is_active,
@@ -25,10 +25,10 @@ const PRODUCT_SELECT = `
 const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 
 /* -----------------------------------------------------------
-   Helpers de transformación
+   HELPERS DE TRANSFORMACIÓN Y CÁLCULO
    ----------------------------------------------------------- */
 
-// Calcula precio final aplicando override + descuento
+// Calcula los precios finales aplicando descuentos y posibles variaciones por color
 function computePrices(parent, variant) {
   const baseNet   = variant.price_net_override   ?? parent.price_net
   const baseGross = variant.price_gross_override ?? parent.price_gross
@@ -51,9 +51,8 @@ function isSizeAvailable(s) {
   return s.stock > 0   // 'limited'
 }
 
-// Normaliza el producto: ordena variantes, imágenes y tallas; aplica precios.
-// Devuelve además campos "legacy" (price, image_url, sizes, color, gallery)
-// tomados de la primera variante para que el frontend actual siga funcionando.
+// Limpia y organiza los datos de la DB para que el Frontend los entienda fácilmente.
+// Gestiona el orden de fotos, tallas disponibles y compatibilidad con versiones anteriores.
 function normalizeProduct(p) {
   if (!p) return null
 
@@ -140,7 +139,8 @@ function normalizeProduct(p) {
 
 export default async function productsRoutes(fastify) {
 
-  // GET /api/products — listar todos los productos activos
+  // --- LISTAR PRODUCTOS (CATÁLOGO) ---
+  // Obtiene todos los productos que están marcados como activos
   fastify.get('/', async (request, reply) => {
     const { data, error } = await supabase
       .from('products')
@@ -157,7 +157,8 @@ export default async function productsRoutes(fastify) {
     return { products }
   })
 
-  // GET /api/products/admin — listar todos (incluyendo inactivos) para gestión
+  // --- LISTAR PRODUCTOS (ADMIN) ---
+  // Obtiene todos los productos del sistema (activos e inactivos)
   fastify.get('/admin', {
     onRequest: [fastify.authenticateAdmin]
   }, async (request, reply) => {
@@ -175,7 +176,7 @@ export default async function productsRoutes(fastify) {
     return { products }
   })
 
-  // GET /api/products/:id — un producto por id
+  // --- OBTENER POR ID ---
   fastify.get('/:id', {
     schema: {
       params: {
@@ -199,7 +200,7 @@ export default async function productsRoutes(fastify) {
     return { product: normalizeProduct(data) }
   })
 
-  // GET /api/products/slug/:slug — un producto por slug (URL pública)
+  // --- OBTENER POR SLUG (URL AMIGABLE) ---
   fastify.get('/slug/:slug', {
     schema: {
       params: {
@@ -223,7 +224,8 @@ export default async function productsRoutes(fastify) {
     return { product: normalizeProduct(data) }
   })
 
-  // GET /api/products/:id/related — productos relacionados (misma colección)
+  // --- PRODUCTOS RELACIONADOS ---
+  // Sugiere productos de la misma colección
   fastify.get('/:id/related', {
     schema: {
       params: {
@@ -260,9 +262,8 @@ export default async function productsRoutes(fastify) {
     return { products }
   })
 
-  // GET /api/products/:id/variants — colores del mismo producto padre
-  // Devuelve cada color como un mini-producto compatible con el PDP actual:
-  // { id (variant_id), name, slug, color, image_url, color_hex }
+  // --- COLORES DISPONIBLES ---
+  // Devuelve las variantes de color para cambiar de modelo en la página de producto
   fastify.get('/:id/variants', {
     schema: {
       params: {
@@ -300,7 +301,7 @@ export default async function productsRoutes(fastify) {
     return { variants }
   })
 
-  // POST /api/products — crear producto (admin, JWT)
+  // --- CREAR PRODUCTO (ADMIN) ---
   fastify.post('/', {
     onRequest: [fastify.authenticateAdmin],
     schema: {
@@ -340,7 +341,7 @@ export default async function productsRoutes(fastify) {
     return reply.status(201).send({ product: data })
   })
 
-  // PATCH /api/products/:id — actualizar producto (admin)
+  // --- ACTUALIZAR PRODUCTO (ADMIN) ---
   fastify.patch('/:id', {
     onRequest: [fastify.authenticateAdmin]
   }, async (request, reply) => {
@@ -358,7 +359,7 @@ export default async function productsRoutes(fastify) {
     return { product: data }
   })
 
-  // PATCH /api/products/variants/:id — actualizar variante (admin)
+  // --- ACTUALIZAR VARIANTE (ADMIN) ---
   fastify.patch('/variants/:id', {
     onRequest: [fastify.authenticateAdmin]
   }, async (request, reply) => {

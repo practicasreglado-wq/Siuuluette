@@ -1,3 +1,5 @@
+// --- CONFIGURACIÓN DE SUPABASE ---
+// Inicializa la conexión con la base de datos y los servicios de autenticación
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 

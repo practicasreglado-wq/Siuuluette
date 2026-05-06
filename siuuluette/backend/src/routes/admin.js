@@ -2,10 +2,11 @@ import { supabase } from '../db/supabase.js'
 
 export default async function adminRoutes(fastify) {
   
-  // Middleware para verificar que el usuario es admin
+  // Middleware para verificar que el usuario es admin (protege todas las rutas de este archivo)
   fastify.addHook('onRequest', fastify.authenticateAdmin)
 
-  // GET /api/admin/orders — Listar todos los pedidos de la tienda con paginación
+  // --- LISTAR PEDIDOS ---
+  // Obtiene todos los pedidos de la tienda, incluyendo detalles de productos y perfiles de usuario
   fastify.get('/orders', async (request, reply) => {
     const { page = 1, limit = 20 } = request.query
     const start = (page - 1) * limit
@@ -72,7 +73,8 @@ export default async function adminRoutes(fastify) {
     }
   })
 
-  // PATCH /api/admin/orders/:id — Actualizar estado del pedido (paid, shipped, delivered, cancelled)
+  // --- ACTUALIZAR ESTADO ---
+  // Permite al administrador cambiar el estado del pedido (ej: enviado, entregado)
   fastify.patch('/orders/:id', async (request, reply) => {
     const { id } = request.params
     const { status } = request.body

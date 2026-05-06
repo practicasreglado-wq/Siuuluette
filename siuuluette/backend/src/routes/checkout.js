@@ -7,7 +7,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 export default async function checkoutRoutes(fastify) {
 
-  // POST /api/checkout/intent — Crear intención de pago
+  // --- CREAR INTENCIÓN DE PAGO ---
+  // Calcula el total real en el servidor y solicita a Stripe un PaymentIntent
   fastify.post('/intent', async (request, reply) => {
     const { items } = request.body // Array de { id, qty }
 
@@ -77,20 +78,8 @@ export default async function checkoutRoutes(fastify) {
     }
   })
 
-  // POST /api/checkout/attach — Adjuntar shipping + items + userId al PaymentIntent
-  //
-  // El frontend lo llama JUSTO antes de stripe.confirmPayment(). Asi cuando el
-  // pago se completa, Stripe nos manda por webhook un PaymentIntent con toda
-  // la info necesaria para crear el pedido aunque el navegador caiga y nunca
-  // llame a /confirm.
-  //
-  // Lo que persistimos en metadata (limites de Stripe: 50 keys, 500 chars/value):
-  //   - user_id          : UUID del usuario autenticado (del JWT)
-  //   - cart_items       : JSON minimizado [{id,q,s}, ...]
-  //   - shipping_addr    : JSON de la direccion
-  //   - customer_email   : email
-  //   - customer_name    : nombre
-  //   - total_amount     : importe total bruto en EUR (string)
+  // --- ADJUNTAR DATOS AL PAGO ---
+  // Guarda los datos del cliente y el carrito en Stripe para que el Webhook pueda procesarlos
   fastify.post('/attach', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
@@ -147,11 +136,8 @@ export default async function checkoutRoutes(fastify) {
     }
   })
 
-  // POST /api/checkout/confirm — Finalizar pedido y guardar en DB
-  // Camino sincrono desde el frontend justo despues de pagar. Crea el
-  // pedido + items y delega en confirmOrderByPaymentIntent para emitir
-  // la factura y enviar el email. Esa funcion es idempotente, asi que
-  // si el webhook llega antes y la corre, /confirm no duplica nada.
+  // --- CONFIRMAR PEDIDO (SÍNCRONO) ---
+  // Se llama desde el frontend tras el pago para crear el pedido inmediatamente
   fastify.post('/confirm', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
@@ -257,18 +243,8 @@ export default async function checkoutRoutes(fastify) {
     }
   })
 
-  // POST /api/checkout/webhook — Recibir eventos de Stripe
-  //
-  // Stripe nos avisa aqui cuando un PaymentIntent se completa, falla, etc.
-  // Es nuestra red de seguridad: si el frontend no llega a llamar a /confirm
-  // (cierre de pestaña, fallo de red, etc.), el webhook se asegura de que
-  // el pedido quede consistente: marcado como 'paid', con factura emitida
-  // y email enviado.
-  //
-  // IMPORTANTE: esta ruta NO tiene autenticacion JWT. La "autenticacion"
-  // es la firma de Stripe (HMAC) sobre el body crudo, que verificamos abajo.
-  // El raw body se preserva en request.rawBody gracias al contentTypeParser
-  // configurado en server.js.
+  // --- WEBHOOK DE STRIPE ---
+  // Recibe notificaciones automáticas de Stripe (ej: pago completado con éxito)
   fastify.post('/webhook', async (request, reply) => {
     const sig = request.headers['stripe-signature']
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -331,7 +307,8 @@ export default async function checkoutRoutes(fastify) {
     return reply.status(200).send({ received: true })
   })
 
-  // GET /api/orders — Obtener historial de pedidos del usuario
+  // --- HISTORIAL DE PEDIDOS ---
+  // Lista todos los pedidos realizados por el usuario logueado
   fastify.get('/orders', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
@@ -372,7 +349,8 @@ export default async function checkoutRoutes(fastify) {
     return { orders }
   })
 
-  // GET /api/checkout/orders/:id/invoice — Descargar PDF de factura
+  // --- DESCARGAR FACTURA ---
+  // Genera y sirve el PDF de la factura asociada a un pedido
   fastify.get('/orders/:id/invoice', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {

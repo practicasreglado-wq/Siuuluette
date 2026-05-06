@@ -36,12 +36,10 @@ const LOGO_PATH = process.env.INVOICE_LOGO_PATH ||
 const STORAGE_BUCKET = 'invoices'
 
 /**
- * Emite la factura para un pedido. Idempotente: si ya existe, la devuelve.
- *
- * @param {number} orderId
- * @param {Object} [opts]
- * @param {Object} [opts.shippingAddress] - Override puntual de la direccion (para flujos donde aun no se ha guardado en profiles).
- * @returns {Promise<{ invoice: Object, pdfBuffer: Buffer, isNew: boolean }>}
+ * PROCESO DE EMISIÓN DE FACTURA
+ * 1. Verifica si ya existe para evitar duplicados.
+ * 2. Calcula importes, genera número correlativo y crea el PDF.
+ * 3. Guarda el archivo en la nube (Storage) y el registro en la DB.
  */
 export async function issueInvoiceForOrder(orderId, opts = {}) {
   // 1. Si ya existe factura para este pedido, devolverla (idempotencia)
@@ -241,11 +239,9 @@ export async function issueInvoiceForOrder(orderId, opts = {}) {
 }
 
 /**
- * Recupera el PDF de una factura ya emitida desde Supabase Storage.
- * Si no encontramos el PDF en Storage, lo regeneramos desde los snapshots.
- *
- * @param {Object} invoice - Fila completa de la tabla invoices
- * @returns {Promise<Buffer>}
+ * RECUPERAR O REGENERAR FACTURA
+ * Intenta descargar el PDF desde el almacenamiento. Si no existe (ej: borrado accidental),
+ * lo reconstruye en tiempo real usando los datos guardados en la base de datos.
  */
 export async function fetchOrRegenerateInvoicePDF(invoice) {
   // Intento descargar el PDF guardado

@@ -2,7 +2,8 @@ import { supabase } from '../db/supabase.js'
 
 export default async function authRoutes(fastify) {
 
-  // POST /api/auth/register — Registro de nuevo usuario
+  // --- REGISTRO DE USUARIOS ---
+  // Crea una nueva cuenta en Supabase Auth y genera el perfil inicial
   fastify.post('/register', {
     config: { 
       rateLimit: { max: 5, timeWindow: '1 minute' } 
@@ -75,7 +76,8 @@ export default async function authRoutes(fastify) {
     }
   })
 
-  // POST /api/auth/login — Inicio de sesión
+  // --- INICIO DE SESIÓN ---
+  // Verifica credenciales y devuelve una cookie HttpOnly con el token JWT
   fastify.post('/login', {
     config: { 
       rateLimit: { max: 5, timeWindow: '1 minute' } 
@@ -150,7 +152,8 @@ export default async function authRoutes(fastify) {
     }
   })
 
-  // GET /api/auth/me — Obtener mi perfil (Protegida)
+  // --- SESIÓN ACTUAL (ME) ---
+  // Devuelve los datos del usuario logueado basándose en el token de la sesión
   fastify.get('/me', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
@@ -170,7 +173,8 @@ export default async function authRoutes(fastify) {
     }
   })
 
-  // PATCH /api/auth/profile — Actualizar perfil (username, phone, address)
+  // --- ACTUALIZAR PERFIL ---
+  // Permite al usuario cambiar su nombre, teléfono o dirección
   fastify.patch('/profile', {
     onRequest: [fastify.authenticate]
   }, async (request, reply) => {
@@ -198,7 +202,8 @@ export default async function authRoutes(fastify) {
     return { message: 'Perfil actualizado', profile: data }
   })
 
-  // POST /api/auth/recover — Solicitar recuperación de contraseña
+  // --- RECUPERACIÓN DE CONTRASEÑA ---
+  // Envía un email con un enlace para restablecer la contraseña
   fastify.post('/recover', {
     config: { 
       rateLimit: { max: 3, timeWindow: '1 minute' } 
@@ -220,7 +225,8 @@ export default async function authRoutes(fastify) {
     return { message: 'Correo de recuperación enviado' }
   })
 
-  // POST /api/auth/update-password — Establecer nueva contraseña (vía token)
+  // --- ESTABLECER NUEVA CONTRASEÑA ---
+  // Actualiza la contraseña usando el token recibido por email o la sesión activa
   fastify.post('/update-password', {
     onRequest: async (request, reply) => {
       // 1. Intentar verificar con el JWT interno del backend
@@ -267,7 +273,8 @@ export default async function authRoutes(fastify) {
     return { message: 'Contraseña actualizada con éxito' }
   })
 
-  // POST /api/auth/logout — Cerrar sesión
+  // --- CERRAR SESIÓN ---
+  // Borra la cookie del token para finalizar la sesión
   fastify.post('/logout', async (request, reply) => {
     reply.clearCookie('token', {
       path: '/',
@@ -278,7 +285,8 @@ export default async function authRoutes(fastify) {
     return { message: 'Sesión cerrada' }
   })
 
-  // GET /api/auth/csrf — Obtener token CSRF
+  // --- PROTECCIÓN CSRF ---
+  // Genera un token de seguridad para validar peticiones desde el frontend
   fastify.get('/csrf', async (request, reply) => {
     const token = await reply.generateCsrf()
     return { csrfToken: token }
