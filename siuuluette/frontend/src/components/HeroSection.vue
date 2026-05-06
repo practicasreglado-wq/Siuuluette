@@ -14,15 +14,11 @@
 
     <!-- Isotipo Backgrounds (Layered) -->
     <div class="hero__isotipo-bg hero__isotipo-bg--large">
-      <video autoplay muted loop playsinline class="hero__isotipo-video">
-        <source src="/SiuuTipo2.webm" type="video/webm" />
-      </video>
+      <video ref="videoLarge" :src="videoUrl" autoplay muted loop playsinline class="hero__isotipo-video"></video>
     </div>
 
     <div class="hero__isotipo-bg hero__isotipo-bg--small">
-      <video autoplay muted loop playsinline class="hero__isotipo-video hero__isotipo-video--solid">
-        <source src="/SiuuTipo2.webm" type="video/webm" />
-      </video>
+      <video ref="videoSmall" :src="videoUrl" autoplay muted loop playsinline class="hero__isotipo-video hero__isotipo-video--solid"></video>
     </div>
 
     <!-- Decorative Sidebar (Desktop only) -->
@@ -83,8 +79,70 @@
 </template>
 
 <script>
+import { ref, onMounted, onUnmounted } from 'vue'
+
 export default {
-  name: 'HeroSection'
+  name: 'HeroSection',
+  setup() {
+    const videoLarge = ref(null)
+    const videoSmall = ref(null)
+    const videoUrl = ref('')
+
+    // Sincronización manual solo al inicio y cuando el video vuelve a empezar (loop)
+    // Esto evita los tirones constantes del setInterval
+    const startVideosInSync = () => {
+      const v1 = videoLarge.value
+      const v2 = videoSmall.value
+      if (!v1 || !v2) return
+
+      v1.currentTime = 0
+      v2.currentTime = 0
+      
+      const playPromise1 = v1.play()
+      const playPromise2 = v2.play()
+
+      // Manejar posibles bloqueos de autoplay del navegador
+      Promise.all([playPromise1, playPromise2]).catch(err => {
+        console.warn("Autoplay blocked or interrupted:", err)
+      })
+    }
+
+    onMounted(async () => {
+      try {
+        const response = await fetch('/SiuuTipo2.webm')
+        const blob = await response.blob()
+        videoUrl.value = URL.createObjectURL(blob)
+
+        // Una vez que el video está listo, los lanzamos a la vez
+        if (videoLarge.value) {
+          videoLarge.value.addEventListener('canplaythrough', startVideosInSync, { once: true })
+          
+          // Sincronizar solo cuando el video principal loopea (cada 16s)
+          // Así cualquier drift se corrige en el corte natural del video
+          videoLarge.value.addEventListener('play', () => {
+            if (videoSmall.value && Math.abs(videoSmall.value.currentTime - videoLarge.value.currentTime) > 0.3) {
+              videoSmall.value.currentTime = videoLarge.value.currentTime
+            }
+          })
+        }
+      } catch (e) {
+        console.error('Video preload error:', e)
+        videoUrl.value = '/SiuuTipo2.webm'
+      }
+    })
+
+    onUnmounted(() => {
+      if (videoUrl.value && videoUrl.value.startsWith('blob:')) {
+        URL.revokeObjectURL(videoUrl.value)
+      }
+    })
+
+    return {
+      videoLarge,
+      videoSmall,
+      videoUrl
+    }
+  }
 }
 </script>
 
