@@ -15,7 +15,7 @@
               type="password" 
               placeholder="••••••••" 
               required 
-              minlength="6"
+              minlength="8"
               class="form-input"
             >
           </div>
@@ -26,7 +26,7 @@
               type="password" 
               placeholder="••••••••" 
               required 
-              minlength="6"
+              minlength="8"
               class="form-input"
             >
           </div>
@@ -94,6 +94,21 @@ export default {
     const handleUpdate = async () => {
       if (password.value !== confirmPassword.value) {
         error.value = 'Las contraseñas no coinciden'
+        return
+      }
+
+      // VALIDACIÓN ESTRICTA
+      const pass = password.value
+      const hasUpper = /[A-Z]/.test(pass)
+      const hasNumber = /[0-9]/.test(pass)
+      const hasSpecial = /[^A-Za-z0-9]/.test(pass)
+
+      if (pass.length < 8) {
+        error.value = 'La contraseña debe tener al menos 8 caracteres.'
+        return
+      }
+      if (!hasUpper || !hasNumber || !hasSpecial) {
+        error.value = 'La contraseña debe incluir una mayúscula, un número y un carácter especial.'
         return
       }
 

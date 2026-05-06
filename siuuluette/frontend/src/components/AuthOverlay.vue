@@ -349,6 +349,19 @@ export default {
           emit('login-success', data.user)
           emit('close')
         } else {
+          // VALIDACIÓN DE CONTRASEÑA ESTRICTA
+          const pass = form.password
+          const hasUpper = /[A-Z]/.test(pass)
+          const hasNumber = /[0-9]/.test(pass)
+          const hasSpecial = /[^A-Za-z0-9]/.test(pass)
+          
+          if (pass.length < 8) {
+            throw new Error('La contraseña debe tener al menos 8 caracteres.')
+          }
+          if (!hasUpper || !hasNumber || !hasSpecial) {
+            throw new Error('La contraseña debe incluir una mayúscula, un número y un carácter especial.')
+          }
+
           const data = await authApi.register({ ...form })
           
           if (data.token) {
