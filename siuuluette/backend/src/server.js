@@ -22,6 +22,34 @@ const fastify = Fastify({
   }
 })
 
+// Raw body parser para el webhook de Stripe.
+// Stripe firma el body crudo (HMAC) y si lo parseamos como JSON antes
+// de verificar, los bytes cambian y la firma falla. Por eso para esta
+// ruta concreta interceptamos el body como Buffer y lo dejamos en
+// request.rawBody para que el handler pueda verificarlo.
+//
+// Para el resto de endpoints mantenemos el parseo JSON normal.
+fastify.addContentTypeParser(
+  'application/json',
+  { parseAs: 'buffer' },
+  (req, body, done) => {
+    try {
+      // Para el webhook de Stripe queremos el buffer crudo
+      if (req.routeOptions?.url === '/api/checkout/webhook' || req.url === '/api/checkout/webhook') {
+        req.rawBody = body
+        done(null, body) // pasamos el buffer tal cual; el handler lo interpreta
+        return
+      }
+      // Resto de rutas: parseo JSON normal
+      const json = body.length ? JSON.parse(body.toString('utf8')) : {}
+      done(null, json)
+    } catch (err) {
+      err.statusCode = 400
+      done(err, undefined)
+    }
+  }
+)
+
 const allowedOrigins = new Set([
   process.env.FRONTEND_URL,
   'http://localhost:5173',

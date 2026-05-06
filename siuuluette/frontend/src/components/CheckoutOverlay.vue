@@ -102,6 +102,7 @@ export default {
     let paymentElement = null
     let addressElement = null
     let linkAuthenticationElement = null
+    let currentPaymentIntentId = null // lo guardamos para poder llamarle a /attach despues
     const guestEmail = ref('')
 
     async function initStripe() {
@@ -112,10 +113,11 @@ export default {
         if (!stripeModule) return
         stripe = stripeModule
 
-        const { clientSecret } = await checkoutApi.createIntent({ 
+        const { clientSecret, paymentIntentId } = await checkoutApi.createIntent({
           items: props.items,
-          totalAmount: props.total 
+          totalAmount: props.total
         })
+        currentPaymentIntentId = paymentIntentId
         
         elements = stripe.elements({ 
           clientSecret,
@@ -197,6 +199,33 @@ export default {
           errorMessage.value = 'Por favor, completa la dirección de envío'
           loading.value = false
           return
+        }
+
+        const finalEmailPre = props.currentUser?.email || guestEmail.value
+
+        // Adjuntar metadata al PaymentIntent ANTES de pagar.
+        // Asi si el navegador cae justo despues, el webhook puede reconstruir
+        // el pedido entero a partir de esta metadata.
+        if (currentPaymentIntentId && props.currentUser) {
+          try {
+            await checkoutApi.attachMetadata({
+              paymentIntentId: currentPaymentIntentId,
+              shippingAddress: {
+                ...value.address,
+                name: value.name || props.currentUser?.username || '',
+                email: finalEmailPre,
+              },
+              items: props.items,
+              customerEmail: finalEmailPre,
+              customerName:  value.name || props.currentUser?.username || '',
+              totalAmount:   props.total,
+            })
+          } catch (attachErr) {
+            // No bloqueamos el pago si /attach falla. /confirm sigue creando
+            // el pedido por la via sincrona habitual. Solo perdemos la red
+            // de seguridad del webhook autonomo.
+            console.warn('[checkout] /attach fallo, continuamos sin red de seguridad:', attachErr)
+          }
         }
 
         const { error, paymentIntent } = await stripe.confirmPayment({

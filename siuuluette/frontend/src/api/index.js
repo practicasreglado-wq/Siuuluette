@@ -92,9 +92,12 @@ export const cartApi = {
 
 // --- API de checkout ---
 export const checkoutApi = {
-  createIntent: (cart) => request('/api/checkout/intent', { method: 'POST', body: JSON.stringify(cart) }),
-  confirmOrder: (data) => request('/api/checkout/confirm', { method: 'POST', body: JSON.stringify(data) }),
-  getHistory:   ()     => request('/api/checkout/orders'),
+  createIntent:   (cart) => request('/api/checkout/intent',  { method: 'POST', body: JSON.stringify(cart) }),
+  // Adjunta shipping + items + userId al PaymentIntent (metadata) ANTES de confirmar el pago.
+  // Esto permite que el webhook reconstruya el pedido si el frontend cae despues.
+  attachMetadata: (data) => request('/api/checkout/attach',  { method: 'POST', body: JSON.stringify(data) }),
+  confirmOrder:   (data) => request('/api/checkout/confirm', { method: 'POST', body: JSON.stringify(data) }),
+  getHistory:     ()     => request('/api/checkout/orders'),
 }
 
 // --- API de administración (Solo Admin) ---
