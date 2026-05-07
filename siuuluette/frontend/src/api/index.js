@@ -7,7 +7,7 @@ let csrfToken = null
 // Esta función maneja todas las peticiones al backend, añadiendo automáticamente
 // el token de sesión (JWT) y el token de seguridad CSRF.
 async function request(path, options = {}) {
-  const token = localStorage.getItem('token')
+  // [SEGURIDAD] Ya no se lee el token JWT de LocalStorage. Se usará la cookie HttpOnly.
 
   // Obtener CSRF token si es una petición de escritura y no lo tenemos
   if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(options.method) && !csrfToken && path !== '/api/auth/csrf') {
@@ -21,7 +21,6 @@ async function request(path, options = {}) {
   }
 
   const headers = {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers || {})
@@ -43,7 +42,6 @@ async function request(path, options = {}) {
   if (!res.ok) {
     if (res.status === 401) {
       localStorage.removeItem('isLoggedIn')
-      localStorage.removeItem('token')
       localStorage.removeItem('user')
       // No recargamos inmediatamente para evitar bucles infinitos en rutas públicas
       // pero el estado queda limpio para la próxima acción del usuario
@@ -93,7 +91,6 @@ export const authApi = {
   logout:   async () => { 
     try { await request('/api/auth/logout', { method: 'POST' }); } catch (e) {}
     localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('token'); 
     localStorage.removeItem('user');
     window.location.reload(); 
   }

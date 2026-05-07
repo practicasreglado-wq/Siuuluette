@@ -61,6 +61,11 @@ const allowedOrigins = new Set([
 // Configuración de CORS (Control de acceso desde el Frontend)
 await fastify.register(cors, {
   origin: (origin, cb) => {
+    // Si no hay origin (ej. llamadas de servidor a servidor o curl) y no estamos en prod estricto
+    if (!origin && process.env.NODE_ENV === 'production') {
+      cb(new Error(`Petición sin origen bloqueada por CORS en producción`), false)
+      return
+    }
     if (!origin || allowedOrigins.has(origin)) {
       cb(null, true)
       return
@@ -97,7 +102,7 @@ await fastify.register(helmet, {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+      scriptSrc: ["'self'", "https://js.stripe.com"], // [SEGURIDAD] Eliminado 'unsafe-inline'
       frameSrc: ["'self'", "https://js.stripe.com"],
       connectSrc: ["'self'", "https://api.stripe.com", "https://*.supabase.co"],
       imgSrc: ["'self'", "data:", "https://*.supabase.co", "https://*.stripe.com"],
@@ -107,7 +112,7 @@ await fastify.register(helmet, {
 })
 
 await fastify.register(rateLimit, {
-  max: 1000,
+  max: 1000, // Restaurado temporalmente para evitar bloqueos de OPTIONS preflight en el panel admin
   timeWindow: '1 minute',
   errorResponseBuilder: (request, context) => ({
     error: 'Demasiadas peticiones',

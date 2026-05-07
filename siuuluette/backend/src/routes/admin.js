@@ -75,7 +75,9 @@ export default async function adminRoutes(fastify) {
 
   // --- ACTUALIZAR ESTADO ---
   // Permite al administrador cambiar el estado del pedido (ej: enviado, entregado)
-  fastify.patch('/orders/:id', async (request, reply) => {
+  fastify.patch('/orders/:id', {
+    onRequest: [fastify.csrfProtection]
+  }, async (request, reply) => {
     const { id } = request.params
     const { status } = request.body
 

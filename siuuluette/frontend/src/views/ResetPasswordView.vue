@@ -74,8 +74,7 @@ export default {
         const type = params.get('type')
 
         if (accessToken && type === 'recovery') {
-          // 1. Guardamos en localStorage como backup
-          localStorage.setItem('token', accessToken)
+          // 1. Guardamos estado de login como backup
           localStorage.setItem('isLoggedIn', 'true')
           
           // 2. Intentamos forzar la cookie en el navegador para que el backend la vea
@@ -119,7 +118,6 @@ export default {
         await authApi.updatePassword(password.value)
         success.value = true
         // Limpiamos los tokens temporales
-        localStorage.removeItem('token')
         localStorage.removeItem('isLoggedIn')
         // Limpiamos la cookie temporal
         document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";

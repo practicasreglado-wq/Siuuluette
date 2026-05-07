@@ -8,6 +8,7 @@ export default async function authRoutes(fastify) {
     config: { 
       rateLimit: { max: 5, timeWindow: '1 minute' } 
     },
+    onRequest: [fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -66,13 +67,7 @@ export default async function authRoutes(fastify) {
     
     return { 
       message: 'Usuario registrado.',
-      user: { ...authData.user, username, phone: phone || '', shipping_address: null },
-      token: token // Enviamos el token todavía por compatibilidad mientras migramos el frontend
-    }
-
-    return { 
-      message: 'Usuario registrado correctamente.',
-      user: authData.user 
+      user: { ...authData.user, username, phone: phone || '', shipping_address: null }
     }
   })
 
@@ -82,6 +77,7 @@ export default async function authRoutes(fastify) {
     config: { 
       rateLimit: { max: 5, timeWindow: '1 minute' } 
     },
+    onRequest: [fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -147,8 +143,7 @@ export default async function authRoutes(fastify) {
     })
 
     return { 
-      user: { ...data.user, ...profile, username: userUsername }, 
-      token 
+      user: { ...data.user, ...profile, username: userUsername }
     }
   })
 
@@ -176,7 +171,7 @@ export default async function authRoutes(fastify) {
   // --- ACTUALIZAR PERFIL ---
   // Permite al usuario cambiar su nombre, teléfono o dirección
   fastify.patch('/profile', {
-    onRequest: [fastify.authenticate]
+    onRequest: [fastify.authenticate, fastify.csrfProtection]
   }, async (request, reply) => {
     const userId = request.user.id
     const { username, phone, shipping_address } = request.body
@@ -208,6 +203,7 @@ export default async function authRoutes(fastify) {
     config: { 
       rateLimit: { max: 3, timeWindow: '1 minute' } 
     },
+    onRequest: [fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -228,7 +224,7 @@ export default async function authRoutes(fastify) {
   // --- ESTABLECER NUEVA CONTRASEÑA ---
   // Actualiza la contraseña usando el token recibido por email o la sesión activa
   fastify.post('/update-password', {
-    onRequest: async (request, reply) => {
+    onRequest: [fastify.csrfProtection, async (request, reply) => {
       // 1. Intentar verificar con el JWT interno del backend
       try {
         await request.jwtVerify()
@@ -252,7 +248,7 @@ export default async function authRoutes(fastify) {
         // Inyectar el usuario en el request para que el handler lo use
         request.user = data.user
       }
-    },
+    }],
     schema: {
       body: {
         type: 'object',
@@ -275,7 +271,9 @@ export default async function authRoutes(fastify) {
 
   // --- CERRAR SESIÓN ---
   // Borra la cookie del token para finalizar la sesión
-  fastify.post('/logout', async (request, reply) => {
+  fastify.post('/logout', {
+    onRequest: [fastify.csrfProtection]
+  }, async (request, reply) => {
     reply.clearCookie('token', {
       path: '/',
       httpOnly: true,

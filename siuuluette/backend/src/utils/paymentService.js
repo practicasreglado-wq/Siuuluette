@@ -178,7 +178,9 @@ async function createOrderFromPaymentIntentMetadata(paymentIntent, log) {
   }
 
   // 2. Insertar el order
-  const totalAmount = Number(meta.total_amount) || (paymentIntent.amount_received / 100)
+  // [SEGURIDAD] Ignoramos cualquier total_amount proporcionado por el cliente.
+  // La cantidad recibida por Stripe es la única fuente de la verdad.
+  const totalAmount = paymentIntent.amount_received / 100
   const { data: newOrder, error: orderErr } = await supabase
     .from('orders')
     .insert([{

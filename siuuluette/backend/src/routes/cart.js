@@ -57,6 +57,7 @@ export default async function cartRoutes(fastify) {
   // --- AÑADIR AL CARRITO ---
   // Si el usuario está logueado se guarda en la DB, si no, se maneja localmente
   fastify.post('/add', {
+    onRequest: [fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -131,7 +132,7 @@ export default async function cartRoutes(fastify) {
   // --- SINCRONIZAR CARRITO ---
   // Pasa los productos del carrito local (invitado) a la cuenta del usuario al loguearse
   fastify.post('/merge', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -202,7 +203,7 @@ export default async function cartRoutes(fastify) {
   // --- ELIMINAR ÍTEM ---
   // Borra un producto específico del carrito basándose en su ID y talla
   fastify.post('/remove', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -234,7 +235,7 @@ export default async function cartRoutes(fastify) {
   // --- ACTUALIZAR CANTIDAD ---
   // Cambia el número de unidades de un producto en el carrito
   fastify.post('/update', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -266,7 +267,7 @@ export default async function cartRoutes(fastify) {
 
   // DELETE /api/cart/:id — Eliminar por ID de fila (Más preciso)
   fastify.delete('/:id', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, fastify.csrfProtection],
     schema: {
       params: {
         type: 'object',
@@ -292,7 +293,7 @@ export default async function cartRoutes(fastify) {
 
   // PATCH /api/cart/:id — Actualizar cantidad por ID de fila
   fastify.patch('/:id', {
-    onRequest: [fastify.authenticate],
+    onRequest: [fastify.authenticate, fastify.csrfProtection],
     schema: {
       params: {
         type: 'object',
@@ -327,7 +328,7 @@ export default async function cartRoutes(fastify) {
   // --- VACIAR CARRITO ---
   // Elimina todos los productos del carrito del usuario
   fastify.delete('/', {
-    onRequest: [fastify.authenticate]
+    onRequest: [fastify.authenticate, fastify.csrfProtection]
   }, async (request, reply) => {
     const userId = request.user.id
     const { error } = await supabase

@@ -9,7 +9,9 @@ export default async function checkoutRoutes(fastify) {
 
   // --- CREAR INTENCIÓN DE PAGO ---
   // Calcula el total real en el servidor y solicita a Stripe un PaymentIntent
-  fastify.post('/intent', async (request, reply) => {
+  fastify.post('/intent', {
+    onRequest: [fastify.csrfProtection]
+  }, async (request, reply) => {
     const { items } = request.body // Array de { id, qty }
 
     if (!items || !items.length) {
@@ -53,13 +55,29 @@ export default async function checkoutRoutes(fastify) {
         return reply.status(400).send({ error: `Importe bajo: ${totalAmount}€` })
       }
 
+      // [SEGURIDAD] Compactamos cart y añadimos precio unitario del server para hacerlo inmutable
+      const cartCompact = items.map(it => {
+        const v = dbVariants.find(dv => dv.id === Number(it.id))
+        const basePrice = v?.price_gross_override ?? v?.product?.price_gross ?? 0
+        const discount  = v?.product?.discount_percent || 0
+        const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
+
+        return {
+          id: Number(it.id),
+          q: Number(it.qty || it.quantity || 1),
+          s: it.selectedSize || it.size || null,
+          p: finalPrice
+        }
+      })
+      const cartJson = JSON.stringify(cartCompact)
+
       // 3. Crear el PaymentIntent en Stripe
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amountInCents,
         currency: 'eur',
         automatic_payment_methods: { enabled: true },
         metadata: {
-          products: JSON.stringify(items.map(i => i.id))
+          cart_items: cartJson // Inmutable
         }
       })
 
@@ -79,38 +97,22 @@ export default async function checkoutRoutes(fastify) {
   })
 
   // --- ADJUNTAR DATOS AL PAGO ---
-  // Guarda los datos del cliente y el carrito en Stripe para que el Webhook pueda procesarlos
+  // Guarda los datos del cliente y envio en Stripe (ya no modifica el carrito, que es inmutable)
   fastify.post('/attach', {
-    onRequest: [fastify.authenticate]
+    onRequest: [fastify.authenticate, fastify.csrfProtection]
   }, async (request, reply) => {
     const userId = request.user.id
-    const { paymentIntentId, shippingAddress, items, customerEmail, customerName, totalAmount } = request.body
+    const { paymentIntentId, shippingAddress, customerEmail, customerName } = request.body
 
     if (!paymentIntentId) {
       return reply.status(400).send({ error: 'paymentIntentId es requerido' })
-    }
-    if (!Array.isArray(items) || !items.length) {
-      return reply.status(400).send({ error: 'items vacio' })
     }
     if (!shippingAddress) {
       return reply.status(400).send({ error: 'shippingAddress es requerido' })
     }
 
-    // Compactamos cart para que entre en 500 chars (limite Stripe metadata)
-    const cartCompact = items.map(it => ({
-      id: Number(it.id),
-      q: Number(it.qty || it.quantity || 1),
-      s: it.selectedSize || it.size || null,
-    }))
-    const cartJson = JSON.stringify(cartCompact)
     const shippingJson = JSON.stringify(shippingAddress)
 
-    if (cartJson.length > 500) {
-      // Caso muy raro: cart enorme. Lo partimos en varios keys cart_items_0, cart_items_1...
-      return reply.status(400).send({
-        error: 'Carrito demasiado grande para metadata Stripe. Reducir items o partir.'
-      })
-    }
     if (shippingJson.length > 500) {
       return reply.status(400).send({ error: 'Direccion demasiado larga.' })
     }
@@ -119,30 +121,27 @@ export default async function checkoutRoutes(fastify) {
       await stripe.paymentIntents.update(paymentIntentId, {
         metadata: {
           user_id: String(userId),
-          cart_items: cartJson,
           shipping_addr: shippingJson,
           customer_email: customerEmail || '',
           customer_name:  customerName || '',
-          total_amount:   String(totalAmount ?? ''),
         }
       })
       return { ok: true }
     } catch (err) {
       fastify.log.error({ err, paymentIntentId }, '[ATTACH] Error actualizando metadata')
       return reply.status(500).send({
-        error: 'No se pudo adjuntar la metadata al PaymentIntent',
-        message: err.message,
+        error: 'No se pudo adjuntar la metadata al PaymentIntent'
       })
     }
   })
 
   // --- CONFIRMAR PEDIDO (SÍNCRONO) ---
-  // Se llama desde el frontend tras el pago para crear el pedido inmediatamente
+  // Se llama desde el frontend tras el pago para verificar y crear el pedido (delegado a paymentService)
   fastify.post('/confirm', {
-    onRequest: [fastify.authenticate]
+    onRequest: [fastify.authenticate, fastify.csrfProtection]
   }, async (request, reply) => {
-    const userId = request.user.id
-    const { paymentIntentId, shippingAddress, items, totalAmount } = request.body
+    // [SEGURIDAD] Ignoramos items y totalAmount del request.body. Stripe es la única fuente de la verdad.
+    const { paymentIntentId, shippingAddress } = request.body
 
     try {
       // 0. Validación con Stripe: Comprobar que el pago realmente se completó
@@ -163,100 +162,28 @@ export default async function checkoutRoutes(fastify) {
         return reply.status(400).send({ error: 'El pago no ha sido procesado o completado con éxito por Stripe' })
       }
 
-      // 1. Idempotencia inicial: si ya existe un order con este
-      //    paymentIntentId, no insertamos uno nuevo. Solo lo confirmamos.
-      const { data: existingOrder } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('stripe_payment_intent_id', paymentIntentId)
-        .maybeSingle()
-
-      let order = existingOrder
-
-      if (!order) {
-        // 1. Crear el Pedido (Order)
-        const { data: newOrder, error: orderError } = await supabase
-          .from('orders')
-          .insert([{
-            user_id: userId,
-            total_amount: totalAmount,
-            status: 'paid',
-            shipping_address: JSON.stringify(shippingAddress),
-            stripe_payment_intent_id: paymentIntentId
-          }])
-          .select()
-          .single()
-
-        if (orderError) {
-          throw orderError
-        }
-        order = newOrder
-
-        // 2. Crear los Detalles del Pedido (Order Items)
-        const variantIds = items.map(i => i.id)
-        const { data: dbVariants } = await supabase
-          .from('product_variants')
-          .select(`
-            id,
-            color_name,
-            price_gross_override,
-            product:products (
-              id, name, price_gross, discount_percent
-            )
-          `)
-          .in('id', variantIds)
-
-        const orderItems = items.map(item => {
-          const v = dbVariants.find(dv => dv.id === item.id)
-          const basePrice = v?.price_gross_override ?? v?.product?.price_gross ?? 0
-          const discount  = v?.product?.discount_percent || 0
-          const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
-
-          return {
-            order_id: order.id,
-            product_id: v?.id || item.id, // ID de la variante
-            quantity: item.qty || item.quantity || 0,
-            unit_price: finalPrice,
-            size: item.selectedSize || 'M'
-          }
-        })
-
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems)
-
-        if (itemsError) {
-          throw itemsError
-        }
-
-        // 3. Vaciar el Carrito del Usuario
-        if (userId) {
-          await supabase
-            .from('cart_items')
-            .delete()
-            .eq('user_id', userId)
-        }
-      }
-
-      // 4. Marcar pagado + emitir factura + enviar email (idempotente)
-      const { invoice } = await confirmOrderByPaymentIntent({
+      // [SEGURIDAD] Delegamos la creación segura a confirmOrderByPaymentIntent
+      const { order, invoice } = await confirmOrderByPaymentIntent({
         paymentIntentId,
+        paymentIntent,
         shippingAddress,
         logger: fastify.log,
       })
 
+      if (!order) {
+         return reply.status(500).send({ error: 'Error interno: No se pudo verificar ni crear el pedido.' })
+      }
+
       return {
-        message: 'Pedido guardado con éxito',
+        message: 'Pedido procesado con éxito',
         orderId: order.id,
         invoice,
       }
 
     } catch (err) {
-      console.error('[CHECKOUT_CONFIRM] Error crítico:', err)
+      fastify.log.error('[CHECKOUT_CONFIRM] Error crítico:', err)
       return reply.status(500).send({
-        error: 'Error al guardar el pedido',
-        message: err.message,
-        details: err.details || null
+        error: 'Error al procesar el pedido' // [SEGURIDAD] Información interna ofuscada
       })
     }
   })

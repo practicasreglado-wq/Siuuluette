@@ -303,7 +303,7 @@ export default async function productsRoutes(fastify) {
 
   // --- CREAR PRODUCTO (ADMIN) ---
   fastify.post('/', {
-    onRequest: [fastify.authenticateAdmin],
+    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection],
     schema: {
       body: {
         type: 'object',
@@ -343,7 +343,7 @@ export default async function productsRoutes(fastify) {
 
   // --- ACTUALIZAR PRODUCTO (ADMIN) ---
   fastify.patch('/:id', {
-    onRequest: [fastify.authenticateAdmin]
+    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection]
   }, async (request, reply) => {
     const { id } = request.params
     const updates = request.body
@@ -361,7 +361,7 @@ export default async function productsRoutes(fastify) {
 
   // --- ACTUALIZAR VARIANTE (ADMIN) ---
   fastify.patch('/variants/:id', {
-    onRequest: [fastify.authenticateAdmin]
+    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection]
   }, async (request, reply) => {
     const { id } = request.params
     const updates = request.body

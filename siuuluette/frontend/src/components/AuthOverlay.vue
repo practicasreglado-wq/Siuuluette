@@ -349,7 +349,6 @@ export default {
           })
           // El token se guarda automáticamente en la cookie HttpOnly por el backend
           localStorage.setItem('isLoggedIn', 'true')
-          localStorage.setItem('token', data.token)
           await mergeGuestCart() // Sincronizamos el carrito de invitado
           emit('login-success', data.user)
           emit('close')
@@ -369,9 +368,8 @@ export default {
 
           const data = await authApi.register({ ...form })
           
-          if (data.token) {
+          if (data.user) {
             localStorage.setItem('isLoggedIn', 'true')
-            localStorage.setItem('token', data.token)
             await mergeGuestCart() // Sincronizamos el carrito de invitado
             emit('login-success', data.user)
             emit('close')
@@ -415,7 +413,6 @@ export default {
     // Solicita al backend el PDF de la factura y lo descarga en el navegador
     const downloadInvoice = async (orderId) => {
       try {
-        const token = localStorage.getItem('token')
         const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
         
         const res = await fetch(`${BASE}/api/checkout/orders/${orderId}/invoice`, {
