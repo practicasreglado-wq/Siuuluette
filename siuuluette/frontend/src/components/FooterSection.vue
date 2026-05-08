@@ -9,7 +9,7 @@
     <div class="footer__marquee" aria-hidden="true">
       <div class="footer__marquee-track">
         <span v-for="n in 8" :key="n" class="footer__marquee-item">
-          LE SIUULUETTE &nbsp;·&nbsp; VISTE LA VICTORIA &nbsp;·&nbsp; MAKE IT REAL &nbsp;·&nbsp;
+          LE SIUULUETTE &nbsp;·&nbsp; NUEVA COLECCIÓN &nbsp;·&nbsp; ENVÍOS A TODA LA UE &nbsp;·&nbsp;
         </span>
       </div>
     </div>
@@ -126,10 +126,10 @@ const IconYouTube = defineComponent({
 });
 
 const highlights = [
-  { text: 'Resolvemos tus dudas', icon: IconHelp },
-  { text: 'Entrega gratis a partir de 100€', icon: IconShipping },
-  { text: 'Devoluciones gratis en 30 días', icon: IconReturns },
-  { text: 'Pago 100% seguro', icon: IconSecurity },
+  { text: 'Atención al cliente',           icon: IconHelp },
+  { text: 'Envíos a toda la Unión Europea', icon: IconShipping },
+  { text: 'Política de devoluciones',       icon: IconReturns },
+  { text: 'Pago 100% seguro',               icon: IconSecurity },
 ];
 
 const socials = [
@@ -157,13 +157,6 @@ const columns = [
       { label: 'Cookies', href: '/cookies' },
       { label: 'Condiciones Generales', href: '/terminos' },
       { label: 'Marca Registrada', href: '/marca-registrada' },
-    ]
-  },
-  {
-    title: 'COMUNIDAD',
-    links: [
-      { label: 'Lista VIP', href: '/lista-vip' },
-      { label: 'Sostenibilidad', href: '/sostenibilidad' },
     ]
   }
 ];
@@ -236,7 +229,7 @@ const columns = [
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: 1rem;
 }
 

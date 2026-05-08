@@ -117,22 +117,6 @@ const routes = [
   },
 
   // ============================================================
-  //  Páginas de comunidad (footer columna COMUNIDAD)
-  // ============================================================
-  {
-    path: '/lista-vip',
-    name: 'vip-list',
-    component: () => import('../views/community/VipListView.vue'),
-    meta: { title: 'Lista VIP — Le Siuuluette®' }
-  },
-  {
-    path: '/sostenibilidad',
-    name: 'sustainability',
-    component: () => import('../views/community/SustainabilityView.vue'),
-    meta: { title: 'Sostenibilidad — Le Siuuluette®' }
-  },
-
-  // ============================================================
   //  Catch-all: rutas desconocidas vuelven a la home
   // ============================================================
   {

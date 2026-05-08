@@ -2,66 +2,54 @@
   <LegalLayout title="Devoluciones y cambios" section="Ayuda">
 
     <p>
-      Queremos que te lleves la prenda perfecta. Si por cualquier motivo no es lo que
-      esperabas, te lo ponemos fácil para devolverla o cambiarla.
+      Si por cualquier motivo la prenda no es lo que esperabas, te lo ponemos fácil para
+      devolverla. Tienes derecho legal de desistimiento durante los 14 días naturales
+      siguientes a la recepción del pedido, conforme al Real Decreto Legislativo 1/2007.
     </p>
 
-    <h2>Plazos</h2>
-    <ul>
-      <li><strong>Derecho legal de desistimiento:</strong> 14 días naturales desde la recepción del pedido.</li>
-      <li><strong>Plazo extendido Le Siuuluette:</strong> 30 días naturales para cambios de talla o color (sujeto a stock).</li>
-    </ul>
+    <h2>Plazo</h2>
+    <p>
+      <strong>14 días naturales</strong> desde la recepción para ejercer el derecho de
+      desistimiento sin necesidad de justificación.
+    </p>
 
     <h2>Condiciones de la prenda devuelta</h2>
     <p>Para que aceptemos la devolución, la prenda debe llegar:</p>
     <ul>
       <li>Sin signos de uso ni lavado.</li>
       <li>Con todas las etiquetas y precintos originales intactos.</li>
-      <li>En su embalaje original (caja, papel de seda y tarjetón de número de serie).</li>
-      <li>Acompañada del ticket o número de pedido.</li>
+      <li>En su embalaje original.</li>
+      <li>Acompañada del número de pedido o justificante de compra.</li>
     </ul>
 
     <h2>¿Cómo devolver una prenda?</h2>
     <ol>
       <li>Escríbenos a <a :href="`mailto:${COMPANY.email}`">{{ COMPANY.email }}</a> con el asunto "Devolución pedido #XXXX".</li>
-      <li>Te responderemos con las instrucciones y la dirección de envío en menos de 24 h laborables.</li>
-      <li>Empaqueta la prenda con su embalaje original y envíala con el transportista que prefieras.</li>
+      <li>Te responderemos con las instrucciones y la dirección de envío.</li>
+      <li>Empaqueta la prenda con su embalaje original y envíala.</li>
       <li>Conserva el justificante del envío hasta recibir la confirmación de la devolución.</li>
-      <li>Una vez recibida y verificada, procesaremos el reembolso o el cambio en un plazo máximo de 14 días.</li>
+      <li>Una vez recibida y verificada, procesaremos el reembolso en un plazo máximo de 14 días.</li>
     </ol>
 
-    <h2>Cambios de talla o color</h2>
+    <h2>Gastos de devolución</h2>
     <p>
-      <strong>Primer cambio gratuito.</strong> Si lo que necesitas es otra talla o color del
-      mismo producto y todavía hay stock disponible, los gastos del primer envío de
-      devolución corren por cuenta de Le Siuuluette. Indícanoslo en el email para que te
-      enviemos una etiqueta prepagada.
-    </p>
-    <p class="callout">
-      Importante: como operamos con drops limitados, el stock de tallas y colores puede
-      cambiar entre el momento de tu compra y tu solicitud de cambio. Si la talla o color
-      que buscas ya no está disponible, te ofreceremos el reembolso íntegro como alternativa.
-    </p>
-
-    <h2>Devoluciones por desistimiento (14 días)</h2>
-    <p>
-      Conforme a la Ley General para la Defensa de los Consumidores y Usuarios, tienes
-      derecho a desistir del pedido sin necesidad de justificación dentro de los 14 días
-      naturales siguientes a la recepción.
-    </p>
-    <p>
-      En este supuesto, los <strong>gastos del envío de devolución corren por cuenta del
-      cliente</strong>, salvo que la devolución se deba a un error nuestro o a un producto
-      defectuoso. El reembolso del importe de la prenda y los gastos de envío inicial se
-      realizará al mismo método de pago utilizado.
+      En el caso de un desistimiento ordinario, los gastos del envío de devolución corren
+      por cuenta del cliente, salvo que la devolución se deba a un error en el envío o a
+      un producto defectuoso, en cuyo caso los asume Le Siuuluette.
     </p>
 
     <h2>Productos defectuosos o errores en el envío</h2>
     <p>
-      Si has recibido una prenda defectuosa o se ha producido un error en el envío, los
-      gastos de devolución corren por nuestra cuenta. Escríbenos en las 48 horas siguientes
-      a la recepción adjuntando fotografías del producto a
-      <a :href="`mailto:${COMPANY.email}`">{{ COMPANY.email }}</a>.
+      Si has recibido una prenda defectuosa o se ha producido un error en el envío,
+      escríbenos en las 48 horas siguientes a la recepción adjuntando fotografías del
+      producto a <a :href="`mailto:${COMPANY.email}`">{{ COMPANY.email }}</a>. Te ofreceremos
+      una reposición o el reembolso íntegro según el caso.
+    </p>
+
+    <h2>Reembolso</h2>
+    <p>
+      El reembolso se realizará al mismo método de pago utilizado en la compra, en un plazo
+      máximo de 14 días desde la recepción y verificación de la prenda.
     </p>
 
     <h2>Garantía legal</h2>

@@ -3,7 +3,7 @@
 
     <p>
       Estamos aquí para ayudarte. La mejor forma de contactar con nosotros es por correo
-      electrónico — solemos responder en menos de 24 horas laborables.
+      electrónico.
     </p>
 
     <h2>Atención al cliente</h2>
@@ -13,9 +13,6 @@
     </p>
     <p v-if="COMPANY.phone">
       <strong>Teléfono:</strong> {{ COMPANY.phone }}
-    </p>
-    <p>
-      <strong>Horario:</strong> Lunes a viernes, de 10:00 a 18:00 (CET).
     </p>
 
     <h2>¿Para qué tipo de consulta es cada vía?</h2>
