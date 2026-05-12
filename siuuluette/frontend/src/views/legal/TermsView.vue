@@ -48,17 +48,13 @@
       de envío se calcularán en el momento del checkout antes de la confirmación del pedido.
     </p>
     <p>
-      Aceptamos los siguientes métodos de pago, procesados de forma segura mediante la pasarela
-      de pagos Stripe:
+      Los pagos se procesan de forma segura a través de la pasarela de pagos
+      <strong>Stripe</strong>, que cumple con el estándar de seguridad PCI-DSS. Los métodos
+      de pago disponibles se muestran en el momento del checkout.
     </p>
-    <ul>
-      <li>Tarjetas de crédito y débito (Visa, Mastercard, American Express).</li>
-      <li>Apple Pay y Google Pay.</li>
-      <li>Bizum (cuando esté disponible).</li>
-    </ul>
     <p>
       {{ COMPANY.tradeName }} <strong>no almacena los datos completos de la tarjeta del usuario</strong>;
-      estos son procesados directamente por Stripe bajo el estándar de seguridad PCI-DSS.
+      estos son procesados directamente por Stripe.
     </p>
 
     <h2>5. Realización del pedido</h2>
@@ -80,17 +76,13 @@
     <h2>6. Envío</h2>
     <p>
       Los pedidos se envían a la dirección indicada por el usuario en el momento del checkout.
-      Los plazos de entrega aproximados son:
+      Los costes y plazos de envío aplicables a cada destino se muestran de forma transparente
+      durante el proceso de compra, antes de la confirmación del pedido.
     </p>
-    <ul>
-      <li><strong>España (península):</strong> 24-72 horas laborables.</li>
-      <li><strong>Baleares y Canarias:</strong> 3-5 días laborables.</li>
-      <li><strong>Unión Europea:</strong> 3-7 días laborables.</li>
-      <li><strong>Resto del mundo:</strong> 7-15 días laborables.</li>
-    </ul>
     <p>
-      <strong>Envío gratuito en pedidos superiores a 100 €</strong> con destino a España
-      (península). Para el resto de zonas, los gastos se calcularán en el checkout.
+      Para envíos fuera de la Unión Europea, pueden aplicarse aranceles e impuestos locales en
+      el país de destino, no incluidos en el precio mostrado, y que serán por cuenta del
+      comprador.
     </p>
 
     <h2>7. Derecho de desistimiento</h2>
@@ -112,15 +104,7 @@
       salvo en caso de producto defectuoso o error en el envío.
     </p>
 
-    <h2>8. Cambios y devoluciones gratuitas en 30 días</h2>
-    <p>
-      Más allá del derecho legal de desistimiento (14 días), {{ COMPANY.tradeName }} ofrece
-      voluntariamente un plazo extendido de <strong>30 días</strong> para cambios de talla
-      o color (sujeto a disponibilidad del stock). En este supuesto, los gastos del primer
-      envío de devolución corren por cuenta de {{ COMPANY.tradeName }}.
-    </p>
-
-    <h2>9. Garantía</h2>
+    <h2>8. Garantía</h2>
     <p>
       Los productos cuentan con la garantía legal de conformidad de <strong>3 años</strong>
       desde la entrega, conforme a la Ley General para la Defensa de los Consumidores y
@@ -128,7 +112,7 @@
       ni los daños derivados de un uso indebido.
     </p>
 
-    <h2>10. Resolución de conflictos</h2>
+    <h2>9. Resolución de conflictos</h2>
     <p>
       En caso de cualquier conflicto, el usuario puede ponerse en contacto con
       {{ COMPANY.tradeName }} en <a :href="`mailto:${COMPANY.email}`">{{ COMPANY.email }}</a>
@@ -141,7 +125,7 @@
       <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>.
     </p>
 
-    <h2>11. Legislación aplicable y jurisdicción</h2>
+    <h2>10. Legislación aplicable y jurisdicción</h2>
     <p>
       Las presentes CGV se rigen por la legislación española. Para la resolución de cualquier
       controversia, las partes se someten a los Juzgados y Tribunales del domicilio del

@@ -34,7 +34,7 @@
     <h2>3. Base jurídica del tratamiento</h2>
     <ul>
       <li><strong>Ejecución de un contrato:</strong> para la gestión de los pedidos y la cuenta de usuario.</li>
-      <li><strong>Consentimiento del interesado:</strong> para el envío de comunicaciones comerciales y suscripción a la lista VIP.</li>
+      <li><strong>Consentimiento del interesado:</strong> para el envío de comunicaciones comerciales, cuando el usuario lo haya autorizado expresamente.</li>
       <li><strong>Cumplimiento de obligación legal:</strong> para la facturación, conservación contable y atención de derechos de consumidores.</li>
       <li><strong>Interés legítimo:</strong> para la prevención del fraude y la mejora de los servicios.</li>
     </ul>

@@ -5,24 +5,23 @@
 
     <h3>¿Cuánto tarda en llegar mi pedido?</h3>
     <p>
-      En España (península) los pedidos llegan en 24-72 horas laborables desde la confirmación
-      del pago. Para Baleares, Canarias y resto de la Unión Europea, el plazo es de 3-7 días
-      laborables. Internacional: 7-15 días.
+      Los plazos exactos dependen del destino y se muestran en el checkout antes de
+      confirmar el pedido. En cuanto el pedido salga del almacén recibirás un email con
+      el número de seguimiento del transportista.
     </p>
 
-    <h3>¿El envío es gratis?</h3>
+    <h3>¿Cuánto cuesta el envío?</h3>
     <p>
-      <strong>Sí, en pedidos superiores a 100 €</strong> con destino a España (península).
-      Para el resto de zonas y pedidos por debajo de ese importe, los gastos de envío se
-      calculan en el checkout antes de la confirmación.
+      Los gastos de envío se calculan en el checkout en función del destino, antes de la
+      confirmación del pedido.
     </p>
 
     <h3>¿Puedo modificar o cancelar mi pedido?</h3>
     <p>
-      Una vez confirmado el pago, los pedidos se preparan inmediatamente para minimizar el
-      tiempo de entrega. Si necesitas modificar o cancelar, escríbenos cuanto antes a
-      <a :href="`mailto:${COMPANY.email}`">{{ COMPANY.email }}</a> y haremos lo posible. Si
-      el pedido ya ha salido, deberás esperar a recibirlo y proceder a una devolución.
+      Una vez confirmado el pago, los pedidos se preparan para minimizar el tiempo de
+      entrega. Si necesitas modificar o cancelar, escríbenos cuanto antes a
+      <a :href="`mailto:${COMPANY.email}`">{{ COMPANY.email }}</a> y haremos lo posible.
+      Si el pedido ya ha salido, deberás esperar a recibirlo y proceder a una devolución.
     </p>
 
     <h2>Tallas y producto</h2>
@@ -30,9 +29,9 @@
     <h3>¿Cómo sé qué talla elegir?</h3>
     <p>
       En la ficha de cada producto encontrarás un enlace a la <strong>Guía de tallas</strong>
-      con las medidas exactas en centímetros. Si tienes dudas, escríbenos al email de soporte
-      indicando tu altura, peso y la talla que sueles usar en otras marcas, y te ayudamos a
-      encontrar la talla ideal.
+      con las medidas en centímetros. Si tienes dudas, escríbenos al email de soporte
+      indicando tu altura, peso y la talla que sueles usar en otras marcas, y te ayudamos
+      a encontrar la talla adecuada.
     </p>
 
     <h3>¿Los colores son fieles a la realidad?</h3>
@@ -44,32 +43,29 @@
 
     <h3>¿Repondréis stock de un producto agotado?</h3>
     <p>
-      <strong>No.</strong> Le Siuuluette opera con un modelo de drops limitados y numerados.
-      Una vez agotado, el producto no vuelve. Suscríbete a nuestra
-      <router-link to="/lista-vip">Lista VIP</router-link> para tener acceso anticipado al
-      próximo drop.
+      Le Siuuluette opera con un modelo de drops limitados y numerados. Una vez agotado un
+      producto, su disponibilidad puede no volver a darse.
     </p>
 
     <h2>Pagos</h2>
 
     <h3>¿Qué métodos de pago aceptáis?</h3>
     <p>
-      Aceptamos tarjetas Visa, Mastercard, American Express, Apple Pay y Google Pay. Todos
-      los pagos se procesan de forma segura mediante Stripe, certificada PCI-DSS. No
-      almacenamos los datos de tu tarjeta en nuestros servidores.
+      Los pagos se procesan a través de la pasarela <strong>Stripe</strong>, certificada
+      PCI-DSS. Los métodos de pago disponibles se muestran en el checkout. No almacenamos
+      los datos de tu tarjeta en nuestros servidores.
     </p>
 
     <h3>¿Es seguro pagar en la web?</h3>
     <p>
-      Sí. Toda la web utiliza conexión cifrada SSL/TLS. La pasarela de pagos (Stripe) cumple
-      el más alto estándar de seguridad de la industria, el mismo que usan empresas como
-      Amazon, Booking o Spotify.
+      Sí. Toda la web utiliza conexión cifrada SSL/TLS y la pasarela de pagos cumple con los
+      estándares de seguridad de la industria.
     </p>
 
     <h3>¿Cuándo se cobra el pedido?</h3>
     <p>
-      El cargo se realiza en el momento de confirmar el pago. Recibirás inmediatamente un
-      email de confirmación con el resumen del pedido y la factura en PDF.
+      El cargo se realiza en el momento de confirmar el pago. Recibirás un email de
+      confirmación con el resumen del pedido y la factura en PDF.
     </p>
 
     <h2>Devoluciones</h2>
@@ -77,9 +73,7 @@
     <h3>¿Puedo devolver un producto?</h3>
     <p>
       Sí. Tienes derecho legal a desistir del pedido en los 14 días naturales tras la
-      recepción. Además, ofrecemos voluntariamente un plazo extendido de
-      <strong>30 días para cambios de talla o color</strong> con primer envío de devolución
-      gratuito. Consulta los detalles en
+      recepción, conforme al RDL 1/2007. Consulta los detalles del proceso en
       <router-link to="/ayuda/devoluciones">Devoluciones</router-link>.
     </p>
 
@@ -93,9 +87,8 @@
 
     <h3>¿Tengo que crearme una cuenta para comprar?</h3>
     <p>
-      No es obligatorio para tu primera compra, pero te lo recomendamos: tener una cuenta te
-      permite ver el historial de pedidos, descargar facturas y unirte a la Lista VIP para
-      acceder antes que nadie a los próximos drops.
+      Tener una cuenta te permite consultar el historial de pedidos y descargar tus
+      facturas en cualquier momento.
     </p>
 
     <h3>¿Puedo eliminar mi cuenta?</h3>
@@ -109,7 +102,7 @@
     <h2>¿No encuentras lo que buscabas?</h2>
     <p>
       Escríbenos a <a :href="`mailto:${COMPANY.email}`">{{ COMPANY.email }}</a> y te
-      respondemos en menos de 24 horas laborables.
+      responderemos a la mayor brevedad.
     </p>
   </LegalLayout>
 </template>
