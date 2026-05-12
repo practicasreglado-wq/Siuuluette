@@ -5,11 +5,11 @@
       <div v-if="hasDiscounts" class="announcement-bar__marquee">
         <div class="marquee-track">
           <span v-for="n in 10" :key="n" class="marquee-item">
-            ACCESO EXCLUSIVO: DESCUENTOS ACTIVOS EN SELECCIÓN OFF-SEASON &nbsp;·&nbsp; VISTE LA VICTORIA CON PRECIOS ESPECIALES &nbsp;·&nbsp; EXPLORA LAS OFERTAS &nbsp;·&nbsp;
+            DESCUENTOS ACTIVOS EN SELECCIÓN OFF-SEASON &nbsp;·&nbsp; OFERTAS DISPONIBLES &nbsp;·&nbsp;
           </span>
         </div>
       </div>
-      <span v-else class="label">Envío gratuito en pedidos superiores a 100€ — Nuevos drops cada mes</span>
+      <span v-else class="label">Envíos a toda la Unión Europea</span>
     </div>
 
     <Navbar
