@@ -290,7 +290,7 @@ export default {
     })
 
     const router = useRouter()
-    const { fullFavorites, fetchFavorites: refreshFavs, toggleFavorite } = useFavorites()
+    const { fullFavorites, fetchFavorites: refreshFavs, toggleFavorite, mergeGuestFavorites } = useFavorites()
     const { mergeGuestCart } = useCart()
     const loadingFavorites = ref(false)
 
@@ -350,6 +350,7 @@ export default {
           // El token se guarda automáticamente en la cookie HttpOnly por el backend
           localStorage.setItem('isLoggedIn', 'true')
           await mergeGuestCart() // Sincronizamos el carrito de invitado
+          await mergeGuestFavorites() // Sincronizamos favoritos de invitado
           emit('login-success', data.user)
           emit('close')
         } else {
@@ -371,6 +372,7 @@ export default {
           if (data.user) {
             localStorage.setItem('isLoggedIn', 'true')
             await mergeGuestCart() // Sincronizamos el carrito de invitado
+            await mergeGuestFavorites() // Sincronizamos favoritos de invitado
             emit('login-success', data.user)
             emit('close')
           } else {

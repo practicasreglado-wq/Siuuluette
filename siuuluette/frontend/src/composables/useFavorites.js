@@ -26,7 +26,7 @@ function saveGuestFavorites() {
 }
 
 function isLogged() {
-  return !!localStorage.getItem('token')
+  return localStorage.getItem('isLoggedIn') === 'true'
 }
 
 // --- Acciones ---
@@ -84,6 +84,26 @@ async function toggleFavorite(productId) {
   }
 }
 
+async function mergeGuestFavorites() {
+  if (!isLogged()) return
+  
+  const guestFavs = [...favoriteIds.value]
+  if (guestFavs.length === 0) return
+
+  // Sincronizamos uno a uno (el backend ignora duplicados con 400/alreadyExists)
+  for (const id of guestFavs) {
+    try {
+      await favoritesApi.add(id)
+    } catch (err) {
+      // Si ya existe o hay error, seguimos con el siguiente
+    }
+  }
+
+  // Limpiamos rastro local y refrescamos desde el servidor
+  localStorage.removeItem('favorites')
+  await fetchFavorites()
+}
+
 // --- Computeds ---
 const favoritesCount = computed(() => favoriteIds.value.size)
 
@@ -96,5 +116,6 @@ export function useFavorites() {
     fetchFavorites,
     isFavorite,
     toggleFavorite,
+    mergeGuestFavorites,
   }
 }

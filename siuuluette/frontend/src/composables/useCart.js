@@ -17,18 +17,20 @@ import { cartApi } from '../api/index.js'
 const savedCart = localStorage.getItem('cart')
 const cartItems = ref(savedCart ? JSON.parse(savedCart) : [])
 
-// Vigilante para persistir cambios locales (solo si NO hay token de sesión)
 watch(cartItems, (newItems) => {
-  const token = localStorage.getItem('token')
-  if (!token) {
+  if (!isLogged()) {
     localStorage.setItem('cart', JSON.stringify(newItems))
   }
 }, { deep: true })
+
 const isCartOpen = ref(false)
 const toastMsg = ref('')
 const toastVisible = ref(false)
 
 // --- Helpers ---
+function isLogged() {
+  return localStorage.getItem('isLoggedIn') === 'true'
+}
 function formatCartFromBackend(cart) {
   return cart.map(i => {
     const v = i.variant || {}
@@ -68,8 +70,7 @@ function showToast(msg) {
 
 // --- Acciones ---
 async function fetchCart() {
-  const token = localStorage.getItem('token')
-  if (!token) return
+  if (!isLogged()) return
   try {
     const { cart } = await cartApi.get()
     cartItems.value = formatCartFromBackend(cart)
@@ -97,8 +98,7 @@ async function addToCart(product) {
     })
   }
 
-  const token = localStorage.getItem('token')
-  if (token) {
+  if (isLogged()) {
     try {
       await cartApi.add({
         product_id: targetId,
@@ -124,8 +124,7 @@ async function removeFromCart(item) {
     i => !(i.id === productId && i.selectedSize === size)
   )
 
-  const token = localStorage.getItem('token')
-  if (token && item.cartItemId) {
+  if (isLogged() && item.cartItemId) {
     try {
       await cartApi.remove(item.cartItemId)
     } catch (err) {
@@ -152,8 +151,7 @@ async function updateQty(productId, size, delta) {
   const previousQty = item.qty
   item.qty = newQty
 
-  const token = localStorage.getItem('token')
-  if (token && item.cartItemId) {
+  if (isLogged() && item.cartItemId) {
     try {
       await cartApi.updateQty(item.cartItemId, newQty)
     } catch (err) {
@@ -189,8 +187,7 @@ async function mergeGuestCart() {
 async function clearCart() {
   cartItems.value = []
   localStorage.removeItem('cart')
-  const token = localStorage.getItem('token')
-  if (token) {
+  if (isLogged()) {
     try {
       await cartApi.clear()
     } catch (err) {
