@@ -219,6 +219,7 @@ export default {
 
     onMounted(async () => {
       window.addEventListener('scroll', handleScroll)
+      window.addEventListener('open-auth', () => { isAuthOpen.value = true })
       await checkAuth()
       await checkDiscounts()
       

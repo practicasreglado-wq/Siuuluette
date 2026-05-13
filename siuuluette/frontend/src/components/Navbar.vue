@@ -27,11 +27,42 @@
       <!-- Primary Navigation (desktop) -->
       <nav class="navbar__nav" aria-label="Navegación principal">
         <router-link :to="{ path: '/', hash: '#inicio' }" class="navbar__link" @click="goToSection($event, '#inicio')">Inicio</router-link>
+        <router-link :to="{ path: '/', hash: '#lanzamientos' }" class="navbar__link" @click="goToSection($event, '#lanzamientos')">Lanzamientos</router-link>
         <router-link :to="{ path: '/', hash: '#explora' }" class="navbar__link" @click="goToSection($event, '#explora')">Explora</router-link>
         <router-link :to="{ path: '/', hash: '#ofertas' }" class="navbar__link navbar__link--accent" @click="goToSection($event, '#ofertas')">Descuentos</router-link>
         <router-link :to="{ path: '/', hash: '#nosotros' }" class="navbar__link" @click="goToSection($event, '#nosotros')">Nosotros</router-link>
-        <router-link v-if="currentUser?.role === 'admin'" to="/admin/products" class="navbar__link navbar__link--admin" title="Gestión de Precios">Admin: Precios</router-link>
-        <router-link v-if="currentUser?.role === 'admin'" to="/admin/orders" class="navbar__link navbar__link--admin" title="Gestión de Pedidos">Admin: Pedidos</router-link>
+        
+        <!-- Admin Dropdown -->
+        <div v-if="currentUser?.role === 'admin'" class="admin-dropdown" v-click-outside="() => adminMenuOpen = false">
+          <button 
+            class="navbar__link admin-dropdown__trigger" 
+            @click="adminMenuOpen = !adminMenuOpen"
+            :class="{ 'admin-dropdown__trigger--active': adminMenuOpen }"
+          >
+            <div class="shield-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <circle cx="12" cy="11" r="3"/>
+                <path d="M7 18.5c0-1.5 2-2.5 5-2.5s5 1 5 2.5"/>
+              </svg>
+            </div>
+            <span>Admin</span>
+          </button>
+          
+          <Transition name="fade-slide">
+            <div v-if="adminMenuOpen" class="admin-dropdown__menu">
+              <router-link to="/admin/products" class="admin-dropdown__link" @click="adminMenuOpen = false">
+                <span>Gestión Precios</span>
+              </router-link>
+              <router-link to="/admin/orders" class="admin-dropdown__link" @click="adminMenuOpen = false">
+                <span>Gestión Pedidos</span>
+              </router-link>
+              <router-link to="/admin/preorders" class="admin-dropdown__link" @click="adminMenuOpen = false">
+                <span>Gestión Reservas</span>
+              </router-link>
+            </div>
+          </Transition>
+        </div>
       </nav>
 
       <!-- Actions -->
@@ -88,9 +119,18 @@
       <div class="navbar__mobile-menu" v-if="menuOpen">
         <nav class="mobile-nav">
           <router-link :to="{ path: '/', hash: '#inicio' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#inicio')">Inicio</router-link>
+          <router-link :to="{ path: '/', hash: '#lanzamientos' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#lanzamientos')">Lanzamientos</router-link>
           <router-link :to="{ path: '/', hash: '#explora' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#explora')">Explora</router-link>
           <router-link :to="{ path: '/', hash: '#ofertas' }" class="mobile-nav__link mobile-nav__link--accent" @click="closeMenuAndScroll($event, '#ofertas')">Descuentos</router-link>
           <router-link :to="{ path: '/', hash: '#nosotros' }" class="mobile-nav__link" @click="closeMenuAndScroll($event, '#nosotros')">Nosotros</router-link>
+          
+          <!-- Admin Links Mobile -->
+          <template v-if="currentUser?.role === 'admin'">
+            <router-link to="/admin/products" class="mobile-nav__link mobile-nav__link--admin" @click="menuOpen = false">Admin: Precios</router-link>
+            <router-link to="/admin/orders" class="mobile-nav__link mobile-nav__link--admin" @click="menuOpen = false">Admin: Pedidos</router-link>
+            <router-link to="/admin/preorders" class="mobile-nav__link mobile-nav__link--admin" @click="menuOpen = false">Admin: Reservas</router-link>
+          </template>
+
           <button class="mobile-nav__link" @click="menuOpen = false; $emit('open-auth')">Mi cuenta</button>
         </nav>
       </div>
@@ -107,9 +147,25 @@ export default {
     isScrolled: { type: Boolean, default: false },
     currentUser: { type: Object, default: null }
   },
+  directives: {
+    clickOutside: {
+      mounted(el, binding) {
+        el.clickOutsideEvent = (event) => {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value()
+          }
+        }
+        document.body.addEventListener('click', el.clickOutsideEvent)
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent)
+      }
+    }
+  },
   data() {
     return {
-      menuOpen: false
+      menuOpen: false,
+      adminMenuOpen: false
     }
   },
   methods: {
@@ -265,6 +321,84 @@ export default {
 }
 .navbar__link--accent       { color: var(--c-accent-vibrant); font-weight: 600; }
 .navbar__link--admin        { color: var(--c-gold); font-weight: 600; }
+
+/* --- Admin Dropdown --- */
+.admin-dropdown {
+  position: relative;
+}
+
+.admin-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.shield-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-gold);
+}
+
+.admin-dropdown__menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 1rem;
+  background: var(--c-white);
+  min-width: 200px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+  z-index: 100;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-dropdown__menu::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: var(--c-white);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-dropdown__link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: var(--c-black);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.admin-dropdown__link:hover {
+  background: var(--c-dark);
+  color: var(--c-gold);
+}
+
+/* Transitions */
+.fade-slide-enter-active, .fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from, .fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px);
+}
 
 /* --- Actions --- */
 .navbar__actions {

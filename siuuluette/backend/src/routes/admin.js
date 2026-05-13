@@ -95,11 +95,26 @@ export default async function adminRoutes(fastify) {
         .single()
 
       if (error) throw error
-
       return { message: 'Estado actualizado', order: data }
     } catch (err) {
       fastify.log.error(err)
       return reply.status(500).send({ error: 'Error al actualizar el pedido' })
+    }
+  })
+
+  // --- LISTAR RESERVAS (PRE-ORDERS) ---
+  fastify.get('/preorders', async (request, reply) => {
+    try {
+      const { data, error } = await supabase
+        .from('preorders')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return { preorders: data }
+    } catch (err) {
+      fastify.log.error(err)
+      return reply.status(500).send({ error: 'Error al obtener las reservas' })
     }
   })
 }

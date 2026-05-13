@@ -47,6 +47,15 @@ const routes = [
       requiresAdmin: true
     }
   },
+  {
+    path: '/admin/preorders',
+    name: 'admin-preorders',
+    component: () => import('../views/AdminPreorders.vue'),
+    meta: {
+      title: 'Gestión de Reservas — Siuuluette®',
+      requiresAdmin: true
+    }
+  },
 
   // ============================================================
   //  Páginas legales (footer columna LEGAL)

@@ -124,5 +124,11 @@ export const checkoutApi = {
 export const adminApi = {
   getOrders:    ()          => request('/api/admin/orders'),
   updateOrder:  (id, status) => request(`/api/admin/orders/${id}`, { method: 'PATCH', body: { status } }),
+  getPreorders: ()          => request('/api/admin/preorders'),
   getInvoiceUrl:(id)         => `${BASE}/api/checkout/orders/${id}/invoice`
+}
+
+// --- SERVICIOS DE DROPS / LANZAMIENTOS ---
+export const dropsApi = {
+  preorder: (data) => request('/api/drops/preorder', { method: 'POST', body: data }),
 }

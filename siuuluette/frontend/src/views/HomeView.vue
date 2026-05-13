@@ -12,6 +12,7 @@
     </div>
 
     <HeroSection id="inicio" />
+    <UpcomingReleases />
     <CategoryGrid id="explora" @category-select="selectCategory" />
     <SalesSection id="ofertas" :products="products" @add-to-cart="addToCart" />
     <BrandValues id="nosotros" />
@@ -36,6 +37,7 @@ import { useCart } from '../composables/useCart.js'
 import HeroSection       from '../components/HeroSection.vue'
 import CategoryGrid      from '../components/CategoryGrid.vue'
 import SalesSection       from '../components/SalesSection.vue'
+import UpcomingReleases    from '../components/UpcomingReleases.vue'
 import BrandValues       from '../components/BrandValues.vue'
 import CategoryExplore   from '../components/CategoryExplore.vue'
 
@@ -43,7 +45,7 @@ export default {
   name: 'HomeView',
   components: {
     HeroSection, CategoryGrid, SalesSection,
-    BrandValues, CategoryExplore
+    UpcomingReleases, BrandValues, CategoryExplore
   },
   setup() {
     const route = useRoute()
