@@ -1,12 +1,9 @@
 <template>
   <section class="upcoming" id="lanzamientos">
-    <!-- Cadenas Estructurales -->
-    <div class="upcoming__chains">
-      <div class="chain chain--1"></div>
-      <div class="chain chain--2"></div>
-      <div class="chain chain--3"></div>
-      <div class="chain chain--4"></div>
-      </div>
+    <!-- Luces de Escáner (Efecto premium de seguridad) -->
+    <div class="upcoming__scanner">
+      <div class="scanner-beam"></div>
+    </div>
 
     <div class="upcoming__bg">
       <img src="/img/upcoming_bg.png" alt="" aria-hidden="true">
@@ -18,7 +15,7 @@
           <span class="upcoming__pulse"></span>
           <span class="label">Acceso Restringido · Reserva</span>
         </div>
-        <h2 class="display-lg upcoming__title">LOCKED<br/><em>RELEASES</em></h2>
+        <h2 class="display-lg upcoming__title">PRÓXIMOS<br/><em>LANZAMIENTOS</em></h2>
         <p class="body-lg upcoming__desc">
           Piezas custodiadas bajo llave hasta el momento de su liberación. 
           Asegura tu posición en la lista de espera para el acceso prioritario.
@@ -32,7 +29,7 @@
             <div class="release-overlay"></div>
             <!-- Etiqueta de INCÓGNITO -->
             <div class="incognito-badge">
-              <span>UNRELEASED</span>
+              <span>CLASIFICADO</span>
             </div>
           </div>
 
@@ -94,10 +91,10 @@ export default {
   name: 'UpcomingReleases',
   setup() {
     const release = {
-      name: 'LOCKED DROP — 01',
-      description: 'Una pieza forjada en las sombras, custodiada hasta el momento de su liberación. Materiales de alta resistencia y diseño disruptivo. Solo los que reserven tendrán la llave del acceso anticipado.',
-      date: 'LIBERACIÓN: JUNIO 2024',
-      price: '195.00€'
+      name: 'DROP BLOQUEADO — 01',
+      description: 'Una pieza forjada en las sombras, custodiada hasta el momento de su salida. Materiales de alta resistencia y diseño disruptivo. Solo los que reserven tendrán la llave del acceso anticipado.',
+      date: 'DISPONIBLE: JULIO 2026',
+      price: '150.00€'
     }
 
     const showModal = ref(false)
@@ -200,66 +197,31 @@ export default {
   border-top: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-/* --- Cadenas estructurales --- */
-.upcoming__chains {
+/* --- Luces de Escáner (Premium Vibe) --- */
+.upcoming__scanner {
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: 1;
   pointer-events: none;
+  overflow: hidden;
 }
 
-.chain {
+.scanner-beam {
   position: absolute;
-  /* SVG de METAL TEMPLADO (Un poco más oscuro y robusto) */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23444' /%3E%3Cstop offset='25%25' stop-color='%23888' /%3E%3Cstop offset='50%25' stop-color='%23fff' /%3E%3Cstop offset='75%25' stop-color='%23888' /%3E%3Cstop offset='100%25' stop-color='%23444' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M15,10 A15,10 0 1,0 15,30 A15,10 0 1,0 15,10 M15,14 A11,6 0 1,1 15,26 A11,6 0 1,1 15,14 Z M30,17 L40,17 L40,23 L30,23 Z' fill='url(%23m)' fill-rule='evenodd' /%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-position: 0 center;
-  background-size: auto 100%;
-  height: 40px;
-  width: 300%;
-  filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8));
-  opacity: 0.9;
-  /* Persistencia de rotación para evitar solapamiento por animación */
-  --r: 0deg;
-  transform: rotate(var(--r));
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 15vh;
+  background: linear-gradient(to bottom, transparent, rgba(197, 163, 106, 0.06) 50%, transparent);
+  box-shadow: 0 0 40px rgba(197, 163, 106, 0.05);
+  animation: scan-vertical 8s ease-in-out infinite alternate;
 }
 
-.chain--1 {
-  top: -100%;
-  left: 0%;
-  --r: 80deg;
-  transform-origin: left center;
-  animation: chain-float 15s ease-in-out infinite;
-}
-
-.chain--2 {
-  bottom: -10%;
-  left: -50%;
-  width: 200%;
-  --r: 20deg;
-  animation: chain-float 18s ease-in-out infinite reverse;
-}
-
-.chain--3 {
-  top: -100%;
-  left: 100%;
-  --r: 95deg;
-  transform-origin: left center;
-  animation: chain-float 16s ease-in-out infinite;
-  opacity: 0.8;
-}
-
-.chain--4 {
-  top: 10%;
-  left: -50%;
-  width: 200%;
-  --r: 20deg;
-  animation: chain-float 22s ease-in-out infinite reverse;
-}
-
-@keyframes chain-float {
-  0%, 100% { transform: rotate(var(--r)) translate(0, 0); }
-  50% { transform: rotate(calc(var(--r) + 1.5deg)) translate(15px, 5px); }
+@keyframes scan-vertical {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
 }
 
 .upcoming__bg {

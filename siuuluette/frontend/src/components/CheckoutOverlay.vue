@@ -345,16 +345,37 @@ export default {
   background: #1c1917;
   width: 100%;
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
   border-radius: 20px;
   border: 1px solid rgba(197, 163, 106, 0.15);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
   animation: slide-up 0.4s ease-out;
 }
 
 @keyframes slide-up {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+/* Scrollbar específico y más grande para la pantalla de pago */
+.checkout-card::-webkit-scrollbar {
+  width: 14px; /* Mucho más ancha para coger con el ratón/trackpad */
+}
+
+.checkout-card::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0 20px 20px 0;
+}
+
+.checkout-card::-webkit-scrollbar-thumb {
+  background: var(--c-gold);
+  border-radius: 10px;
+  border: 4px solid #1c1917; /* Truco para que parezca que tiene margen */
+}
+
+.checkout-card::-webkit-scrollbar-thumb:hover {
+  background: var(--c-accent-vibrant);
 }
 
 .shipping-section {
