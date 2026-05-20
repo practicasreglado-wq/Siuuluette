@@ -1,5 +1,5 @@
 // backend/src/server.js
-import 'dotenv/config'
+import './env.js'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import cookie from '@fastify/cookie'
