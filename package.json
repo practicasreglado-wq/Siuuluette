@@ -8,6 +8,9 @@
     "// start": "Lo ejecuta Hostinger para arrancar la app. Llama al wrapper server.js de la raíz, que a su vez importa el Fastify real del backend.",
     "start": "node server.js",
 
+    "// postinstall": "Magia pura para Hostinger: tras el npm install de la raíz, fuerza la instalación de los paquetes reales del backend.",
+    "postinstall": "cd siuuluette/backend && npm install --omit=dev",
+
     "// build": "Lo ejecuta Hostinger en la fase de compilación. Entra al backend y dispara su script build:all, que instala el frontend, lo construye con Vite, y luego instala el backend.",
     "build": "cd siuuluette/backend && npm run build:all"
   }
