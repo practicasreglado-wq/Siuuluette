@@ -1,8 +1,21 @@
 {
   "name": "siuuluette-workspace",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "description": "Workspace que agrupa backend (Fastify) y frontend (Vue 3) + wrapper de despliegue para Hostinger.",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+    "// dev": "Arranca backend y frontend en paralelo para desarrollo local (necesita concurrently).",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+
+    "// start": "Comando que Hostinger ejecuta para arrancar la app en producción. Lanza server.js (wrapper de esta carpeta) que importa el Fastify real del backend.",
+    "start": "node server.js",
+
+    "// build": "Comando de compilación para Hostinger. Instala dependencias del frontend, lo construye con Vite (genera frontend/dist), e instala el backend sin devDependencies. Es lo que tienes que poner en el campo 'Comando de compilación' del panel de Hostinger.",
+    "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --omit=dev --prefix backend",
+
+    "// postinstall": "Hook automático de npm: se ejecuta justo después de un 'npm install' en esta carpeta. Útil si Hostinger no ofrece un campo de 'Comando de compilación' separado y se limita a hacer 'npm install'. Si Hostinger sí tiene ese campo, este hook NO ES NECESARIO y puedes ignorarlo (no estorba, npm lo dispara igual).",
+    "postinstall": "npm run build"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
