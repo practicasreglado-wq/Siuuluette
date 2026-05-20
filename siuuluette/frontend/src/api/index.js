@@ -1,6 +1,31 @@
 // frontend/src/api/index.js
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+// ============================================================
+//  URL BASE DE LA API
+// ============================================================
+// Se lee de la variable de entorno VITE_API_URL.
+//
+// IMPORTANTE: usamos el operador ?? (nullish coalescing) en lugar de || porque
+// queremos diferenciar tres casos:
+//
+//   - VITE_API_URL no está definida (undefined) → fallback a localhost:3000
+//     (caso por defecto si alguien arranca sin .env)
+//
+//   - VITE_API_URL='http://localhost:3000' → se usa esa URL absoluta
+//     (caso típico en desarrollo, .env.development)
+//
+//   - VITE_API_URL='' (vacío) → BASE queda como string vacío, por lo que las
+//     llamadas a `${BASE}/api/products` se convierten en `/api/products`,
+//     que son URLs relativas y van al mismo origen que sirve el HTML.
+//     (caso típico en producción, .env.production — frontend y backend bajo
+//     el mismo dominio, con el backend Fastify sirviendo también el dist/)
+//
+// Si usáramos `||`, el string vacío se trataría como falsy y volvería a caer
+// en localhost:3000, rompiendo la app en producción.
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+
+// Token CSRF cacheado en memoria. Se obtiene la primera vez que se hace una
+// petición de escritura (POST/PUT/PATCH/DELETE) y se reutiliza después.
 let csrfToken = null
 
 // --- CLIENTE API CENTRALIZADO ---
