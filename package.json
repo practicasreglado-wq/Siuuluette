@@ -1,0 +1,14 @@
+{
+  "name": "lesiuuluette-root",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Wrapper de despliegue para Hostinger. El código real del proyecto vive en siuuluette/backend (Fastify) y siuuluette/frontend (Vue 3). Este package.json solo orquesta el despliegue desde la raíz.",
+  "scripts": {
+    "// start": "Lo ejecuta Hostinger para arrancar la app. Llama al wrapper server.js de la raíz, que a su vez importa el Fastify real del backend.",
+    "start": "node server.js",
+
+    "// build": "Lo ejecuta Hostinger en la fase de compilación. Entra al backend y dispara su script build:all, que instala el frontend, lo construye con Vite, y luego instala el backend.",
+    "build": "cd siuuluette/backend && npm run build:all"
+  }
+}
