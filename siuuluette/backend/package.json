@@ -11,8 +11,8 @@
     "// dev": "Arranca el backend en modo desarrollo (nodemon reinicia al guardar).",
     "dev": "nodemon src/server.js",
 
-    "// build:all": "Instala y construye el frontend, luego instala el backend. Se ejecuta en el deploy de Hostinger antes de arrancar el server. Genera la carpeta frontend/dist que el backend sirve como estática.",
-    "build:all": "cd ../frontend && npm install && npm run build && cd ../backend && npm install --omit=dev",
+    "// build:all": "Instala y construye el frontend, luego instala el backend. Se ejecuta en el deploy de Hostinger antes de arrancar el server. Genera la carpeta frontend/dist que el backend sirve como estática. IMPORTANTE: --include=dev fuerza la instalación de devDependencies del frontend (Vite, @vitejs/plugin-vue) aunque Hostinger lance el deploy con NODE_ENV=production. Sin este flag, npm se saltaría las devDeps y vite no estaría disponible para construir el bundle.",
+    "build:all": "cd ../frontend && npm install --include=dev && npm run build && cd ../backend && npm install --omit=dev",
 
     "// deploy:start": "Comando completo de despliegue: construye todo y arranca. Útil si quieres una sola línea para apuntar desde Hostinger o un Procfile.",
     "deploy:start": "npm run build:all && npm start"
