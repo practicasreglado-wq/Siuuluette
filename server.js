@@ -2,32 +2,36 @@
 //  server.js — Punto de entrada para el despliegue en Hostinger
 // ============================================================
 //
-// Hostinger ejecuta `node server.js` desde la raíz del repositorio.
-// Como el código real del backend Fastify vive en una subcarpeta
-// (siuuluette/backend/src/), este archivo simplemente lo importa
-// y lo lanza. No tiene lógica propia.
+// Hostinger usa LiteSpeed (lsnode.js) para cargar este archivo, y lo
+// hace mediante un require() de CommonJS. Eso significa que aunque
+// el package.json tenga "type": "module", lsnode hace
+// require('./server.js'), no import.
 //
-// Estructura del repositorio:
+// PROBLEMA CON ESM + top-level await:
+// Desde Node 22, require() puede cargar módulos ESM... siempre que
+// el grafo de módulos NO contenga top-level await. Si lo contiene,
+// lanza ERR_REQUIRE_ASYNC_MODULE y la app no arranca.
 //
-//   siuuluette-brand/
-//   ├── server.js                       ← ESTE ARCHIVO (wrapper de entrada)
-//   ├── package.json                    ← Wrapper, solo orquesta el deploy
-//   ├── siuuluette/
-//   │   ├── backend/
-//   │   │   ├── package.json            ← Dependencias reales del backend
-//   │   │   └── src/server.js           ← Servidor Fastify real
-//   │   └── frontend/
-//   │       ├── package.json            ← Dependencias del frontend
-//   │       └── dist/                   ← Build de Vue que Fastify sirve
-//   └── ...
+// El backend Fastify (siuuluette/backend/src/server.js) sí usa
+// top-level await (await fastify.register(...)). Si lo importáramos
+// aquí con `import` estático, lsnode se ahogaría.
 //
-// ¿Por qué este archivo y no apuntar Hostinger directamente al server.js
-// del backend? Porque Hostinger asume estructura "plana" (entry file en
-// la raíz). En lugar de pelearnos con sus rutas, hacemos este wrapper
-// y todos contentos.
+// SOLUCIÓN:
+// Usar `import()` DINÁMICO (la función, no la declaración).
+//   - `import` estático → propaga el top-level await al wrapper → CRASH.
+//   - `import()` dinámico → devuelve una Promise, el wrapper se evalúa
+//     síncronamente y el backend se carga después de forma asíncrona.
 //
-// Al importar el módulo del backend, este se autoejecuta (su última
-// línea es `start()`), así que no hace falta llamar a nada más.
+// lsnode hace require() del wrapper, ve que no hay top-level await
+// directo, lo evalúa síncronamente y queda contento. La Promise del
+// import() resuelve a los pocos ms y Fastify arranca normalmente.
+//
+// Si el backend lanza cualquier error al arrancar, lo capturamos
+// con .catch() y matamos el proceso con un código de error para que
+// los logs de Hostinger lo recojan.
 // ============================================================
 
-import './siuuluette/backend/src/server.js'
+import('./siuuluette/backend/src/server.js').catch((err) => {
+  console.error('[server.js] Error al iniciar el backend Fastify:', err)
+  process.exit(1)
+})
