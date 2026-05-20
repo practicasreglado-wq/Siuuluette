@@ -5,24 +5,33 @@
 // ============================================================
 // Se lee de la variable de entorno VITE_API_URL.
 //
-// IMPORTANTE: usamos el operador ?? (nullish coalescing) en lugar de || porque
-// queremos diferenciar tres casos:
+// Casos soportados según el valor configurado:
 //
-//   - VITE_API_URL no está definida (undefined) → fallback a localhost:3000
-//     (caso por defecto si alguien arranca sin .env)
+//   - VITE_API_URL no definida (undefined) → fallback a http://localhost:3000
+//     (caso por defecto cuando alguien arranca el frontend sin .env).
 //
-//   - VITE_API_URL='http://localhost:3000' → se usa esa URL absoluta
-//     (caso típico en desarrollo, .env.development)
+//   - VITE_API_URL='http://localhost:3000' → URL absoluta a backend local
+//     (típico de .env.development).
 //
-//   - VITE_API_URL='' (vacío) → BASE queda como string vacío, por lo que las
-//     llamadas a `${BASE}/api/products` se convierten en `/api/products`,
-//     que son URLs relativas y van al mismo origen que sirve el HTML.
-//     (caso típico en producción, .env.production — frontend y backend bajo
-//     el mismo dominio, con el backend Fastify sirviendo también el dist/)
+//   - VITE_API_URL='https://lesiuuluette.com' → URL absoluta al dominio real
+//     (típico de producción cuando frontend y backend están en el mismo
+//     origen; el navegador resuelve la llamada como same-origin y se salta
+//     CORS).
 //
-// Si usáramos `||`, el string vacío se trataría como falsy y volvería a caer
-// en localhost:3000, rompiendo la app en producción.
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+//   - VITE_API_URL='' (string vacío) → URLs relativas tipo `/api/products`,
+//     resueltas contra el origen del HTML. Funciona igual que el caso
+//     anterior, pero algunos paneles de hosting (Hostinger entre ellos) no
+//     permiten guardar variables con valor vacío, así que para producción
+//     conviene poner la URL absoluta.
+//
+// Usamos ?? (nullish coalescing) en lugar de || para que el string vacío
+// NO caiga en el fallback de localhost (que rompería producción).
+//
+// .replace(/\/+$/, '') elimina cualquier barra final ('/' o '////'), evitando
+// que se generen URLs con doble barra del tipo `https://...//api/products`
+// si alguien configura la variable con barra al final por costumbre.
+const BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3000')
+  .replace(/\/+$/, '')
 
 // Token CSRF cacheado en memoria. Se obtiene la primera vez que se hace una
 // petición de escritura (POST/PUT/PATCH/DELETE) y se reutiliza después.
