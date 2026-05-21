@@ -139,7 +139,14 @@ export async function issueInvoiceForOrder(orderId, opts = {}) {
 
   const customer = {
     user_id: order.user_id,
-    name: profile?.username || 'Cliente Siuuluette',
+    // El nombre debe ser el que el cliente escribio en el formulario de
+    // checkout ("Nombre completo"), no el username de su cuenta. Ese nombre
+    // viaja dentro de shippingAddress.name (el frontend lo adjunta alli).
+    // Se usa para el "Hola ..." del email y para el destinatario de la
+    // factura PDF, asi que debe ser el nombre real de quien recibe el pedido.
+    // profile.username queda solo como respaldo si por algun motivo no
+    // llegara el nombre del formulario.
+    name: shippingAddress?.name || profile?.username || 'Cliente Siuuluette',
     email: userEmail,
     phone: profile?.phone || null,
     address: shippingAddress,

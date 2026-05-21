@@ -1,5 +1,9 @@
 export function renderOrderConfirmationHTML({ invoice, customer, items, orderId }) {
   const customerName = customer?.name || 'Cliente'
+  // Para el saludo usamos solo el primer nombre ("Hola Alejandro" en vez de
+  // "Hola Alejandro Rodriguez"): resulta mas cercano. El nombre completo se
+  // sigue usando tal cual en la factura PDF, que es un documento legal.
+  const firstName = customerName.trim().split(/\s+/)[0] || 'Cliente'
   const invoiceNumber = invoice?.invoice_number || 'S/N'
   const totalAmount = Number(invoice?.total_gross || 0).toFixed(2)
 
@@ -42,7 +46,7 @@ export function renderOrderConfirmationHTML({ invoice, customer, items, orderId 
           <tr>
             <td style="padding: 20px 40px;">
               <p style="margin: 0 0 15px; font-size: 16px; line-height: 1.5; color: #E5E0D8;">
-                Hola <strong>${customerName}</strong>,
+                Hola <strong>${firstName}</strong>,
               </p>
               <p style="margin: 0 0 25px; font-size: 16px; line-height: 1.5; color: #AAA;">
                 Gracias por confiar en <strong>Le Siuuluette</strong>. Hemos recibido tu pedido y estamos preparándolo. No sigas tendencias, créalas.

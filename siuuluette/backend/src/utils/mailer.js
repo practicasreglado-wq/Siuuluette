@@ -78,7 +78,9 @@ export async function sendOrderConfirmationEmail({
   try {
     const { data, error } = await resend.emails.send({
       from:        fromAddress,
+      reply_to:    'pedidos@lesiuuluette.com',
       to:          recipient,
+      bcc:         'pedidos@lesiuuluette.com',
       subject,
       html,
       text,
@@ -108,7 +110,10 @@ export async function sendOrderConfirmationEmail({
  */
 function renderOrderConfirmationText({ invoice, customer, items, orderId }) {
   const lines = []
-  lines.push(`Hola ${customer?.name || 'cliente'},`)
+  // Solo el primer nombre en el saludo ("Hola Alejandro"), igual que en la
+  // version HTML del email. El nombre completo se mantiene en la factura PDF.
+  const firstName = (customer?.name || 'cliente').trim().split(/\s+/)[0] || 'cliente'
+  lines.push(`Hola ${firstName},`)
   lines.push('')
   lines.push('Hemos recibido tu pedido en Le Siuuluette. Gracias por confiar en nosotros.')
   lines.push('')
