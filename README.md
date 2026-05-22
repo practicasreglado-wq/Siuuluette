@@ -6,6 +6,51 @@ Cosas importantes a tener en cuenta si vas a tocar este proyecto.
 
 ---
 
+## Estado actual (mayo 2026)
+
+Foto de dónde está el proyecto ahora mismo, para no perder tiempo averiguándolo:
+
+- **Web desplegada** en `https://lesiuuluette.com` (Hostinger, hosting Node.js). Frontend y backend funcionando.
+- **Dominio:** `lesiuuluette.com` está registrado y gestionado en Hostinger, dentro de la cuenta de Le Siuuluette. SSL/HTTPS activo.
+- **Despliegue:** Hostinger está conectado a GitHub y despliega automáticamente la rama **`diego`**. Hacer `push` a `diego` publica en producción (ver sección "Despliegue en Hostinger").
+- **Resend (envío de emails):** la cuenta de Resend se accede con la cuenta de Google `webregladoac1@gmail.com`. Desde esa cuenta se dio de alta el dominio `lesiuuluette.com` en Resend, sus registros DNS (DKIM, SPF/MX, DMARC) están añadidos en el panel DNS de Hostinger y el dominio está verificado. El envío de emails transaccionales está operativo.
+- **Buzón de correo:** `pedidos@lesiuuluette.com` creado en Hostinger (plan de email gratuito incluido con el hosting, prueba de 12 meses; pasado ese plazo se renueva como plan de pago). Sirve para *recibir*; el *envío* automático lo hace Resend.
+- **Stripe:** la cuenta está en **modo TEST** — no se mueve dinero real. Pendiente de activar la cuenta definitiva de Stripe a nombre de la sociedad (LE SIUULUETTE TRADEMARK, S.L.).
+- **Base de datos (Supabase):** el proyecto de Supabase que aloja la base de datos se creó accediendo con una **cuenta personal de Diego**. Esto es un riesgo de continuidad — ver "Pendientes críticos": hay que dar acceso a la empresa para que la base de datos no dependa de una persona.
+- **Cuentas de servicio:** hay dos correos distintos en juego. A **Resend** se accede con la cuenta de Google `webregladoac1@gmail.com`, y ese correo se usa únicamente para iniciar sesión en Resend. A **Hostinger** y a **Stripe** se accede con el correo `lesiuuluette@gmail.com`. Ojo a esta separación para no buscar cada servicio en la cuenta equivocada.
+
+---
+
+## ⚠️ PENDIENTES CRÍTICOS POST-DESPLIEGUE — LEER PRIMERO
+
+> La app está desplegada en `https://lesiuuluette.com` (Hostinger), pero **NO está lista para aceptar pagos reales**. Esta lista resume los problemas detectados en la auditoría posterior al despliegue. Resuélvelos en este orden.
+
+### Bloqueantes (impiden vender de forma segura)
+
+- [ ] **Webhook de Stripe no configurado.** Si un cliente paga y cierra el navegador antes de terminar, Stripe cobra pero la orden NO se crea en Supabase. Hay que crear el endpoint en el dashboard de Stripe (`https://lesiuuluette.com/api/checkout/webhook`), escuchar `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, y poner el `whsec_...` resultante en la variable `STRIPE_WEBHOOK_SECRET` de Hostinger.
+- [ ] **El stock no se valida ni se decrementa.** La tabla `variant_stock` existe pero `checkout.js` no la lee al cobrar ni la actualiza tras una orden. Resultado: overselling y race conditions. Mínimo: trigger SQL en Supabase que bloquee inserts en `order_items` si `stock_mode='limited'` y `stock <= 0`, y decrementar stock en `confirmOrderByPaymentIntent`.
+- [ ] **El modal de "Reserva tu compra" miente.** Dice "Te hemos enviado un email de confirmación" pero `routes/drops.js` no envía ningún email. O se implementa `sendPreorderConfirmationEmail()`, o se cambia el texto del modal en `UpcomingReleases.vue`.
+- [ ] **Rotar claves filtradas.** Durante el desarrollo se compartieron por chat valores reales de `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_KEY`, `STRIPE_SECRET_KEY` (test) y `RESEND_API_KEY`. Rotarlas todas desde sus dashboards.
+- [ ] **Stripe sigue en modo TEST.** No se mueve dinero real. Al activar la cuenta, cambiar `STRIPE_SECRET_KEY` y `VITE_STRIPE_PUBLISHABLE_KEY` a las claves `live`.
+
+### Importantes (resolver pronto)
+
+- [ ] **`console.log` en `cart.js`** filtra `user_id` en los logs de producción. Cambiar a `fastify.log.debug()` o eliminar.
+- [ ] **Errores 5xx inconsistentes:** algunas rutas de `products.js` hacen `reply.send({ error: error.message })` exponiendo detalles internos. Estandarizar a mensaje genérico.
+- [ ] **Preorders sin validación:** un usuario puede reservar el mismo drop N veces. Añadir `UNIQUE(user_id, product_name)` en la tabla `preorders`.
+- [ ] **Sin plan para el día del drop (julio 2026):** no hay automatización para notificar a quienes reservaron. Habrá que exportar el CSV del panel admin y avisar a mano, o implementar un cron.
+- [ ] **La base de datos de Supabase está en una cuenta personal.** El proyecto de Supabase se creó con una cuenta personal de Diego. Si Diego deja el proyecto, la empresa puede quedarse sin acceso a la base de datos. Acción: como mínimo, invitar a una persona de la empresa a la organización de Supabase con rol de Owner/Admin; e idealmente, **transferir el proyecto a una organización de Supabase propiedad de la empresa** (cuenta corporativa), para que no dependa de ninguna persona concreta.
+
+### Mejoras a medio plazo (no bloquean)
+
+- [ ] **Activar RLS en Supabase** en las tablas con datos de usuario (`orders`, `order_items`, `cart_items`, `favorites`, `profiles`, `invoices`, `preorders`). Hoy toda la seguridad depende de que el backend filtre bien por `user_id`.
+- [ ] **Crear índices** en Supabase: `products(is_active, id)`, `cart_items(user_id, product_id, size)`, `orders(user_id, created_at DESC)`, `favorites(user_id)`, `order_items(order_id)`, `invoices(order_id)`, `preorders(user_id, product_name)`.
+- [ ] **Paginar `/api/products`:** ahora hace N+1 (carga todos los productos, luego variantes, luego imágenes). Escala mal a partir de ~1000 productos.
+- [ ] **GDPR mínimo:** no hay "derecho al olvido". Añadir borrado de cuenta con cascade de datos personales.
+- [ ] **Bajar rate limit** de 1000/min a 300/min cuando termine la fase de pruebas.
+
+---
+
 ## Estructura del repo
 
 ```
@@ -20,6 +65,8 @@ Todo el código vive dentro de `siuuluette/`. La raíz solo contiene este README
 ---
 
 ## Cómo arrancar
+
+Requisitos: **Node 22** (el wrapper de despliegue depende de comportamiento de Node 22+; ver "Despliegue en Hostinger") y `npm`.
 
 **Backend** (puerto 3000):
 
@@ -58,6 +105,41 @@ Variables clave (sin valores aquí):
 Frontend solo necesita: `VITE_API_URL` (por defecto `http://localhost:3000`).
 
 **La `SERVICE_ROLE_KEY` de Supabase NUNCA se expone en frontend.** Solo backend.
+
+En **producción no hay archivo `.env`**: las variables se configuran en el panel de Hostinger (ver sección siguiente).
+
+---
+
+## Despliegue en Hostinger
+
+La web está alojada en **Hostinger** con hosting de **Node.js** (servidor LiteSpeed). Entender cómo funciona el despliegue es imprescindible antes de publicar nada.
+
+### Cómo se publica un cambio
+
+Hostinger está conectado al repositorio de GitHub y **despliega automáticamente la rama `diego`**. Es decir: **hacer `git push` a la rama `diego` publica directamente en producción**. No es un "guardar" más — conviene revisar y probar en local antes de subir.
+
+Tras recibir el push, Hostinger:
+
+1. Ejecuta `npm install` en la raíz del repositorio.
+2. El hook `postinstall` del `package.json` raíz dispara `npm run build`.
+3. `build` entra en `siuuluette/backend` y ejecuta `build:all`: instala el frontend (con `--include=dev`, necesario para que Vite esté disponible aunque el deploy corra con `NODE_ENV=production`), lo construye con Vite (genera `siuuluette/frontend/dist/`) y después instala el backend.
+4. Arranca la app con `npm start` → `node server.js`.
+
+### Por qué hay un wrapper en la raíz
+
+El código real vive en `siuuluette/backend` y `siuuluette/frontend`, pero Hostinger espera el punto de entrada en la raíz del repo. Por eso la raíz contiene un `server.js` y un `package.json` "wrapper" que **solo orquestan arranque y build**; no tienen lógica de negocio.
+
+El `server.js` raíz usa **`import()` dinámico** (la función, no el `import` estático) a propósito. LiteSpeed carga el archivo con `require()` de CommonJS, y el backend Fastify usa top-level await; un `import` estático propagaría ese await al wrapper y el arranque fallaría con `ERR_REQUIRE_ASYNC_MODULE`. **No lo cambies a `import` estático.**
+
+### Variables de entorno en producción
+
+En producción no se sube ningún `.env`. Las variables se definen en el panel de Hostinger, en la sección "Variables de entorno". Ahí van tanto las del backend como las `VITE_*` del frontend. Ojo: las `VITE_*` se incrustan en el bundle al construir, así que cambiar una exige volver a desplegar para que tenga efecto.
+
+Detalle no obvio: Hostinger no permite guardar variables con valor vacío. Por eso `VITE_API_URL` se configura con la URL absoluta (`https://lesiuuluette.com`) en lugar de vacía; el código de `siuuluette/frontend/src/api/index.js` ya limpia una posible barra final por robustez.
+
+### Node
+
+El despliegue asume **Node 22**. El comportamiento de `require()` sobre módulos ESM del que depende el wrapper raíz es propio de Node 22 en adelante; con versiones anteriores el arranque puede romperse.
 
 ---
 
@@ -207,7 +289,8 @@ Cada uno de estos debe tener una entrada en el gestor con etiqueta clara `Le Siu
 | Credenciales de Stripe (cuenta) | No se puede gestionar pagos ni payouts | Recuperar desde Stripe |
 | Credenciales de Resend (cuenta) | No se puede gestionar el envío de emails | Recuperar desde Resend |
 | Credenciales del dominio (registrador) | No se puede renovar ni cambiar DNS | Recuperar desde el registrador (Hostinger en nuestro caso) |
-| Credenciales del email `lesiuuluette@gmail.com` | No se reciben notificaciones de Stripe, Supabase, Resend, etc. | Recuperación de Google |
+| Credenciales del email `lesiuuluette@gmail.com` | Es el correo con el que se accede a Hostinger y a Stripe: sin él se pierde el acceso de recuperación a ambos | Recuperación de Google |
+| Credenciales del email `webregladoac1@gmail.com` | Es la cuenta de Google con la que se accede a Resend: sin ella se pierde el control de la cuenta de Resend y del envío de emails | Recuperación de Google |
 
 ### Quién debe tener acceso al gestor de contraseñas
 
@@ -225,7 +308,7 @@ Checklist obligatorio al irse cualquier persona con acceso a secretos:
 1. **Rotar TODOS los secretos** listados arriba (no se pueden dejar los antiguos vivos).
 2. Actualizar el `.env` del servidor con los nuevos valores.
 3. Actualizar el gestor de contraseñas con los nuevos valores.
-4. **Revocar el acceso del exempleado** al gestor de contraseñas, al dashboard de Supabase, Stripe, Resend, Hostinger, GitHub/GitLab, y al email `lesiuuluette@gmail.com`.
+4. **Revocar el acceso del exempleado** al gestor de contraseñas, al dashboard de Supabase, Stripe, Resend, Hostinger, GitHub/GitLab, y a los correos `lesiuuluette@gmail.com` y `webregladoac1@gmail.com`.
 5. Revisar logs de actividad reciente para detectar accesos anómalos.
 6. Si tenía acceso de admin en el panel `/admin/*`, revocar también su rol en la tabla `profiles` de Supabase.
 
@@ -249,26 +332,6 @@ Esto es lo que falta antes de poder anunciar el lanzamiento. Los puntos se puede
   4. Copiar el `whsec_...` generado a `STRIPE_WEBHOOK_SECRET` en el `.env`.
 - [ ] Hacer una **compra real de 1 €** con tarjeta propia para validar el flujo completo end-to-end.
 
-### Resend (emails)
-
-- [ ] **Verificar el dominio** desde el dashboard de Resend. Hay que añadir registros DNS en Hostinger:
-  - `SPF` (TXT) — autoriza a Resend a enviar en nombre del dominio.
-  - `DKIM` (CNAME o TXT) — firma criptográfica de los emails.
-  - `DMARC` (TXT) — política de qué hacer con emails no verificados.
-
-  Sin esto, los emails caen en spam o son rechazados por Gmail/Outlook.
-- [ ] **Cambiar `RESEND_FROM_EMAIL`** del valor de pruebas a uno del dominio real (`pedidos@<dominio>` o similar).
-- [ ] **Vaciar `EMAIL_DEV_RECIPIENT_OVERRIDE`** en el `.env` de producción (si no, todos los emails se redirigen a una sola dirección y los clientes no reciben nada).
-- [ ] Generar `RESEND_API_KEY` específica de producción (no reusar la de dev).
-- [ ] Probar el envío real: hacer un pedido y verificar que el email de confirmación llega bien.
-
-### Dominio (Hostinger)
-
-- [ ] **Comprar / confirmar el dominio definitivo** en Hostinger.
-- [ ] Configurar los **DNS A / CNAME** apuntando al servidor donde se aloja el backend y al hosting del frontend.
-- [ ] Activar **SSL/HTTPS** (Hostinger suele tener Let's Encrypt gratis).
-- [ ] Validar que `https://dominio.com` carga el frontend y `https://dominio.com/api/...` responde el backend.
-
 ### Configuración de producción (backend)
 
 - [ ] **Generar un `JWT_SECRET` nuevo y fuerte** (mínimo 32 caracteres, aleatorio). NO usar el de dev.
@@ -286,14 +349,6 @@ Esto es lo que falta antes de poder anunciar el lanzamiento. Los puntos se puede
 - [ ] Configurar **backups automáticos** desde el dashboard de Supabase (depende del plan).
 - [ ] Crear un usuario admin real en la tabla `profiles` (cambiar el rol desde SQL).
 
-### Limpieza pendiente del repo
-
-- [ ] **Eliminar** `siuuluette/frontend/src/views/MotionTestView.vue` (ya quitado del router, pero el archivo sigue en disco).
-- [ ] **Eliminar** `siuuluette/backend/src/routes/example.js` (ruta zombie, no registrada en `server.js`).
-- [ ] **Eliminar** `siuuluette/backend/src/plugins/example.js` (plugin zombie, no usado).
-- [ ] Ejecutar `npm install` en `siuuluette/frontend/` para refrescar el `package-lock.json` tras quitar `motion-v`.
-- [ ] Revisar si `@fastify/static` y `fastify-plugin` se pueden quitar del `backend/package.json` (actualmente no se usan tras la limpieza).
-
 ### Día del lanzamiento
 
 - [ ] Probar el flujo completo en producción con tarjeta real de 1 €:
@@ -304,3 +359,9 @@ Esto es lo que falta antes de poder anunciar el lanzamiento. Los puntos se puede
   5. El email de confirmación llega al cliente.
 - [ ] Probar también la reserva de un drop (preorder) end-to-end.
 - [ ] Tener un canal de comunicación abierto (Stripe dashboard, logs del servidor, email) las primeras 24h para detectar problemas.
+
+---
+
+## Autoría y contexto histórico
+
+La primera versión de la web —desde cero hasta el despliegue inicial en producción en `lesiuuluette.com`— la desarrollaron **Diego y Miguel**. Si necesitas contexto sobre decisiones de diseño, de producto o de negocio tomadas en esa etapa inicial, Diego y Miguel son las personas de referencia.

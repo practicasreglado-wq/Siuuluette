@@ -100,6 +100,12 @@ export const productsApi = {
   getOne:     (id)    => request(`/api/products/${id}`),
   update:     (id, d) => request(`/api/products/${id}`, { method: 'PATCH', body: d }),
   updateVariant:(id, d) => request(`/api/products/variants/${id}`, { method: 'PATCH', body: d }),
+  // Actualiza el stock de una talla concreta. id = variant_id;
+  // d = { size, stock?, stock_mode?, restock_date? }
+  updateStock:(id, d) => request(`/api/products/variants/${id}/stock`, { method: 'PATCH', body: d }),
+  // Aplica un descuento a todos los productos de una colección de golpe.
+  applyCollectionDiscount: (collection, discount_percent) =>
+    request('/api/products/collection-discount', { method: 'PATCH', body: { collection, discount_percent } }),
   getBySlug:  (slug)  => request(`/api/products/slug/${slug}`),
   getRelated: (id)    => request(`/api/products/${id}/related`),
   getVariants:(id)    => request(`/api/products/${id}/variants`),

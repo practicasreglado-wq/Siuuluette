@@ -26,6 +26,7 @@ export default async function checkoutRoutes(fastify) {
         .select(`
           id,
           price_gross_override,
+          discount_percent,
           product:products (
             price_gross,
             discount_percent
@@ -35,13 +36,49 @@ export default async function checkoutRoutes(fastify) {
 
       if (error) throw error
 
+      // 1.5 [STOCK] Validar disponibilidad ANTES de crear el cobro.
+      //     Si una prenda esta agotada, abortamos aqui: el cliente ve
+      //     un error claro y NO se le llega a generar el PaymentIntent.
+      //     La garantia DURA contra overselling esta en el trigger
+      //     trg_decrement_variant_stock de la DB (descuenta al crear
+      //     order_items); esto es la primera barrera, de cara al usuario.
+      const { data: stockRows, error: stockErr } = await supabase
+        .from('variant_stock')
+        .select('variant_id, size, stock, stock_mode')
+        .in('variant_id', variantIds)
+
+      if (stockErr) throw stockErr
+
+      for (const item of items) {
+        const size = item.selectedSize || item.size || null
+        const qty  = item.qty || item.quantity || 1
+        const row  = stockRows.find(
+          s => s.variant_id === Number(item.id) && s.size === size
+        )
+
+        // Sin registro de stock para esa variante+talla -> no vendible.
+        if (!row) {
+          return reply.status(400).send({
+            error: 'Una de las prendas de tu carrito ya no esta disponible. Revisa el carrito.'
+          })
+        }
+        // Modo 'limited': tiene que haber unidades suficientes.
+        // (on_demand y preorder se consideran siempre disponibles.)
+        if (row.stock_mode === 'limited' && (row.stock ?? 0) < qty) {
+          return reply.status(400).send({
+            error: `Stock insuficiente para una de las prendas (talla ${size || 'unica'}). Disponibles: ${row.stock ?? 0}.`
+          })
+        }
+      }
+
       // 2. Calcular el total real aplicando overrides y descuentos
       const totalAmount = items.reduce((sum, item) => {
         const v = dbVariants.find(dv => dv.id === Number(item.id))
         if (!v) return sum
 
         const basePrice = v.price_gross_override ?? v.product?.price_gross ?? 0
-        const discount  = v.product?.discount_percent || 0
+        // El descuento de la variante (color) manda sobre el del producto.
+        const discount  = v.discount_percent ?? v.product?.discount_percent ?? 0
         const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
 
         const itemQty = item.qty || item.quantity || 0
@@ -59,7 +96,8 @@ export default async function checkoutRoutes(fastify) {
       const cartCompact = items.map(it => {
         const v = dbVariants.find(dv => dv.id === Number(it.id))
         const basePrice = v?.price_gross_override ?? v?.product?.price_gross ?? 0
-        const discount  = v?.product?.discount_percent || 0
+        // El descuento de la variante (color) manda sobre el del producto.
+        const discount  = v?.discount_percent ?? v?.product?.discount_percent ?? 0
         const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
 
         return {

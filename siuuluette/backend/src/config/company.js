@@ -2,37 +2,15 @@
 //
 // Datos fiscales del emisor de las facturas.
 //
-// =====================================================================
-// ATENCIÓN — TODOS LOS VALORES SON PLACEHOLDERS HASTA QUE EL CLIENTE
-// (Le Siuuluette) NOS DÉ SUS DATOS FISCALES REALES.
-// =====================================================================
-//
 // Estos datos se imprimen literalmente en la cabecera de cada factura
 // PDF y se guardan también en la columna issuer_snapshot de la tabla
 // invoices en el momento de emisión.
 //
-// Cualquier factura emitida con los placeholders actuales NO TIENE
-// VALIDEZ LEGAL. Solo sirven para validar técnicamente que la pipeline
-// de facturación funciona.
-//
-// Cuando el cliente nos pase los datos reales, hay dos formas de
-// inyectarlos sin tocar este código:
-//
-//   1. Recomendado — vía variables de entorno en el .env del backend:
-//        COMPANY_LEGAL_NAME=...
-//        COMPANY_TAX_ID=...
-//        ...etc.
-//
-//   2. Editando los valores por defecto de abajo. Más rápido, pero los
-//      datos quedan hardcodeados en el repositorio.
-//
-// Lo que necesitamos del cliente está documentado en el README o en el
-// mensaje que le mandemos. Mínimo imprescindible:
-//   - Razón social (legal name)
-//   - NIF/CIF
-//   - Domicilio fiscal completo
-//   - Email de contacto
-// =====================================================================
+// Los valores por defecto de abajo son los datos fiscales REALES de la
+// sociedad (LE SIUULUETTE TRADEMARK, S.L.). Si hace falta cambiarlos sin
+// tocar este archivo, se pueden sobreescribir mediante variables de
+// entorno en el .env del backend (COMPANY_LEGAL_NAME, COMPANY_TAX_ID,
+// COMPANY_ADDRESS_LINE1, etc.).
 
 export const COMPANY = {
   // Nombre legal del emisor (sale en grande en la factura)
@@ -62,8 +40,8 @@ export const COMPANY = {
   invoiceSeries: process.env.COMPANY_INVOICE_SERIES || 'SIU',
 
   // Inscripción en Registro Mercantil — solo aplicable a sociedades.
-  // Cuando el cliente nos confirme su sociedad, rellenar (formato
-  // habitual: "Inscrita en el Reg. Mercantil de Valencia, T.X F.Y H.Z").
+  // Si la sociedad está inscrita, conviene rellenarlo (formato habitual:
+  // "Inscrita en el Reg. Mercantil de Valencia, T.X F.Y H.Z").
   registryInfo: process.env.COMPANY_REGISTRY_INFO || '',
 }
 

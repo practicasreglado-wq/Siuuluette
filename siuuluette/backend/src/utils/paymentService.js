@@ -168,7 +168,7 @@ async function createOrderFromPaymentIntentMetadata(paymentIntent, log) {
   const { data: variants, error: vErr } = await supabase
     .from('product_variants')
     .select(`
-      id, color_name, price_gross_override,
+      id, color_name, price_gross_override, discount_percent,
       product:products ( id, name, price_gross, discount_percent )
     `)
     .in('id', variantIds)
@@ -218,7 +218,8 @@ async function createOrderFromPaymentIntentMetadata(paymentIntent, log) {
   const orderItems = cart.map(it => {
     const v = variants?.find(vv => vv.id === Number(it.id))
     const basePrice = v?.price_gross_override ?? v?.product?.price_gross ?? 0
-    const discount  = v?.product?.discount_percent || 0
+    // El descuento de la variante (color) manda sobre el del producto.
+    const discount  = v?.discount_percent ?? v?.product?.discount_percent ?? 0
     const finalPrice = +(basePrice * (1 - discount / 100)).toFixed(2)
     return {
       order_id: newOrder.id,
@@ -234,6 +235,19 @@ async function createOrderFromPaymentIntentMetadata(paymentIntent, log) {
     .insert(orderItems)
 
   if (itemsErr) {
+    // El trigger trg_decrement_variant_stock de la DB descuenta el
+    // stock al insertar cada linea y RECHAZA la insercion si alguna
+    // prenda se quedo sin unidades entre el pago y la confirmacion
+    // (carrera por la ultima unidad). Si eso pasa, el 'order' ya se
+    // creo unas lineas mas arriba y quedaria huerfano (sin order_items
+    // y sin stock descontado), asi que lo borramos para no dejar
+    // basura en la DB. El cobro de Stripe, si existio, habra que
+    // reembolsarlo manualmente desde el dashboard de Stripe.
+    log.error?.(
+      { orderId: newOrder.id, paymentIntentId: paymentIntent.id, err: itemsErr.message },
+      '[paymentService] Fallo al crear order_items (posible falta de stock). Limpiando order huerfano.'
+    )
+    await supabase.from('orders').delete().eq('id', newOrder.id)
     throw new Error(`Error creando order_items desde webhook: ${itemsErr.message}`)
   }
 

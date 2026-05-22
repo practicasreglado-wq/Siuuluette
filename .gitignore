@@ -19,6 +19,13 @@ Thumbs.db
 .env.local
 .env.production
 .env.*.local
+# Cualquier archivo de variables de entorno (incluido hostinger.env, que
+# contiene claves reales y NUNCA debe subirse al repositorio).
+*.env
+hostinger.env
+
+# Archivos temporales de Vite
+vite.config.js.timestamp-*
 
 # Logs
 npm-debug.log*

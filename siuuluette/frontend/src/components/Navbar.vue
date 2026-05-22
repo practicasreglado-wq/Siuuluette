@@ -54,6 +54,9 @@
               <router-link to="/admin/products" class="admin-dropdown__link" @click="adminMenuOpen = false">
                 <span>Gestión Precios</span>
               </router-link>
+              <router-link to="/admin/stock" class="admin-dropdown__link" @click="adminMenuOpen = false">
+                <span>Gestión Stock</span>
+              </router-link>
               <router-link to="/admin/orders" class="admin-dropdown__link" @click="adminMenuOpen = false">
                 <span>Gestión Pedidos</span>
               </router-link>
@@ -127,6 +130,7 @@
           <!-- Admin Links Mobile -->
           <template v-if="currentUser?.role === 'admin'">
             <router-link to="/admin/products" class="mobile-nav__link mobile-nav__link--admin" @click="menuOpen = false">Admin: Precios</router-link>
+            <router-link to="/admin/stock" class="mobile-nav__link mobile-nav__link--admin" @click="menuOpen = false">Admin: Stock</router-link>
             <router-link to="/admin/orders" class="mobile-nav__link mobile-nav__link--admin" @click="menuOpen = false">Admin: Pedidos</router-link>
             <router-link to="/admin/preorders" class="mobile-nav__link mobile-nav__link--admin" @click="menuOpen = false">Admin: Reservas</router-link>
           </template>

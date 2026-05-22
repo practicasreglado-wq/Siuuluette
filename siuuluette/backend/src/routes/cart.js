@@ -84,8 +84,9 @@ export default async function cartRoutes(fastify) {
 
     const { product_id, quantity = 1, size } = request.body
     
-    // Log para depuración
-    console.log(`[CART_ADD] User: ${userId}, ProductID: ${product_id}, Size: ${size}`)
+    // Log de depuración: solo se imprime con nivel 'debug' (no en producción),
+    // así no se filtra el user_id en los logs de producción.
+    request.log.debug({ userId, product_id, size }, '[CART_ADD] item añadido al carrito')
 
     const { data: existing, error: existingError } = await supabase
       .from('cart_items')
@@ -98,6 +99,36 @@ export default async function cartRoutes(fastify) {
     if (existingError) {
       console.error('[CART_ADD] Error buscando existente:', existingError)
       return reply.status(400).send({ error: existingError.message })
+    }
+
+    // [STOCK] Validar disponibilidad antes de añadir al carrito.
+    //   Busca la variante+talla en variant_stock. En modo 'limited' no
+    //   se permite tener en el carrito mas unidades de las que existen
+    //   (se cuenta lo que ya hubiera + lo que se añade ahora).
+    //   Esto es una validacion de UX; la definitiva se repite en
+    //   /checkout/intent y la garantia dura esta en el trigger
+    //   trg_decrement_variant_stock de la base de datos.
+    const desiredQty = (existing?.quantity || 0) + quantity
+    const { data: stockRow, error: stockErr } = await supabase
+      .from('variant_stock')
+      .select('stock, stock_mode')
+      .eq('variant_id', product_id)
+      .eq('size', size)
+      .maybeSingle()
+
+    if (stockErr) {
+      return reply.status(400).send({ error: stockErr.message })
+    }
+    if (!stockRow) {
+      return reply.status(400).send({
+        error: 'Esta prenda no esta disponible en la talla seleccionada.'
+      })
+    }
+    // on_demand y preorder se consideran siempre disponibles.
+    if (stockRow.stock_mode === 'limited' && (stockRow.stock ?? 0) < desiredQty) {
+      return reply.status(400).send({
+        error: `Solo quedan ${stockRow.stock ?? 0} unidades de esta talla.`
+      })
     }
 
     if (existing) {

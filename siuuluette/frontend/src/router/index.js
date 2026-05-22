@@ -48,6 +48,15 @@ const routes = [
     }
   },
   {
+    path: '/admin/stock',
+    name: 'admin-stock',
+    component: () => import('../views/AdminStock.vue'),
+    meta: {
+      title: 'Gestión de Stock — Siuuluette®',
+      requiresAdmin: true
+    }
+  },
+  {
     path: '/admin/preorders',
     name: 'admin-preorders',
     component: () => import('../views/AdminPreorders.vue'),

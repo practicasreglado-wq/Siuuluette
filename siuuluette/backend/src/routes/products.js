@@ -15,7 +15,7 @@ const PRODUCT_SELECT = `
   price_net, price_gross, discount_percent, materials, size_guide, is_active,
   variants:product_variants(
     id, color_name, color_hex, sort_order,
-    price_net_override, price_gross_override, is_active,
+    price_net_override, price_gross_override, discount_percent, is_active,
     images:product_images(id, url, alt, sort_order),
     stock:variant_stock(id, size, stock, stock_mode, restock_date, sku_code)
   )
@@ -32,7 +32,10 @@ const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 function computePrices(parent, variant) {
   const baseNet   = variant.price_net_override   ?? parent.price_net
   const baseGross = variant.price_gross_override ?? parent.price_gross
-  const discount  = parent.discount_percent || 0
+  // El descuento de la variante (color) manda sobre el del producto.
+  // Si la variante no tiene descuento propio (NULL), hereda el del
+  // producto; si el producto tampoco tiene, no hay descuento.
+  const discount  = variant.discount_percent ?? parent.discount_percent ?? 0
 
   const finalNet   = +(baseNet   * (1 - discount / 100)).toFixed(2)
   const finalGross = +(baseGross * (1 - discount / 100)).toFixed(2)
@@ -81,6 +84,7 @@ function normalizeProduct(p) {
         color_hex: v.color_hex,
         price_net_override: v.price_net_override,
         price_gross_override: v.price_gross_override,
+        discount_percent: v.discount_percent,
         ...vPrices,
         primary_image: imageUrls[0] || null,
         secondary_image: imageUrls[1] || null,
@@ -375,5 +379,95 @@ export default async function productsRoutes(fastify) {
 
     if (error) return reply.status(400).send({ error: error.message })
     return { variant: data }
+  })
+
+  // --- ACTUALIZAR STOCK DE UNA TALLA (ADMIN) ---
+  // Modifica las unidades o el modo de stock de UNA talla concreta de una
+  // variante. La pareja (variant_id, size) identifica la fila exacta de
+  // variant_stock. Lo usa el panel /admin/stock.
+  //
+  // El descuento real de stock al vender lo hace el trigger
+  // trg_decrement_variant_stock de la base de datos; aqui solo se permite
+  // al administrador fijar/corregir las unidades disponibles.
+  fastify.patch('/variants/:id/stock', {
+    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection],
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'integer' } }
+      },
+      body: {
+        type: 'object',
+        required: ['size'],
+        properties: {
+          size:         { type: 'string', minLength: 1 },
+          stock:        { type: 'integer', minimum: 0 },
+          stock_mode:   { type: 'string', enum: ['limited', 'on_demand', 'preorder'] },
+          restock_date: { type: ['string', 'null'] }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id }   = request.params   // id = variant_id
+    const { size } = request.body
+
+    // Solo se actualizan los campos que llegan realmente en el body.
+    const updates = {}
+    if (request.body.stock        !== undefined) updates.stock        = request.body.stock
+    if (request.body.stock_mode   !== undefined) updates.stock_mode   = request.body.stock_mode
+    if (request.body.restock_date !== undefined) updates.restock_date = request.body.restock_date || null
+
+    if (Object.keys(updates).length === 0) {
+      return reply.status(400).send({ error: 'No se ha enviado ningun campo a actualizar' })
+    }
+
+    const { data, error } = await supabase
+      .from('variant_stock')
+      .update(updates)
+      .eq('variant_id', id)
+      .eq('size', size)
+      .select()
+      .maybeSingle()
+
+    if (error) return reply.status(400).send({ error: error.message })
+    if (!data) return reply.status(404).send({ error: 'No existe registro de stock para esa variante y talla' })
+
+    return { stock: data }
+  })
+
+  // --- DESCUENTO POR COLECCION (ADMIN) ---
+  // Aplica un mismo descuento a TODOS los productos de una coleccion de
+  // golpe (p.ej. rebajar toda la coleccion "Essentials"). Es una accion
+  // en bloque: escribe products.discount_percent de cada producto de esa
+  // coleccion. Ojo: si despues se anade un producto nuevo a la coleccion,
+  // NO hereda el descuento automaticamente (habria que volver a aplicar).
+  fastify.patch('/collection-discount', {
+    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection],
+    schema: {
+      body: {
+        type: 'object',
+        required: ['collection', 'discount_percent'],
+        properties: {
+          collection:       { type: 'string', minLength: 1 },
+          discount_percent: { type: 'integer', minimum: 0, maximum: 100 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { collection, discount_percent } = request.body
+
+    const { data, error } = await supabase
+      .from('products')
+      .update({ discount_percent })
+      .eq('collection', collection)
+      .select('id')
+
+    if (error) return reply.status(400).send({ error: error.message })
+
+    return {
+      message: `Descuento del ${discount_percent}% aplicado a la coleccion "${collection}"`,
+      updated: (data || []).length
+    }
   })
 }

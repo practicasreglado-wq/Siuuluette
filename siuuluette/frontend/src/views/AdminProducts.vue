@@ -18,6 +18,28 @@
       </div>
     </header>
 
+    <!-- Herramienta de descuento por colección -->
+    <section class="bulk-tool">
+      <div class="bulk-tool__inner">
+        <span class="bulk-tool__label">Descuento por colección</span>
+        <select v-model="bulkCollection" class="bulk-select">
+          <option value="">— Elige colección —</option>
+          <option v-for="c in collections" :key="c" :value="c">{{ c }}</option>
+        </select>
+        <div class="bulk-discount-field">
+          <input type="number" v-model="bulkDiscount" min="0" max="100" class="bulk-input" placeholder="0" />
+          <span class="bulk-pct">%</span>
+        </div>
+        <button class="bulk-apply-btn" :disabled="saving" @click="applyCollectionDiscount">
+          Aplicar a la colección
+        </button>
+      </div>
+      <p class="bulk-tool__hint">
+        Aplica ese descuento a todos los productos de la colección elegida de una vez.
+        Para descuentos de una prenda o un color concretos, usa las casillas de la tabla.
+      </p>
+    </section>
+
     <main class="admin-main">
       <div v-if="loading" class="state-container">
         <div class="loading-spinner"></div>
@@ -32,7 +54,8 @@
               <th>Variante (Override)</th>
               <th class="text-right">Neto (€)</th>
               <th class="text-right">Bruto (IVA)</th>
-              <th class="text-center">Dte. (%)</th>
+              <th class="text-center">Dte. Color (%)</th>
+              <th class="text-center">Dte. Prenda (%)</th>
               <th class="text-right">Estado</th>
             </tr>
           </thead>
@@ -90,7 +113,22 @@
                     {{ formatPrice((variant.price_net_override || product.price_net) * 1.21) }}€
                   </span>
                 </td>
-                
+
+                <!-- Descuento propio del color. Vacío = hereda el de la prenda. -->
+                <td class="td-discount-variant text-center">
+                  <div class="price-input-wrapper">
+                    <input
+                      type="number"
+                      class="discount-input"
+                      :class="{ 'price-input--inherited': variant.discount_percent == null }"
+                      :placeholder="product.discount_percent || 0"
+                      :value="variant.discount_percent ?? ''"
+                      @change="onVariantDiscountChange($event, product, variant)"
+                    />
+                    <span v-if="variant.discount_percent == null" class="inheritance-tag">Heredado</span>
+                  </div>
+                </td>
+
                 <td v-if="vIdx === 0" :rowspan="product.variants.length" class="td-discount text-center">
                   <div class="discount-edit">
                     <span class="symbol">%</span>
@@ -119,7 +157,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { productsApi } from '../api/index.js'
 
 export default {
@@ -129,6 +167,16 @@ export default {
     const loading = ref(true)
     const saving = ref(false)
     const error = ref(null)
+
+    // --- Herramienta de descuento por colección ---
+    const bulkCollection = ref('')
+    const bulkDiscount = ref('')
+    // Lista de colecciones distintas presentes en los productos cargados.
+    const collections = computed(() => {
+      const set = new Set()
+      products.value.forEach(p => { if (p.collection) set.add(p.collection) })
+      return [...set].sort()
+    })
 
     async function fetchProducts() {
       loading.value = true
@@ -202,6 +250,49 @@ export default {
       }
     }
 
+    // Descuento propio de un color (variante). Casilla vacía = hereda el
+    // descuento de la prenda; un número = ese color usa su propio descuento.
+    async function onVariantDiscountChange(event, product, variant) {
+      const val = event.target.value
+      const newDisc = val === '' ? null : parseInt(val, 10)
+      if (newDisc !== null && (isNaN(newDisc) || newDisc < 0 || newDisc > 100)) {
+        alert('El descuento debe ser un número entre 0 y 100')
+        event.target.value = variant.discount_percent ?? ''
+        return
+      }
+      saving.value = true
+      try {
+        await productsApi.updateVariant(variant.id, { discount_percent: newDisc })
+        variant.discount_percent = newDisc
+      } catch (err) {
+        alert('Error al guardar el descuento del color')
+        event.target.value = variant.discount_percent ?? ''
+      } finally {
+        saving.value = false
+      }
+    }
+
+    // Aplica un descuento a todos los productos de una colección de golpe.
+    async function applyCollectionDiscount() {
+      if (!bulkCollection.value) { alert('Elige una colección primero'); return }
+      const pct = parseInt(bulkDiscount.value, 10)
+      if (isNaN(pct) || pct < 0 || pct > 100) {
+        alert('El descuento debe ser un número entre 0 y 100')
+        return
+      }
+      if (!confirm(`¿Aplicar ${pct}% de descuento a TODOS los productos de la colección "${bulkCollection.value}"?`)) return
+      saving.value = true
+      try {
+        const res = await productsApi.applyCollectionDiscount(bulkCollection.value, pct)
+        alert(res.message || 'Descuento aplicado')
+        await fetchProducts()
+      } catch (err) {
+        alert('Error al aplicar el descuento: ' + err.message)
+      } finally {
+        saving.value = false
+      }
+    }
+
     function formatPrice(val) {
       return parseFloat(val || 0).toFixed(2)
     }
@@ -222,7 +313,13 @@ export default {
 
     onMounted(fetchProducts)
 
-    return { products, loading, saving, error, fetchProducts, formatPrice, getColorHex, onBasePriceChange, onVariantPriceChange, onDiscountChange }
+    return {
+      products, loading, saving, error,
+      bulkCollection, bulkDiscount, collections,
+      fetchProducts, formatPrice, getColorHex,
+      onBasePriceChange, onVariantPriceChange, onDiscountChange,
+      onVariantDiscountChange, applyCollectionDiscount
+    }
   }
 }
 </script>
@@ -442,6 +539,79 @@ export default {
 
 .saving-indicator { display: flex; align-items: center; gap: 0.6rem; color: #836e4e; font-size: 0.8rem; font-weight: 600; }
 .mini-spinner { width: 14px; height: 14px; border: 2px solid #d5cfc5; border-top-color: #836e4e; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+/* --- Herramienta de descuento por colección --- */
+.bulk-tool {
+  max-width: 1500px;
+  margin: 0 auto 2rem;
+  padding: 0 2rem;
+}
+
+.bulk-tool__inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: #fbfaf9;
+  border: 1px solid #d5cfc5;
+  border-radius: 4px;
+  padding: 1.2rem 1.5rem;
+}
+
+.bulk-tool__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: #836e4e;
+}
+
+.bulk-select {
+  background: white;
+  border: 1px solid #d5cfc5;
+  padding: 0.5rem 0.7rem;
+  border-radius: 2px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: #3d362f;
+  cursor: pointer;
+}
+
+.bulk-discount-field { display: flex; align-items: center; gap: 0.3rem; }
+
+.bulk-input {
+  width: 70px;
+  background: white;
+  border: 1px solid #d5cfc5;
+  padding: 0.5rem;
+  border-radius: 2px;
+  text-align: center;
+  font-weight: 700;
+  color: #3d362f;
+}
+
+.bulk-pct { font-weight: 700; color: #836e4e; }
+
+.bulk-apply-btn {
+  background: var(--c-gold);
+  color: var(--c-black);
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bulk-apply-btn:disabled { opacity: 0.6; cursor: default; }
+
+.bulk-tool__hint {
+  margin-top: 0.6rem;
+  font-size: 0.72rem;
+  color: #a59c8e;
+}
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .text-right { text-align: right; }
