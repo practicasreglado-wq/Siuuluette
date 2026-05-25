@@ -1,5 +1,6 @@
 // frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
+import { authApi } from '../api/index.js'
 
 const routes = [
   // ============================================================
@@ -36,7 +37,10 @@ const routes = [
     path: '/admin/orders',
     name: 'admin-orders',
     component: () => import('../views/AdminOrders.vue'),
-    meta: { title: 'Gestión de Pedidos — Le Siuuluette®' }
+    meta: {
+      title: 'Gestión de Pedidos — Le Siuuluette®',
+      requiresAdmin: true
+    }
   },
   {
     path: '/admin/products',
@@ -168,6 +172,27 @@ router.afterEach((to) => {
   if (to.meta?.title) {
     document.title = to.meta.title
   }
+})
+
+// --- GUARD DE ADMIN ---
+// Las rutas marcadas con `meta.requiresAdmin` solo se abren si el backend
+// confirma que la cuenta tiene rol 'admin'. La comprobación se hace
+// SIEMPRE contra el servidor (authApi.me consulta la tabla profiles de la
+// base de datos), no contra datos de localStorage que el usuario podría
+// manipular. Esta es la barrera de cara al usuario; la seguridad real la
+// impone el backend, que verifica el rol contra la DB en cada endpoint
+// protegido de /api/admin y /api/products.
+router.beforeEach(async (to) => {
+  if (!to.meta?.requiresAdmin) return true
+  try {
+    const { profile, user } = await authApi.me()
+    const role = profile?.role || user?.role
+    if (role === 'admin') return true
+  } catch (e) {
+    // Sin sesión válida o error de red: se trata como no autorizado.
+  }
+  // No es admin → se le saca del panel y se le manda a la home.
+  return { name: 'home' }
 })
 
 export default router

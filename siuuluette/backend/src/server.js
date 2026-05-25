@@ -13,6 +13,7 @@ import fastifyStatic from '@fastify/static' // Servir el build del frontend en p
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
+import { supabase } from './db/supabase.js' // Para verificar el rol admin contra la DB
 
 // --- CONFIGURACIÓN INICIAL DEL SERVIDOR ---
 
@@ -177,24 +178,55 @@ await fastify.register(swaggerUi, {
 
 // --- DECORADORES (MIDDLEWARES DE AUTENTICACIÓN) ---
 
-// Verifica que el usuario esté logueado
+// Verifica que el usuario esté logueado.
+//
+// IMPORTANTE: cuando la verificación falla hay que hacer `return reply...`.
+// En un hook `async` de Fastify, enviar la respuesta SIN retornarla NO
+// detiene la petición: el handler de la ruta se ejecutaría igualmente.
+// Sin el `return`, una petición sin token válido seguiría adelante.
 fastify.decorate('authenticate', async (request, reply) => {
   try {
     await request.jwtVerify()
   } catch (err) {
-    reply.status(401).send({ error: 'No autorizado' })
+    return reply.status(401).send({ error: 'No autorizado' })
   }
 })
 
-// Verifica que el usuario sea administrador
+// Verifica que el usuario sea administrador.
+//
+// El rol se comprueba SIEMPRE contra la base de datos (tabla `profiles`),
+// nunca contra el rol que viaja dentro del JWT. Motivo: si se revoca el
+// rol admin de una cuenta en la base de datos, debe perder el acceso al
+// panel de inmediato, aunque conserve un token antiguo que aún diga
+// "admin". Es una verificación en cada petición de admin (volumen bajo,
+// coste asumible) a cambio de seguridad real y sincronizada con la DB.
+//
+// Igual que arriba: cada rechazo lleva `return` para cortar la petición.
 fastify.decorate('authenticateAdmin', async (request, reply) => {
+  // 1. El token debe ser válido (usuario autenticado).
+  let payload
   try {
-    const user = await request.jwtVerify()
-    if (user.role !== 'admin') {
-      reply.status(403).send({ error: 'Acceso restringido: Se requiere rol de administrador' })
+    payload = await request.jwtVerify()
+  } catch (err) {
+    return reply.status(401).send({ error: 'No autorizado' })
+  }
+
+  // 2. El rol real se lee de la tabla profiles, no del JWT.
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', payload.id)
+      .single()
+
+    if (error || !profile || profile.role !== 'admin') {
+      return reply.status(403).send({
+        error: 'Acceso restringido: se requiere rol de administrador'
+      })
     }
   } catch (err) {
-    reply.status(401).send({ error: 'No autorizado' })
+    request.log.error({ err }, '[authenticateAdmin] Error verificando el rol')
+    return reply.status(500).send({ error: 'Error verificando permisos' })
   }
 })
 
