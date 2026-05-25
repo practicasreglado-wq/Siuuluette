@@ -137,7 +137,9 @@ await fastify.register(helmet, {
 })
 
 await fastify.register(rateLimit, {
-  max: 1000, // Restaurado temporalmente para evitar bloqueos de OPTIONS preflight en el panel admin
+  // Límite global por IP. Las rutas sensibles (login, registro, /intent)
+  // tienen límites propios más estrictos definidos en sus propias rutas.
+  max: 200,
   timeWindow: '1 minute',
   errorResponseBuilder: (request, context) => ({
     error: 'Demasiadas peticiones',
@@ -228,6 +230,23 @@ fastify.decorate('authenticateAdmin', async (request, reply) => {
     request.log.error({ err }, '[authenticateAdmin] Error verificando el rol')
     return reply.status(500).send({ error: 'Error verificando permisos' })
   }
+})
+
+// --- MANEJADOR DE ERRORES GLOBAL ---
+//
+// Red de seguridad: cualquier error que se propague (throw) hasta aquí se
+// registra completo en el log del servidor, pero al cliente solo le llega
+// un mensaje genérico. Así nunca se filtran detalles internos (mensajes de
+// Postgres, Stripe, stack traces) al navegador.
+fastify.setErrorHandler((error, request, reply) => {
+  const status = error.statusCode || 500
+  if (status >= 500) {
+    request.log.error({ err: error, url: request.url }, 'Error interno no controlado')
+    return reply.status(500).send({ error: 'Error interno del servidor' })
+  }
+  // Errores 4xx (validación de datos, rate limit, etc.): son seguros de
+  // mostrar porque describen la petición del cliente, no el sistema.
+  return reply.status(status).send({ error: error.message || 'Error en la petición' })
 })
 
 // --- REGISTRO DE RUTAS DEL SISTEMA ---

@@ -15,7 +15,7 @@ export default async function cartRoutes(fastify) {
       .eq('user_id', userId)
 
     if (cartError) {
-      return reply.status(500).send({ error: cartError.message })
+      return reply.status(500).send({ error: 'No se ha podido cargar el carrito' })
     }
 
     if (!cartItems || cartItems.length === 0) {
@@ -39,7 +39,7 @@ export default async function cartRoutes(fastify) {
       .in('id', variantIds)
 
     if (varError) {
-      return reply.status(500).send({ error: varError.message })
+      return reply.status(500).send({ error: 'No se ha podido cargar el carrito' })
     }
 
     // 3. Combinar los datos
@@ -98,7 +98,7 @@ export default async function cartRoutes(fastify) {
 
     if (existingError) {
       console.error('[CART_ADD] Error buscando existente:', existingError)
-      return reply.status(400).send({ error: existingError.message })
+      return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
     }
 
     // [STOCK] Validar disponibilidad antes de añadir al carrito.
@@ -117,7 +117,7 @@ export default async function cartRoutes(fastify) {
       .maybeSingle()
 
     if (stockErr) {
-      return reply.status(400).send({ error: stockErr.message })
+      return reply.status(400).send({ error: 'No se ha podido comprobar el stock' })
     }
     if (!stockRow) {
       return reply.status(400).send({
@@ -139,7 +139,7 @@ export default async function cartRoutes(fastify) {
 
       if (error) {
         console.error('[CART_ADD] Error actualizando:', error)
-        return reply.status(400).send({ error: error.message })
+        return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
       }
     } else {
       const { error } = await supabase
@@ -153,7 +153,7 @@ export default async function cartRoutes(fastify) {
 
       if (error) {
         console.error('[CART_ADD] Error insertando:', error)
-        return reply.status(400).send({ error: error.message })
+        return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
       }
     }
 
@@ -199,7 +199,7 @@ export default async function cartRoutes(fastify) {
 
       if (existingError) {
         console.error('[CART_MERGE] Error buscando item existente:', existingError)
-        return reply.status(400).send({ error: existingError.message })
+        return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
       }
 
       if (existing) {
@@ -209,7 +209,7 @@ export default async function cartRoutes(fastify) {
           .eq('id', existing.id)
 
         if (error) {
-          return reply.status(400).send({ error: error.message })
+          return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
         }
       } else {
         const { error } = await supabase
@@ -223,7 +223,7 @@ export default async function cartRoutes(fastify) {
 
         if (error) {
           console.error('[CART_MERGE] Error insertando nuevo item:', error)
-          return reply.status(400).send({ error: error.message })
+          return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
         }
       }
     }
@@ -257,7 +257,7 @@ export default async function cartRoutes(fastify) {
       .eq('size', size)
 
     if (error) {
-      return reply.status(400).send({ error: error.message })
+      return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
     }
 
     return { message: 'Producto eliminado del carrito' }
@@ -290,7 +290,7 @@ export default async function cartRoutes(fastify) {
       .eq('size', size || 'M')
 
     if (error) {
-      return reply.status(400).send({ error: error.message })
+      return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
     }
 
     return { message: 'Cantidad actualizada' }
@@ -318,7 +318,7 @@ export default async function cartRoutes(fastify) {
       .eq('id', id)
       .eq('user_id', userId)
 
-    if (error) return reply.status(400).send({ error: error.message })
+    if (error) return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
     return { message: 'Item eliminado' }
   })
 
@@ -352,7 +352,7 @@ export default async function cartRoutes(fastify) {
       .eq('id', id)
       .eq('user_id', userId)
 
-    if (error) return reply.status(400).send({ error: error.message })
+    if (error) return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
     return { message: 'Cantidad actualizada' }
   })
 
@@ -367,7 +367,7 @@ export default async function cartRoutes(fastify) {
       .delete()
       .eq('user_id', userId)
 
-    if (error) return reply.status(400).send({ error: error.message })
+    if (error) return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
     return { message: 'Carrito vaciado' }
   })
 }

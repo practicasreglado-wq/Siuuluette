@@ -154,7 +154,7 @@ export default async function productsRoutes(fastify) {
 
     if (error) {
       request.log.error({ err: error }, 'Error listando productos')
-      return reply.status(500).send({ error: error.message })
+      return reply.status(500).send({ error: 'No se han podido cargar los productos' })
     }
 
     const products = (data || []).map(normalizeProduct)
@@ -173,7 +173,7 @@ export default async function productsRoutes(fastify) {
 
     if (error) {
       request.log.error({ err: error }, 'Error listando productos admin')
-      return reply.status(500).send({ error: error.message })
+      return reply.status(500).send({ error: 'No se han podido cargar los productos' })
     }
 
     const products = (data || []).map(normalizeProduct)
@@ -198,7 +198,10 @@ export default async function productsRoutes(fastify) {
       .eq('id', id)
       .maybeSingle()
 
-    if (error)  return reply.status(500).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error obteniendo producto')
+      return reply.status(500).send({ error: 'No se ha podido cargar el producto' })
+    }
     if (!data)  return reply.status(404).send({ error: 'Producto no encontrado' })
 
     return { product: normalizeProduct(data) }
@@ -222,7 +225,10 @@ export default async function productsRoutes(fastify) {
       .eq('slug', slug)
       .maybeSingle()
 
-    if (error)  return reply.status(500).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error obteniendo producto')
+      return reply.status(500).send({ error: 'No se ha podido cargar el producto' })
+    }
     if (!data)  return reply.status(404).send({ error: 'Producto no encontrado' })
 
     return { product: normalizeProduct(data) }
@@ -248,7 +254,10 @@ export default async function productsRoutes(fastify) {
       .eq('id', id)
       .maybeSingle()
 
-    if (baseErr) return reply.status(500).send({ error: baseErr.message })
+    if (baseErr) {
+      request.log.error({ err: baseErr }, 'Error obteniendo producto base')
+      return reply.status(500).send({ error: 'No se han podido cargar productos relacionados' })
+    }
     if (!base)   return reply.status(404).send({ error: 'Producto no encontrado' })
 
     // 2) Hasta 4 productos de la misma colección, excluyendo el actual
@@ -260,7 +269,10 @@ export default async function productsRoutes(fastify) {
       .neq('id', id)
       .limit(4)
 
-    if (error) return reply.status(500).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error en consulta de productos')
+      return reply.status(500).send({ error: 'No se ha podido completar la operación' })
+    }
 
     const products = (data || []).map(normalizeProduct)
     return { products }
@@ -285,7 +297,10 @@ export default async function productsRoutes(fastify) {
       .eq('id', id)
       .maybeSingle()
 
-    if (error) return reply.status(500).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error en consulta de productos')
+      return reply.status(500).send({ error: 'No se ha podido completar la operación' })
+    }
     if (!data) return reply.status(404).send({ error: 'Producto no encontrado' })
 
     const product = normalizeProduct(data)
@@ -341,13 +356,39 @@ export default async function productsRoutes(fastify) {
       .select()
       .single()
 
-    if (error) return reply.status(500).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error en consulta de productos')
+      return reply.status(500).send({ error: 'No se ha podido completar la operación' })
+    }
     return reply.status(201).send({ product: data })
   })
 
   // --- ACTUALIZAR PRODUCTO (ADMIN) ---
   fastify.patch('/:id', {
-    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection]
+    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection],
+    schema: {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'integer' } } },
+      // additionalProperties:false -> rechaza cualquier columna no listada,
+      // para que no se pueda escribir nada inesperado en la tabla products.
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          name:             { type: 'string', minLength: 2 },
+          slug:             { type: 'string', minLength: 2 },
+          description:      { type: 'string' },
+          collection:       { type: 'string' },
+          category:         { type: 'string' },
+          style:            { type: 'string' },
+          price_net:        { type: 'number', minimum: 0 },
+          price_gross:      { type: 'number', minimum: 0 },
+          discount_percent: { type: 'integer', minimum: 0, maximum: 100 },
+          materials:        { type: 'string' },
+          size_guide:       { type: 'object' },
+          is_active:        { type: 'boolean' }
+        }
+      }
+    }
   }, async (request, reply) => {
     const { id } = request.params
     const updates = request.body
@@ -359,13 +400,33 @@ export default async function productsRoutes(fastify) {
       .select()
       .single()
 
-    if (error) return reply.status(400).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error guardando cambios de producto')
+      return reply.status(400).send({ error: 'No se han podido guardar los cambios' })
+    }
     return { product: data }
   })
 
   // --- ACTUALIZAR VARIANTE (ADMIN) ---
   fastify.patch('/variants/:id', {
-    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection]
+    onRequest: [fastify.authenticateAdmin, fastify.csrfProtection],
+    schema: {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'integer' } } },
+      // Solo se permiten estas columnas de product_variants.
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          color_name:           { type: 'string' },
+          color_hex:            { type: 'string' },
+          sort_order:           { type: 'integer' },
+          price_net_override:   { type: ['number', 'null'], minimum: 0 },
+          price_gross_override: { type: ['number', 'null'], minimum: 0 },
+          discount_percent:     { type: ['integer', 'null'], minimum: 0, maximum: 100 },
+          is_active:            { type: 'boolean' }
+        }
+      }
+    }
   }, async (request, reply) => {
     const { id } = request.params
     const updates = request.body
@@ -377,7 +438,10 @@ export default async function productsRoutes(fastify) {
       .select()
       .single()
 
-    if (error) return reply.status(400).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error guardando cambios de producto')
+      return reply.status(400).send({ error: 'No se han podido guardar los cambios' })
+    }
     return { variant: data }
   })
 
@@ -430,7 +494,10 @@ export default async function productsRoutes(fastify) {
       .select()
       .maybeSingle()
 
-    if (error) return reply.status(400).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error guardando cambios de producto')
+      return reply.status(400).send({ error: 'No se han podido guardar los cambios' })
+    }
     if (!data) return reply.status(404).send({ error: 'No existe registro de stock para esa variante y talla' })
 
     return { stock: data }
@@ -463,7 +530,10 @@ export default async function productsRoutes(fastify) {
       .eq('collection', collection)
       .select('id')
 
-    if (error) return reply.status(400).send({ error: error.message })
+    if (error) {
+      request.log.error({ err: error }, 'Error guardando cambios de producto')
+      return reply.status(400).send({ error: 'No se han podido guardar los cambios' })
+    }
 
     return {
       message: `Descuento del ${discount_percent}% aplicado a la coleccion "${collection}"`,

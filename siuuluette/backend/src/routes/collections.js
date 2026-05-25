@@ -22,7 +22,7 @@ export default async function collectionsRoutes(fastify) {
 
     if (error) {
       request.log.error({ err: error }, 'Error listando colecciones')
-      return reply.status(500).send({ error: error.message })
+      return reply.status(500).send({ error: 'No se han podido cargar las colecciones' })
     }
 
     // Calculamos el count real de productos por colección
@@ -33,7 +33,7 @@ export default async function collectionsRoutes(fastify) {
 
     if (countError) {
       request.log.error({ err: countError }, 'Error contando productos')
-      return reply.status(500).send({ error: countError.message })
+      return reply.status(500).send({ error: 'No se han podido cargar las colecciones' })
     }
 
     // Agrupamos los counts por colección

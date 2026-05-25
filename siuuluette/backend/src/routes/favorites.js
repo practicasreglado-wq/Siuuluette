@@ -16,7 +16,7 @@ export default async function favoritesRoutes(fastify) {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    if (favError) return reply.status(500).send({ error: favError.message })
+    if (favError) return reply.status(500).send({ error: 'No se han podido cargar los favoritos' })
     if (!favs || favs.length === 0) return { favorites: [] }
 
     // 2. Obtener datos de las variantes específicas (incluyendo precios)
@@ -34,7 +34,7 @@ export default async function favoritesRoutes(fastify) {
       `)
       .in('id', variantIds)
 
-    if (varError) return reply.status(500).send({ error: varError.message })
+    if (varError) return reply.status(500).send({ error: 'No se han podido cargar los favoritos' })
 
     // 3. Reconstruir para el frontend (calculando precios reales)
     const enrichedFavs = favs.map(f => {
@@ -83,7 +83,7 @@ export default async function favoritesRoutes(fastify) {
       if (error.code === '23505') {
         return { message: 'El producto ya estaba en favoritos', alreadyExists: true }
       }
-      return reply.status(400).send({ error: error.message })
+      return reply.status(400).send({ error: 'No se ha podido actualizar los favoritos' })
     }
 
     return { message: 'Añadido a favoritos' }
@@ -112,7 +112,7 @@ export default async function favoritesRoutes(fastify) {
       .eq('product_id', productId)
 
     if (error) {
-      return reply.status(400).send({ error: error.message })
+      return reply.status(400).send({ error: 'No se ha podido actualizar los favoritos' })
     }
 
     return { message: 'Quitado de favoritos' }

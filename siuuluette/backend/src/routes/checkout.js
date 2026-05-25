@@ -10,6 +10,11 @@ export default async function checkoutRoutes(fastify) {
   // --- CREAR INTENCIÓN DE PAGO ---
   // Calcula el total real en el servidor y solicita a Stripe un PaymentIntent
   fastify.post('/intent', {
+    config: {
+      // Crear un PaymentIntent genera un objeto en Stripe; limitamos su
+      // frecuencia para que no se pueda abusar del endpoint en masa.
+      rateLimit: { max: 20, timeWindow: '1 minute' }
+    },
     onRequest: [fastify.csrfProtection]
   }, async (request, reply) => {
     const { items } = request.body // Array de { id, qty }
@@ -128,8 +133,7 @@ export default async function checkoutRoutes(fastify) {
     } catch (err) {
       fastify.log.error(err)
       return reply.status(500).send({
-        error: 'Error al procesar el pago',
-        message: err.message
+        error: 'Error al procesar el pago'
       })
     }
   })
@@ -307,7 +311,10 @@ export default async function checkoutRoutes(fastify) {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    if (ordersError) return reply.status(400).send({ error: ordersError.message })
+    if (ordersError) {
+      fastify.log.error({ err: ordersError }, 'Error obteniendo pedidos del usuario')
+      return reply.status(400).send({ error: 'No se han podido cargar tus pedidos' })
+    }
 
     // 2. Enriquecer los order_items con datos de variantes y productos (manual)
     const allVariantIds = orders.flatMap(o => o.order_items.map(oi => oi.product_id))
@@ -396,8 +403,7 @@ export default async function checkoutRoutes(fastify) {
     } catch (err) {
       fastify.log.error({ err, orderId }, 'Error al servir la factura')
       return reply.status(500).send({
-        error: 'Error al obtener la factura',
-        details: err.message
+        error: 'Error al obtener la factura'
       })
     }
   })
