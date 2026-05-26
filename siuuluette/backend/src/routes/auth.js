@@ -59,8 +59,8 @@ export default async function authRoutes(fastify) {
       reply.setCookie('token', token, {
         path: '/',
         httpOnly: true,
-        secure: true, // Requerido para SameSite=None
-        sameSite: 'none',
+        secure: true, // HTTPS-only en producción; en localhost los navegadores modernos lo toleran.
+        sameSite: 'lax',
         maxAge: 30 * 24 * 60 * 60 // 30 días
       })
     }
@@ -138,7 +138,7 @@ export default async function authRoutes(fastify) {
       path: '/',
       httpOnly: true,
       secure: true,
-      sameSite: 'none',
+      sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 // 30 días
     })
 
@@ -278,7 +278,7 @@ export default async function authRoutes(fastify) {
       path: '/',
       httpOnly: true,
       secure: true,
-      sameSite: 'none'
+      sameSite: 'lax'
     })
     return { message: 'Sesión cerrada' }
   })

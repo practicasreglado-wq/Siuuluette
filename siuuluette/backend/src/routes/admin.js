@@ -39,14 +39,28 @@ export default async function adminRoutes(fastify) {
           .select('id, username')
           .in('id', userIds)
         
-        // 2. Obtener emails desde Supabase Auth (Admin API)
-        const { data: authData } = await supabase.auth.admin.listUsers()
-        const authUsers = authData?.users || []
+        // 2. Obtener emails desde Supabase Auth, pero buscando POR ID
+        //    concreto. NO usar listUsers(), que sin paginar devuelve solo
+        //    los primeros 50 usuarios -> los pedidos de los clientes que
+        //    queden mas alla del 50 saldrian sin email en el panel.
+        //    Con getUserById buscamos uno a uno los user_id que tenemos
+        //    en este lote de pedidos: rápido (lote ya paginado), exacto.
+        const authUserPairs = await Promise.all(
+          userIds.map(async (uid) => {
+            try {
+              const { data } = await supabase.auth.admin.getUserById(uid)
+              return [uid, data?.user || null]
+            } catch {
+              return [uid, null]
+            }
+          })
+        )
+        const authUsersById = new Map(authUserPairs)
 
         orders.forEach(order => {
           const profile = profiles?.find(p => p.id === order.user_id) || null
-          const authUser = authUsers.find(u => u.id === order.user_id)
-          
+          const authUser = authUsersById.get(order.user_id) || null
+
           if (profile || authUser) {
             order.profile = {
               ...(profile || {}),

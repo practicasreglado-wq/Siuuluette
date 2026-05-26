@@ -114,11 +114,13 @@ await fastify.register(jwt, {
 // Manejo de Cookies y protección CSRF (evita ataques de suplantación)
 await fastify.register(cookie)
 await fastify.register(csrf, {
-  cookieOpts: { 
+  cookieOpts: {
     path: '/',
     httpOnly: false, // Permitimos lectura por JS para enviarlo en cabecera
     secure: true,
-    sameSite: 'none'
+    // 'lax' es lo correcto con front y back en el mismo dominio en producción.
+    // Reduce la superficie de CSRF; la defensa real sigue siendo el token CSRF.
+    sameSite: 'lax'
   }
 })
 

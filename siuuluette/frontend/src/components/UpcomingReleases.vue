@@ -74,7 +74,7 @@
           <div v-else class="preorder-modal__success">
             <div class="success-icon">✓</div>
             <h3 class="display-sm">RESERVA CONFIRMADA</h3>
-            <p class="body-sm">Te hemos enviado un email de confirmación. Te avisaremos en cuanto el drop esté disponible.</p>
+            <p class="body-sm">Hemos registrado tu reserva. Te avisaremos en cuanto el drop esté disponible.</p>
             <button class="btn btn-dark" @click="showModal = false">CERRAR</button>
           </div>
         </div>

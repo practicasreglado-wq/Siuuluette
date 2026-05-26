@@ -21,33 +21,39 @@ Foto de dónde está el proyecto ahora mismo, para no perder tiempo averiguándo
 
 ---
 
-## ⚠️ PENDIENTES CRÍTICOS POST-DESPLIEGUE — LEER PRIMERO
+## ⚠️ PENDIENTES — LEER PRIMERO
 
-> La app está desplegada en `https://lesiuuluette.com` (Hostinger), pero **NO está lista para aceptar pagos reales**. Esta lista resume los problemas detectados en la auditoría posterior al despliegue. Resuélvelos en este orden.
+> La app está desplegada en `https://lesiuuluette.com` (Hostinger) pero **aún NO está lista para aceptar pagos reales**. Lo que queda por hacer, ordenado por urgencia.
 
 ### Bloqueantes (impiden vender de forma segura)
 
 - [ ] **Webhook de Stripe no configurado.** Si un cliente paga y cierra el navegador antes de terminar, Stripe cobra pero la orden NO se crea en Supabase. Hay que crear el endpoint en el dashboard de Stripe (`https://lesiuuluette.com/api/checkout/webhook`), escuchar `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, y poner el `whsec_...` resultante en la variable `STRIPE_WEBHOOK_SECRET` de Hostinger.
-- [ ] **El stock no se valida ni se decrementa.** La tabla `variant_stock` existe pero `checkout.js` no la lee al cobrar ni la actualiza tras una orden. Resultado: overselling y race conditions. Mínimo: trigger SQL en Supabase que bloquee inserts en `order_items` si `stock_mode='limited'` y `stock <= 0`, y decrementar stock en `confirmOrderByPaymentIntent`.
-- [ ] **El modal de "Reserva tu compra" miente.** Dice "Te hemos enviado un email de confirmación" pero `routes/drops.js` no envía ningún email. O se implementa `sendPreorderConfirmationEmail()`, o se cambia el texto del modal en `UpcomingReleases.vue`.
 - [ ] **Rotar claves filtradas.** Durante el desarrollo se compartieron por chat valores reales de `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_KEY`, `STRIPE_SECRET_KEY` (test) y `RESEND_API_KEY`. Rotarlas todas desde sus dashboards.
 - [ ] **Stripe sigue en modo TEST.** No se mueve dinero real. Al activar la cuenta, cambiar `STRIPE_SECRET_KEY` y `VITE_STRIPE_PUBLISHABLE_KEY` a las claves `live`.
 
 ### Importantes (resolver pronto)
 
-- [ ] **`console.log` en `cart.js`** filtra `user_id` en los logs de producción. Cambiar a `fastify.log.debug()` o eliminar.
-- [ ] **Errores 5xx inconsistentes:** algunas rutas de `products.js` hacen `reply.send({ error: error.message })` exponiendo detalles internos. Estandarizar a mensaje genérico.
-- [ ] **Preorders sin validación:** un usuario puede reservar el mismo drop N veces. Añadir `UNIQUE(user_id, product_name)` en la tabla `preorders`.
+- [ ] **El PaymentIntent no se ata al usuario.** `/checkout/attach` y `/confirm` no comprueban que el `paymentIntentId` pertenezca al usuario de la sesión. El id de Stripe no es adivinable, pero la propiedad debería estar fijada. Solución: fijar `user_id` en la metadata del PaymentIntent desde `/intent` (que pasará a exigir login) y validar coincidencia en `/attach` y `/confirm`.
+- [ ] **El webhook de Stripe no descarta reentregas.** Stripe puede entregar el mismo evento dos veces; hoy la idempotencia depende del estado del pedido. Crear una tabla `stripe_events(event_id pk, processed_at)` y comprobar antes de procesar.
+- [ ] **`/checkout/intent` está abierto sin login y no valida la variante.** Tres cosas que cerrar de golpe: exigir `authenticate` (el checkout ya requiere login para `attach`/`confirm`), poner un tope sensato a la cantidad por línea, y rechazar variantes con `is_active=false`.
+- [ ] **Preorders sin validación de duplicados.** Un usuario puede reservar el mismo drop N veces. Añadir `UNIQUE(user_id, product_name)` en la tabla `preorders`.
 - [ ] **Sin plan para el día del drop (julio 2026):** no hay automatización para notificar a quienes reservaron. Habrá que exportar el CSV del panel admin y avisar a mano, o implementar un cron.
-- [ ] **La base de datos de Supabase está en una cuenta personal.** El proyecto de Supabase se creó con una cuenta personal de Diego. Si Diego deja el proyecto, la empresa puede quedarse sin acceso a la base de datos. Acción: como mínimo, invitar a una persona de la empresa a la organización de Supabase con rol de Owner/Admin; e idealmente, **transferir el proyecto a una organización de Supabase propiedad de la empresa** (cuenta corporativa), para que no dependa de ninguna persona concreta.
+- [ ] **La base de datos de Supabase está en una cuenta personal.** El proyecto de Supabase se creó con una cuenta personal de Diego. Si Diego deja el proyecto, la empresa puede quedarse sin acceso. Acción: como mínimo, invitar a una persona de la empresa a la organización de Supabase con rol de Owner/Admin; e idealmente, **transferir el proyecto a una organización de Supabase propiedad de la empresa**.
+
+### Hardening de base de datos (avisos del linter de Supabase)
+
+- [ ] **Activar "Leaked Password Protection"** en Supabase → Authentication → Providers → Email. Comprueba contraseñas contra HaveIBeenPwned. **Requiere plan Pro de Supabase** (ver nota más abajo); en plan Free, como mitigación, dejar `Minimum password length = 12` y `Password requirements = Lowercase, uppercase letters, digits and symbols`.
+- [ ] **Configurar SMTP propio (Resend) en Supabase** → Authentication → SMTP Settings. **Urgente**: "Confirm email" ya está activado, así que los correos de confirmación se envían con el SMTP por defecto de Supabase, que en plan Free tiene un límite muy bajo (≈3-4 emails/hora). En cuanto haya un poco de tráfico, los registros nuevos no recibirán el correo de confirmación y no podrán entrar. Hay que meter las credenciales SMTP de Resend para que esos correos se envíen por ahí.
+- [ ] **Verificar la whitelist de Redirect URLs** en Supabase → Authentication → URL Configuration: solo debe estar `https://lesiuuluette.com/*`. El endpoint `/api/auth/recover` usa la cabecera `Origin` del cliente para construir el enlace del email; sin la whitelist bien puesta, un atacante podría provocar phishing por correo de recuperación.
+- [ ] **Configurar backups automáticos** en Supabase desde el dashboard. **Requiere plan Pro** para backups diarios y point-in-time recovery; en plan Free no hay backups automáticos.
+- [ ] **Crear índices**: `cart_items(user_id, product_id, size)`, `orders(user_id, created_at DESC)`, `favorites(user_id)`, `order_items(order_id)`, `invoices(order_id)`, `preorders(user_id, product_name)`. Mejoran el rendimiento de RLS y de consultas con FK.
 
 ### Mejoras a medio plazo (no bloquean)
 
-- [ ] **Activar RLS en Supabase** en las tablas con datos de usuario (`orders`, `order_items`, `cart_items`, `favorites`, `profiles`, `invoices`, `preorders`). Hoy toda la seguridad depende de que el backend filtre bien por `user_id`.
-- [ ] **Crear índices** en Supabase: `products(is_active, id)`, `cart_items(user_id, product_id, size)`, `orders(user_id, created_at DESC)`, `favorites(user_id)`, `order_items(order_id)`, `invoices(order_id)`, `preorders(user_id, product_name)`.
+- [ ] **Plan Pro de Supabase (opcional, a valorar):** el proyecto está hoy en el plan Free. Subir al plan **Pro** (~25 €/mes) desbloquea de un golpe tres cosas que aparecen como pendientes en este README: backups diarios automáticos + point-in-time recovery, protección contra contraseñas filtradas (Leaked Password Protection), y límites de email/auth más altos. Cuando se active Stripe en vivo y empiece a haber clientes reales, es razonable subir a Pro por la tranquilidad de los backups solos.
 - [ ] **Paginar `/api/products`:** ahora hace N+1 (carga todos los productos, luego variantes, luego imágenes). Escala mal a partir de ~1000 productos.
 - [ ] **GDPR mínimo:** no hay "derecho al olvido". Añadir borrado de cuenta con cascade de datos personales.
-- [ ] **Bajar rate limit** de 1000/min a 300/min cuando termine la fase de pruebas.
+- [ ] **Pulir `cart.js`:** `/add` puede guardar `size = null` mientras `/merge` y `/update` asumen `'M'` por defecto, lo que deja líneas que no casan al borrar/actualizar.
 
 ---
 
@@ -149,7 +155,7 @@ El despliegue asume **Node 22**. El comportamiento de `require()` sobre módulos
 
 - El JWT se guarda en **cookie HttpOnly**, no en `localStorage`. Si abres devtools y no ves token, es normal.
 - Hay protección **CSRF** activa: cualquier llamada que modifique datos necesita el header `x-csrf-token`. Se obtiene en `/api/auth/csrf`.
-- Hay rol `admin` que da acceso a las rutas `/api/admin/*` y al panel `/admin/*` del frontend.
+- Hay rol `admin` que da acceso a las rutas `/api/admin/*` y al panel `/admin/*` del frontend. **El rol admin se concede EXCLUSIVAMENTE desde el editor SQL de Supabase** (`update profiles set role='admin' where id = (select id from auth.users where email = 'CORREO')`). No hay forma de auto-asignárselo desde la web: un trigger en la BD lo impide y el backend verifica el rol contra la tabla `profiles` en cada petición de admin (no se fía del JWT).
 
 ### Pagos
 
@@ -227,7 +233,7 @@ Sin Vuex/Pinia, sin Tailwind. CSS puro y composables para el estado.
 
 - **CSRF** en todas las mutaciones
 - **Helmet** con CSP (no `unsafe-inline` en scripts — el iframe de Stripe está permitido explícitamente)
-- **Rate limiting**: 1000 req/min global, algunas rutas con límites más bajos
+- **Rate limiting**: 200 req/min global, `/checkout/intent` 20/min, login y registro 5/min
 - **CORS** whitelist: `localhost:5173/5174` + `FRONTEND_URL`. Los webhooks de Stripe son excepción
 - **RLS de Supabase** debe estar activo en todas las tablas — si añades una nueva, configúrale políticas
 - **Service Role Key** solo backend, jamás frontend
@@ -335,19 +341,15 @@ Esto es lo que falta antes de poder anunciar el lanzamiento. Los puntos se puede
 ### Configuración de producción (backend)
 
 - [ ] **Generar un `JWT_SECRET` nuevo y fuerte** (mínimo 32 caracteres, aleatorio). NO usar el de dev.
-- [ ] **Crear `.env.production`** con todos los valores reales (Stripe live, Resend prod, dominio real, Supabase prod, etc.).
-- [ ] **Cambiar `NODE_ENV=production`** — esto activa la lógica más estricta de CORS en `server.js`.
-- [ ] **Quitar `localhost:5173/5174` de la whitelist CORS** en `server.js:51-57` (o envolverlo en check `NODE_ENV`).
-- [ ] **Bajar `rateLimit.max`** en `server.js:115` de 1000/min a algo más razonable (100-200/min). El comentario en el código indica que se subió temporalmente para problemas de preflight en admin — revisar si todavía aplica.
-- [ ] **Ajustar el logger de Fastify** a JSON plano en producción (sin `pino-pretty`, que es solo para desarrollo).
-- [ ] Revisar que **no quedan `console.log` de debug** ni datos sensibles en logs.
+- [ ] Confirmar todas las variables reales en el panel de Hostinger (Stripe live cuando llegue, Resend prod, dominio real, Supabase prod, `COMPANY_*`).
+- [ ] **Comprobar que `NODE_ENV=production`** está fijada en Hostinger. Eso activa automáticamente CORS estricto (sin localhost), logger JSON y otros valores de producción que el código ya tiene preparados.
+- [ ] Pasar una revisión final para confirmar que **no quedan `console.log` de debug** ni datos sensibles en logs.
 
 ### Supabase
 
-- [ ] **Verificar RLS activado en todas las tablas** (especialmente `profiles`, `orders`, `invoices`, `cart`, `favorites`).
-- [ ] Revisar las **políticas RLS** una a una — el `SERVICE_ROLE_KEY` se las salta, pero cualquier query con la anon key debe estar protegida.
+- [ ] Confirmar admin en la tabla `profiles`: `select email, role from profiles join auth.users using (id) order by role desc`. Solo deberías ver `admin` en tu(s) cuenta(s) de desarrollador. Para conceder admin, ver "Cómo se concede admin" en la sección de Autenticación.
 - [ ] Configurar **backups automáticos** desde el dashboard de Supabase (depende del plan).
-- [ ] Crear un usuario admin real en la tabla `profiles` (cambiar el rol desde SQL).
+- [ ] Resolver los avisos del linter de seguridad (ver "Hardening de base de datos" arriba).
 
 ### Día del lanzamiento
 

@@ -364,34 +364,34 @@ export default async function productsRoutes(fastify) {
   })
 
   // --- ACTUALIZAR PRODUCTO (ADMIN) ---
+  // Whitelist de columnas EN CÓDIGO: solo se copian al UPDATE los campos
+  // listados en PRODUCT_UPDATABLE. Cualquier otro campo del body se ignora
+  // silenciosamente, así que NUNCA llega a la tabla. Es más robusto que un
+  // schema con additionalProperties:false porque si mañana el frontend
+  // manda un campo nuevo no rompe la API: simplemente no se guarda hasta
+  // que se añada a la lista de aquí abajo.
   fastify.patch('/:id', {
     onRequest: [fastify.authenticateAdmin, fastify.csrfProtection],
     schema: {
-      params: { type: 'object', required: ['id'], properties: { id: { type: 'integer' } } },
-      // additionalProperties:false -> rechaza cualquier columna no listada,
-      // para que no se pueda escribir nada inesperado en la tabla products.
-      body: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          name:             { type: 'string', minLength: 2 },
-          slug:             { type: 'string', minLength: 2 },
-          description:      { type: 'string' },
-          collection:       { type: 'string' },
-          category:         { type: 'string' },
-          style:            { type: 'string' },
-          price_net:        { type: 'number', minimum: 0 },
-          price_gross:      { type: 'number', minimum: 0 },
-          discount_percent: { type: 'integer', minimum: 0, maximum: 100 },
-          materials:        { type: 'string' },
-          size_guide:       { type: 'object' },
-          is_active:        { type: 'boolean' }
-        }
-      }
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'integer' } } }
     }
   }, async (request, reply) => {
     const { id } = request.params
-    const updates = request.body
+    const body = request.body || {}
+
+    const PRODUCT_UPDATABLE = [
+      'name', 'slug', 'description', 'collection', 'category', 'style',
+      'price_net', 'price_gross', 'discount_percent', 'materials',
+      'size_guide', 'is_active'
+    ]
+    const updates = {}
+    for (const k of PRODUCT_UPDATABLE) {
+      if (body[k] !== undefined) updates[k] = body[k]
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return reply.status(400).send({ error: 'No se han enviado cambios' })
+    }
 
     const { data, error } = await supabase
       .from('products')
@@ -408,28 +408,31 @@ export default async function productsRoutes(fastify) {
   })
 
   // --- ACTUALIZAR VARIANTE (ADMIN) ---
+  // Misma lógica que el PATCH de producto: la lista de columnas
+  // permitidas vive en código (VARIANT_UPDATABLE). Cualquier campo no
+  // listado del body se descarta antes de tocar la tabla.
   fastify.patch('/variants/:id', {
     onRequest: [fastify.authenticateAdmin, fastify.csrfProtection],
     schema: {
-      params: { type: 'object', required: ['id'], properties: { id: { type: 'integer' } } },
-      // Solo se permiten estas columnas de product_variants.
-      body: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          color_name:           { type: 'string' },
-          color_hex:            { type: 'string' },
-          sort_order:           { type: 'integer' },
-          price_net_override:   { type: ['number', 'null'], minimum: 0 },
-          price_gross_override: { type: ['number', 'null'], minimum: 0 },
-          discount_percent:     { type: ['integer', 'null'], minimum: 0, maximum: 100 },
-          is_active:            { type: 'boolean' }
-        }
-      }
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'integer' } } }
     }
   }, async (request, reply) => {
     const { id } = request.params
-    const updates = request.body
+    const body = request.body || {}
+
+    const VARIANT_UPDATABLE = [
+      'color_name', 'color_hex', 'sort_order',
+      'price_net_override', 'price_gross_override',
+      'discount_percent', 'is_active'
+    ]
+    const updates = {}
+    for (const k of VARIANT_UPDATABLE) {
+      if (body[k] !== undefined) updates[k] = body[k]
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return reply.status(400).send({ error: 'No se han enviado cambios' })
+    }
 
     const { data, error } = await supabase
       .from('product_variants')
@@ -439,7 +442,7 @@ export default async function productsRoutes(fastify) {
       .single()
 
     if (error) {
-      request.log.error({ err: error }, 'Error guardando cambios de producto')
+      request.log.error({ err: error }, 'Error guardando cambios de variante')
       return reply.status(400).send({ error: 'No se han podido guardar los cambios' })
     }
     return { variant: data }
