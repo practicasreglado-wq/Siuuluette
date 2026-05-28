@@ -12,7 +12,7 @@ Información imprescindible para el desarrollo y despliegue del proyecto **Le Si
 *   **Despliegue automático**: Hostinger está conectado a GitHub y despliega automáticamente la rama **`diego`** al recibir un `push`.
 *   **Emails transaccionales**: Verificados y operativos en producción mediante **Resend** (cuenta `webregladoac1@gmail.com`). Remitente: `pedidos@lesiuuluette.com`.
 *   **Stripe**: La cuenta de la SL (*LE SIUULUETTE TRADEMARK, S.L.*) está **activada** e implementada en producción con claves `live` en Hostinger. Los pagos reales han sido verificados y funcionan correctamente, mientras que el entorno local (`localhost`) sigue usando las claves `test` para pruebas seguras.
-*   **Base de datos**: Alojada en **Supabase**. La organización del proyecto tiene como Owner principal a `lesiuuluette@gmail.com` (cuenta corporativa), lo que garantiza que toda la base de datos e infraestructura pertenecen de forma íntegra a la empresa. Diego utiliza su correo `disago2002@gmail.com` únicamente para pruebas de pedidos y desarrollo en el entorno test local (donde posee rol de administrador). Las cuentas personales adicionales de los propietarios de Supabase (como la de Diego y de un compañero anterior) se pueden retirar con total seguridad de la organización de Supabase; la base de datos no sufrirá ningún impacto y el control completo quedará en la cuenta corporativa `lesiuuluette@gmail.com`.
+*   **Base de datos**: Alojada en **Supabase**. La organización del proyecto tiene como Owner principal a `lesiuuluette@gmail.com` (cuenta corporativa), lo que garantiza que toda la base de datos e infraestructura pertenecen de forma íntegra a la empresa. Las cuentas personales adicionales de Owners en la organización de Supabase (la de Diego y la de un compañero anterior) se pueden retirar con total seguridad cuando ya no se necesite su acceso; la base de datos no sufrirá ningún impacto y el control completo quedará en la cuenta corporativa. Para el rol de administrador del panel `/admin` de la web, ver sección "Gestión Segura de Administradores" más abajo.
 
 ---
 
@@ -32,17 +32,42 @@ Para la administración integral de la infraestructura del proyecto, la empresa 
 
 ## 🛡️ Gestión Segura de Administradores (Desarrolladores)
 
-El sistema cuenta con un modelo de seguridad estricto. **El rol de administrador no se puede solicitar desde el frontend ni manipular con peticiones HTTP públicas en la API por seguridad**. Para otorgar permisos de administrador de manera totalmente segura a un desarrollador o persona del equipo, se debe proceder de forma excepcional y manual directamente en la base de datos:
+### Quién tiene rol `admin` ahora mismo en producción
 
-1.  **Registro del usuario**: El desarrollador debe registrarse normalmente desde la web `https://lesiuuluette.com` con su correo y contraseña elegida. Por defecto, su cuenta se creará con el rol de cliente `'user'`.
-2.  **Acceso a la DB**: Un propietario del proyecto debe iniciar sesión en el panel de **Supabase** (`https://supabase.com`) con la cuenta de Gmail corporativa `lesiuuluette@gmail.com`.
-3.  **Localizar la tabla**: En la barra lateral izquierda, entrar en el **Table Editor** (Editor de tablas) y seleccionar la tabla `profiles`.
-4.  **Otorgar rol**:
-    *   Buscar la fila correspondiente al correo del desarrollador recién registrado.
-    *   Hacer doble clic sobre el valor de la columna `role` (que inicialmente contendrá `'user'`).
-    *   Escribir el valor **`'admin'`** de manera exacta (todo en minúsculas y sin espacios).
-    *   Confirmar y pulsar en guardar cambios en la base de datos.
-5.  **Resultado**: Al volver a iniciar sesión, el desarrollador tendrá acceso inmediato al panel exclusivo `/admin` en la web.
+- `practicasreglado@gmail.com` — equipo de desarrollo actual.
+- `disago2002@gmail.com` (Diego, desarrollador inicial) — sigue con admin para operar mientras se completa el traspaso; revocárselo el día que ya no necesite operar el panel.
+
+El otro desarrollador inicial (Miguel, `miguelitoqm970@gmail.com`) está registrado en la web pero **no** tiene rol admin.
+
+> Para consultar la lista actualizada en cualquier momento, ejecuta en el SQL Editor de Supabase:
+> ```sql
+> select u.email, p.role
+> from public.profiles p
+> join auth.users u on u.id = p.id
+> where p.role = 'admin';
+> ```
+
+### Cómo otorgar admin a una persona nueva
+
+**El rol admin no se puede solicitar desde el frontend ni manipular con peticiones HTTP públicas** — un trigger en la base de datos lo impide y el backend verifica el rol contra la tabla `profiles` en cada petición de admin. La única forma de concederlo es directamente desde Supabase:
+
+1. **Registro del usuario**: La persona se registra normalmente desde `https://lesiuuluette.com` con su correo y contraseña. Por defecto su cuenta se crea con rol `'user'`.
+2. **Acceso a Supabase**: Un Owner del proyecto inicia sesión en `https://supabase.com` con la cuenta corporativa `lesiuuluette@gmail.com`.
+3. **Editar `profiles`**: Sidebar → **Table Editor** → tabla `profiles`. Buscar la fila del nuevo usuario (puedes cruzar por `id` con la tabla `auth.users` si no recuerdas el UUID).
+4. **Cambiar el rol**: Doble clic sobre la columna `role` (estará en `'user'`), escribir exactamente **`admin`** (minúsculas, sin comillas, sin espacios), guardar.
+5. **Resultado**: La próxima vez que esa persona inicie sesión tendrá acceso al panel `/admin/*`.
+
+Alternativa por SQL Editor (más rápido si sabes el correo):
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (select id from auth.users where email = 'CORREO@AQUI.COM');
+```
+
+### Cómo revocar admin
+
+El mismo procedimiento al revés: cambiar `role` de `admin` a `user`. **Hacerlo el mismo día** que la persona deje el proyecto, como parte del checklist de offboarding (ver "Custodia de secretos y traspaso" más abajo).
 
 ---
 
@@ -101,12 +126,7 @@ El sistema permite a clientes autenticados pre-reservar prendas de colecciones e
 4. **Enlazar `preorders` con `products` estructuralmente** — añadir una columna `product_id` (FK a `product_variants` o a `products`) a la tabla `preorders`, sustituyendo o complementando el `product_name` actual (que hoy es solo texto sin relación).
 
 ### Otras mejoras del sistema de reservas
-*   **Prevención de Duplicados**: Actualmente no existe restricción a nivel de base de datos; un mismo usuario puede reservar el mismo drop múltiples veces.
-    *   **Acción de DB**: Añadir una restricción única en Supabase SQL Editor:
-        ```sql
-        ALTER TABLE preorders ADD CONSTRAINT unique_user_preorder UNIQUE (user_id, product_name);
-        ```
-    *   **Acción de Backend**: Capturar el error Postgres `23505` (violación de clave única) en `drops.js` y retornar un `400` con el mensaje: *"Ya has realizado una reserva para este lanzamiento."*
+*   **Prevención de duplicados** ✅ ya hecho. Existe el constraint `preorders_user_product_unique (user_id, product_name)` en Supabase y `drops.js` captura el error `23505` devolviendo *"Ya tienes una reserva activa para este lanzamiento."*
 *   **Notificación del día del lanzamiento**: implementar un cron o tarea programada que recorra `preorders` y envíe email vía Resend cuando el producto pase de `preorder` a `limited`. Mientras tanto, se puede exportar el CSV desde el panel admin (`/admin/preorders`) y notificar manualmente.
 
 ---
@@ -136,6 +156,42 @@ El hosting de Hostinger Node.js espera que los puntos de ejecución residan en l
 *   La raíz tiene un `package.json` y un `server.js` que actúan como **Wrapper**.
 *   El `server.js` de la raíz utiliza **`import()` dinámico** para evitar colisionar con CommonJS (`require()`) de LiteSpeed. **No modificar este wrapper**.
 *   Las variables de entorno se configuran en el Panel de Hostinger (no se sube ningún `.env` al repositorio).
+
+### Variables de entorno necesarias
+
+El backend **no arranca sin un `.env`** correctamente configurado (en local) o sin estas mismas variables en el Panel de Hostinger (en producción):
+
+| Variable | Para qué sirve | Notas |
+|---|---|---|
+| `JWT_SECRET` | Firma de los JWT de sesión. | Mínimo 32 caracteres, aleatorio. Distinto en cada entorno. |
+| `SUPABASE_URL` | URL del proyecto Supabase. | Pública, se puede compartir. |
+| `SUPABASE_KEY` | Anon key de Supabase. | Pública por diseño, pero rotable. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service key (bypass RLS). | **Secreta. Solo backend. Jamás frontend.** |
+| `STRIPE_SECRET_KEY` | Clave secreta de Stripe. | `sk_test_...` en local, `sk_live_...` en producción. |
+| `STRIPE_WEBHOOK_SECRET` | Firma del webhook de Stripe. | `whsec_...`. Distinto por entorno (test vs live). |
+| `RESEND_API_KEY` | API key de Resend (envío de emails). | Producción. |
+| `RESEND_FROM_EMAIL` | Dirección remitente. | Ej: `pedidos@lesiuuluette.com`. |
+| `COMPANY_LEGAL_NAME`, `COMPANY_TAX_ID`, `COMPANY_ADDRESS_*` | Datos fiscales para las facturas PDF. | Los valores por defecto del código son los reales de la S.L. |
+| `FRONTEND_URL` | URL del frontend (para CORS y enlaces en emails). | `https://lesiuuluette.com` en producción. |
+| `EMAIL_DEV_RECIPIENT_OVERRIDE` | (Solo dev) Redirige todos los emails a una dirección concreta. | Para no spamear a usuarios reales al probar. |
+| `NODE_ENV` | Modo de ejecución. | `production` en Hostinger; activa CORS estricto y logger JSON. |
+
+Frontend solo necesita `VITE_STRIPE_PUBLISHABLE_KEY` (clave pública de Stripe, `pk_test_...` en local y `pk_live_...` en producción) y `VITE_API_URL` (URL del backend; en producción es `https://lesiuuluette.com`).
+
+---
+
+## 🔐 Custodia de secretos y traspaso
+
+Cuando alguien deja el equipo (o como práctica periódica), seguir este checklist:
+
+1. **Rotar** en sus dashboards: `JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`.
+2. **Actualizar** los nuevos valores en el panel de variables de Hostinger.
+3. **Guardar** los valores nuevos en un gestor de contraseñas compartido del equipo (Bitwarden gratuito sirve bien). El `.env` no se versiona ni se manda por chat.
+4. **Revocar acceso** del ex-miembro a: Supabase, Stripe, Resend, Hostinger, GitHub, y a las cuentas Gmail (`lesiuuluette@gmail.com`, `webregladoac1@gmail.com`).
+5. **Revocar rol admin** en la tabla `profiles` de Supabase si lo tenía.
+6. **Revisar logs** recientes (Stripe, Supabase, Hostinger) por accesos anómalos.
+
+Acceso mínimo al gestor de contraseñas: **dos personas** (desarrollador principal + responsable de negocio), nunca solo una.
 
 ---
 
