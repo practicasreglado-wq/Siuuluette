@@ -1,3 +1,8 @@
+/**
+ * ARCHIVO: routes/auth.js
+ * DESCRIPCIÓN: Define las rutas de autenticación, control de sesiones, perfiles y seguridad de usuarios (registro, login, perfil, recuperación y cierre de sesión).
+ * Utiliza Supabase Auth y gestiona tokens JWT mediante cookies seguras HttpOnly con protección CSRF activa.
+ */
 import { supabase } from '../db/supabase.js'
 
 export default async function authRoutes(fastify) {

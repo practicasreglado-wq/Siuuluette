@@ -1,3 +1,8 @@
+/**
+ * ARCHIVO: routes/cart.js
+ * DESCRIPCIÓN: Implementa las rutas del carrito de compras (añadir, listar, fusionar carrito de invitado al iniciar sesión, actualizar cantidades, eliminar elementos o vaciar carrito).
+ * Realiza comprobaciones preventivas de stock disponible a nivel de experiencia de usuario antes de permitir la adición.
+ */
 import { supabase } from '../db/supabase.js'
 
 export default async function cartRoutes(fastify) {

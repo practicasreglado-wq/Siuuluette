@@ -1,6 +1,9 @@
+/**
+ * ARCHIVO: utils/paymentService.js
+ * DESCRIPCIÓN: Implementa la lógica de negocio idempotente para confirmar pedidos pagados.
+ * Maneja la creación automática de órdenes en la base de datos a partir de metadata en caso de desconexión del cliente, invoca la generación de facturas y coordina el envío de correos de confirmación.
+ */
 // backend/src/utils/paymentService.js
-//
-// Logica idempotente de "confirmar pedido pagado":
 //   - busca el order por stripe_payment_intent_id
 //   - si ya esta en 'paid' y tiene factura, no hace nada (idempotencia)
 //   - si no, lo marca como pagado, emite la factura y envia el email

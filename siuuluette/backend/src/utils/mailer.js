@@ -1,3 +1,8 @@
+/**
+ * ARCHIVO: utils/mailer.js
+ * DESCRIPCIÓN: Encapsula la integración con el SDK de correo transaccional (Resend).
+ * Procesa la composición de plantillas en formato HTML y texto plano, adjunta la factura PDF codificada en Base64, admite desvíos por sandbox durante desarrollo (EMAIL_DEV_RECIPIENT_OVERRIDE) y despacha notificaciones con copia oculta (BCC) a administración.
+ */
 // backend/src/utils/mailer.js
 //
 // Envio de emails transaccionales mediante Resend.

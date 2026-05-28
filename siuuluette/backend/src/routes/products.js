@@ -1,13 +1,9 @@
+/**
+ * ARCHIVO: routes/products.js
+ * DESCRIPCIÓN: Define las rutas y lógica del catálogo de productos y variantes.
+ * Se encarga de listar artículos (activos para catálogo e integral para administradores), búsquedas por ID o slug URL amigable, cálculos de descuentos y precios anidados por color de variante, comprobación de disponibilidad de stock por tallas y administración de catálogo (creación, edición con whitelist selectiva de campos y actualizaciones en masa por colección).
+ */
 import { supabase } from '../db/supabase.js'
-
-/* ============================================================
-   SIUULUETTE — Rutas de Productos (Modelo de Datos)
-   ============================================================
-   - products: Producto base (ej: Sudadera)
-   - product_variants: Variantes por color del producto
-   - product_images: Galería de fotos por variante
-   - variant_stock: Inventario por talla y SKU
-   ============================================================ */
 
 // Consulta base para traer toda la información relacionada de un producto
 const PRODUCT_SELECT = `

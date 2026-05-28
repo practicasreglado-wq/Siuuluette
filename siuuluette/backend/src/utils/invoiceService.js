@@ -1,3 +1,8 @@
+/**
+ * ARCHIVO: utils/invoiceService.js
+ * DESCRIPCIÓN: Servicio que coordina el proceso de facturación de pedidos.
+ * Calcula los importes fiscales (base imponible, IVA, total bruto), genera secuencias numéricas correlativas correlacionadas por año/serie, crea PDFs facturarios y los sincroniza con Supabase Storage para su descarga retroactiva.
+ */
 // backend/src/utils/invoiceService.js
 //
 // Servicio que orquesta la emisión de una factura para un pedido:

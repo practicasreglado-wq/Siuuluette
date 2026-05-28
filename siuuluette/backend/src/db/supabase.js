@@ -1,5 +1,8 @@
-// --- CONFIGURACIÓN DE SUPABASE ---
-// Inicializa la conexión con la base de datos y los servicios de autenticación
+/**
+ * ARCHIVO: supabase.js
+ * DESCRIPCIÓN: Inicializa y exporta el cliente de Supabase utilizando la Service Role Key o la clave pública.
+ * Actúa como punto de conexión principal para interactuar con la base de datos relacional y el almacenamiento (Storage).
+ */
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 

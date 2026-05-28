@@ -1,3 +1,8 @@
+/**
+ * ARCHIVO: routes/checkout.js
+ * DESCRIPCIÓN: Gestiona el flujo del proceso de compra (Checkout) y pasarela de pagos.
+ * Incluye la creación de PaymentIntents con Stripe, vinculación segura de direcciones, confirmación de pedidos, webhook de Stripe para procesamientos en segundo plano y descarga de facturas en PDF.
+ */
 import Stripe from 'stripe'
 import { supabase } from '../db/supabase.js'
 import { issueInvoiceForOrder, fetchOrRegenerateInvoicePDF } from '../utils/invoiceService.js'

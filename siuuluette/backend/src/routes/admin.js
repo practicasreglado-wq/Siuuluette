@@ -1,3 +1,8 @@
+/**
+ * ARCHIVO: routes/admin.js
+ * DESCRIPCIÓN: Define las rutas y controladores para el panel de administración.
+ * Permite listar pedidos paginados, modificar sus estados fiscales y logísticos (shipped, delivered, etc.) y consultar las reservas/pre-orders activas del sistema. Todas las rutas requieren rol 'admin' verificado contra base de datos.
+ */
 import { supabase } from '../db/supabase.js'
 
 export default async function adminRoutes(fastify) {

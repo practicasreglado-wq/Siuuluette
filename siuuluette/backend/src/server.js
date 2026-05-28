@@ -1,4 +1,8 @@
-// backend/src/server.js
+/**
+ * ARCHIVO: server.js
+ * DESCRIPCIÓN: Punto de entrada y configuración central de la aplicación Fastify 5.
+ * Orquesta la carga de middlewares de seguridad (CORS, Helmet, Rate Limiter, cookies y protección CSRF), autenticación por JWT, decoradores para validación de sesiones y roles, manejadores globales de excepciones, enrutamiento a los controladores de negocio (/api/*) y el servido condicional del build estático del frontend SPA.
+ */
 import './env.js'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'

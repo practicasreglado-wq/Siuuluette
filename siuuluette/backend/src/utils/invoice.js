@@ -1,3 +1,8 @@
+/**
+ * ARCHIVO: utils/invoice.js
+ * DESCRIPCIÓN: Implementa la lógica de dibujo y estructuración del PDF de la factura legal.
+ * Utiliza la biblioteca PDFKit para componer la cabecera (incluyendo renderizado condicional del logo corporativo), los bloques de dirección fiscal de emisor y receptor, la tabla de desglose neto y bruto por producto y la banda del pie de página.
+ */
 // backend/src/utils/invoice.js
 //
 // Generador de PDF de factura.
