@@ -31,6 +31,13 @@ export default async function (fastify, opts) {
       .single()
 
     if (error) {
+      // 23505 = unique_violation -> el constraint preorders_user_product_unique
+      // (mismo user_id + product_name) impide reservar dos veces el mismo drop.
+      if (error.code === '23505' || /duplicate key/i.test(error.message || '')) {
+        return reply.status(400).send({
+          error: 'Ya tienes una reserva activa para este lanzamiento.'
+        })
+      }
       fastify.log.error({ err: error }, 'Error al crear reserva')
       return reply.status(500).send({ error: 'No se pudo procesar la reserva' })
     }
