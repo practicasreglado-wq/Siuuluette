@@ -15,12 +15,29 @@ export default async function checkoutRoutes(fastify) {
       // frecuencia para que no se pueda abusar del endpoint en masa.
       rateLimit: { max: 20, timeWindow: '1 minute' }
     },
-    onRequest: [fastify.csrfProtection]
+    // [SEGURIDAD] La compra exige cuenta registrada. El user_id se ata
+    // al PaymentIntent desde aquí para que /attach y /confirm puedan
+    // validar que la sesión que opera sobre el pago es la misma que lo
+    // creó (anti-secuestro de pagos ajenos).
+    onRequest: [fastify.authenticate, fastify.csrfProtection]
   }, async (request, reply) => {
+    const userId = request.user.id
     const { items } = request.body // Array de { id, qty }
 
     if (!items || !items.length) {
       return reply.status(400).send({ error: 'El carrito está vacío' })
+    }
+
+    // [SEGURIDAD] Tope sensato a la cantidad por línea. Evita valores
+    // basura del cliente que reventarían totales o sobrecargarían Stripe.
+    const MAX_QTY_PER_LINE = 50
+    for (const it of items) {
+      const qty = Number(it.qty || it.quantity || 0)
+      if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY_PER_LINE) {
+        return reply.status(400).send({
+          error: `Cantidad inválida (máximo ${MAX_QTY_PER_LINE} unidades por línea).`
+        })
+      }
     }
 
     try {
@@ -30,16 +47,30 @@ export default async function checkoutRoutes(fastify) {
         .from('product_variants')
         .select(`
           id,
+          is_active,
           price_gross_override,
           discount_percent,
           product:products (
             price_gross,
-            discount_percent
+            discount_percent,
+            is_active
           )
         `)
         .in('id', variantIds)
 
       if (error) throw error
+
+      // [SEGURIDAD] Rechazar variantes desactivadas (o productos padre
+      // desactivados). Así no se puede comprar algo que el admin ha
+      // ocultado del catálogo si alguien conoce el id concreto.
+      for (const item of items) {
+        const v = dbVariants.find(dv => dv.id === Number(item.id))
+        if (!v || v.is_active === false || v.product?.is_active === false) {
+          return reply.status(400).send({
+            error: 'Una de las prendas de tu carrito ya no está disponible. Revisa el carrito.'
+          })
+        }
+      }
 
       // 1.5 [STOCK] Validar disponibilidad ANTES de crear el cobro.
       //     Si una prenda esta agotada, abortamos aqui: el cliente ve
@@ -115,12 +146,15 @@ export default async function checkoutRoutes(fastify) {
       const cartJson = JSON.stringify(cartCompact)
 
       // 3. Crear el PaymentIntent en Stripe
+      //    [SEGURIDAD] Atamos el PaymentIntent al usuario desde su creación.
+      //    /attach y /confirm comprobarán que metadata.user_id == sesión.
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amountInCents,
         currency: 'eur',
         automatic_payment_methods: { enabled: true },
         metadata: {
-          cart_items: cartJson // Inmutable
+          cart_items: cartJson, // Inmutable
+          user_id: String(userId)
         }
       })
 
@@ -160,6 +194,18 @@ export default async function checkoutRoutes(fastify) {
     }
 
     try {
+      // [SEGURIDAD] Comprobamos que el PaymentIntent pertenece al usuario
+      // de la sesión. El user_id se fija en /intent al crear el PI; si
+      // aquí no coincide, alguien intenta operar sobre un pago ajeno.
+      const existing = await stripe.paymentIntents.retrieve(paymentIntentId)
+      if (existing.metadata?.user_id !== String(userId)) {
+        request.log.warn(
+          { paymentIntentId, userId },
+          '[ATTACH] Intento de attach sobre PaymentIntent ajeno'
+        )
+        return reply.status(403).send({ error: 'No autorizado' })
+      }
+
       await stripe.paymentIntents.update(paymentIntentId, {
         metadata: {
           user_id: String(userId),
@@ -182,6 +228,7 @@ export default async function checkoutRoutes(fastify) {
   fastify.post('/confirm', {
     onRequest: [fastify.authenticate, fastify.csrfProtection]
   }, async (request, reply) => {
+    const userId = request.user.id
     // [SEGURIDAD] Ignoramos items y totalAmount del request.body. Stripe es la única fuente de la verdad.
     const { paymentIntentId, shippingAddress } = request.body
 
@@ -202,6 +249,15 @@ export default async function checkoutRoutes(fastify) {
       if (paymentIntent.status !== 'succeeded') {
         fastify.log.warn({ paymentIntentId, status: paymentIntent.status }, 'Intento de confirmar pedido sin pago exitoso')
         return reply.status(400).send({ error: 'El pago no ha sido procesado o completado con éxito por Stripe' })
+      }
+
+      // [SEGURIDAD] El PaymentIntent debe pertenecer al usuario de la sesión.
+      if (paymentIntent.metadata?.user_id !== String(userId)) {
+        fastify.log.warn(
+          { paymentIntentId, userId, ownerId: paymentIntent.metadata?.user_id },
+          '[CONFIRM] Intento de confirmar PaymentIntent ajeno'
+        )
+        return reply.status(403).send({ error: 'No autorizado' })
       }
 
       // [SEGURIDAD] Delegamos la creación segura a confirmOrderByPaymentIntent
@@ -252,6 +308,30 @@ export default async function checkoutRoutes(fastify) {
     } catch (err) {
       fastify.log.warn({ err: err.message }, '[WEBHOOK] Firma invalida')
       return reply.status(400).send({ error: `Firma invalida: ${err.message}` })
+    }
+
+    // [IDEMPOTENCIA] Stripe puede reentregar el mismo evento (si nuestra
+    // respuesta tardó o falló). Registramos event.id como PRIMARY KEY en
+    // stripe_events: si el insert choca por unique_violation (23505), es
+    // una reentrega y la ignoramos sin volver a procesar.
+    const { error: dupErr } = await supabase
+      .from('stripe_events')
+      .insert({ event_id: event.id, event_type: event.type })
+
+    if (dupErr) {
+      if (dupErr.code === '23505' || /duplicate key/i.test(dupErr.message || '')) {
+        fastify.log.info(
+          { eventId: event.id, type: event.type },
+          '[WEBHOOK] Evento ya procesado, ignorando reentrega'
+        )
+        return reply.status(200).send({ received: true, duplicate: true })
+      }
+      // Otro tipo de error registrando: NO abortamos. Mejor procesar dos
+      // veces que rechazar Stripe (que reintentaría de todos modos).
+      fastify.log.error(
+        { err: dupErr, eventId: event.id },
+        '[WEBHOOK] Error registrando event_id; se continúa igualmente'
+      )
     }
 
     fastify.log.info({ type: event.type, id: event.id }, '[WEBHOOK] Evento recibido')

@@ -37,7 +37,7 @@ export default async function authRoutes(fastify) {
     })
 
     if (authError) {
-      console.error('Error en SignUp:', authError)
+      request.log.error({ err: authError }, '[REGISTER] Error en signUp de Supabase')
       return reply.status(400).send({ error: authError.message })
     }
 
@@ -241,7 +241,7 @@ export default async function authRoutes(fastify) {
         const { data, error } = await supabase.auth.getUser(token)
         
         if (error || !data.user) {
-          console.error('Error validando token de Supabase:', error)
+          request.log.error({ err: error }, '[UPDATE_PASSWORD] Token de Supabase inválido')
           return reply.status(401).send({ error: 'No autorizado o token de recuperación expirado' })
         }
 

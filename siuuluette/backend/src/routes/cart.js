@@ -97,7 +97,7 @@ export default async function cartRoutes(fastify) {
       .maybeSingle()
 
     if (existingError) {
-      console.error('[CART_ADD] Error buscando existente:', existingError)
+      request.log.error({ err: existingError }, '[CART_ADD] Error buscando item existente')
       return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
     }
 
@@ -138,7 +138,7 @@ export default async function cartRoutes(fastify) {
         .eq('id', existing.id)
 
       if (error) {
-        console.error('[CART_ADD] Error actualizando:', error)
+        request.log.error({ err: error }, '[CART_ADD] Error actualizando item')
         return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
       }
     } else {
@@ -152,7 +152,7 @@ export default async function cartRoutes(fastify) {
         }])
 
       if (error) {
-        console.error('[CART_ADD] Error insertando:', error)
+        request.log.error({ err: error }, '[CART_ADD] Error insertando item')
         return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
       }
     }
@@ -194,11 +194,11 @@ export default async function cartRoutes(fastify) {
         .select('id, quantity')
         .eq('user_id', userId)
         .eq('product_id', item.product_id)
-        .eq('size', item.size || 'M')
+        .eq('size', item.size)
         .maybeSingle()
 
       if (existingError) {
-        console.error('[CART_MERGE] Error buscando item existente:', existingError)
+        request.log.error({ err: existingError }, '[CART_MERGE] Error buscando item existente')
         return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
       }
 
@@ -218,11 +218,11 @@ export default async function cartRoutes(fastify) {
             user_id: userId,
             product_id: item.product_id,
             quantity: item.quantity,
-            size: item.size || 'M'
+            size: item.size
           }])
 
         if (error) {
-          console.error('[CART_MERGE] Error insertando nuevo item:', error)
+          request.log.error({ err: error }, '[CART_MERGE] Error insertando nuevo item')
           return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
         }
       }
@@ -231,70 +231,6 @@ export default async function cartRoutes(fastify) {
     return { message: 'Carrito sincronizado' }
   })
 
-  // --- ELIMINAR ÍTEM ---
-  // Borra un producto específico del carrito basándose en su ID y talla
-  fastify.post('/remove', {
-    onRequest: [fastify.authenticate, fastify.csrfProtection],
-    schema: {
-      body: {
-        type: 'object',
-        required: ['product_id'],
-        properties: {
-          product_id: { type: 'integer' },
-          size: { type: 'string' }
-        }
-      }
-    }
-  }, async (request, reply) => {
-    const userId = request.user.id
-    const { product_id, size } = request.body
-
-    const { error } = await supabase
-      .from('cart_items')
-      .delete()
-      .eq('user_id', userId)
-      .eq('product_id', product_id)
-      .eq('size', size)
-
-    if (error) {
-      return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
-    }
-
-    return { message: 'Producto eliminado del carrito' }
-  })
-
-  // --- ACTUALIZAR CANTIDAD ---
-  // Cambia el número de unidades de un producto en el carrito
-  fastify.post('/update', {
-    onRequest: [fastify.authenticate, fastify.csrfProtection],
-    schema: {
-      body: {
-        type: 'object',
-        required: ['product_id', 'quantity'],
-        properties: {
-          product_id: { type: 'integer' },
-          quantity: { type: 'number', minimum: 1 },
-          size: { type: 'string' }
-        }
-      }
-    }
-  }, async (request, reply) => {
-    const userId = request.user.id
-    const { product_id, quantity, size } = request.body
-
-    const { error } = await supabase
-      .from('cart_items')
-      .update({ quantity })
-      .eq('user_id', userId)
-      .eq('product_id', product_id)
-      .eq('size', size || 'M')
-
-    if (error) {
-      return reply.status(400).send({ error: 'No se ha podido actualizar el carrito' })
-    }
-
-    return { message: 'Cantidad actualizada' }
-  })
 
   // DELETE /api/cart/:id — Eliminar por ID de fila (Más preciso)
   fastify.delete('/:id', {
