@@ -11,8 +11,38 @@ Información imprescindible para el desarrollo y despliegue del proyecto **Le Si
 *   **Producción**: Desplegado en `https://lesiuuluette.com` (Hostinger Node.js).
 *   **Despliegue automático**: Hostinger está conectado a GitHub y despliega automáticamente la rama **`diego`** al recibir un `push`.
 *   **Emails transaccionales**: Verificados y operativos en producción mediante **Resend** (cuenta `webregladoac1@gmail.com`). Remitente: `pedidos@lesiuuluette.com`.
-*   **Stripe**: La cuenta de la SL (*LE SIUULUETTE TRADEMARK, S.L.*) está **activada** y las claves `live` están disponibles. El proyecto desplegado sigue usando las claves `test` (no se mueve dinero real todavía); el cambio a producción se hace siguiendo el primer pendiente más abajo.
-*   **Base de datos**: Alojada en **Supabase**. La organización tiene **dos Owners**: la cuenta personal con la que se creó originalmente y `lesiuuluette@gmail.com` (cuenta corporativa). Para máxima continuidad, lo ideal es transferir el proyecto a una organización propiedad únicamente de la empresa (ver pendientes).
+*   **Stripe**: La cuenta de la SL (*LE SIUULUETTE TRADEMARK, S.L.*) está **activada** e implementada en producción con claves `live` en Hostinger. Los pagos reales han sido verificados y funcionan correctamente, mientras que el entorno local (`localhost`) sigue usando las claves `test` para pruebas seguras.
+*   **Base de datos**: Alojada en **Supabase**. La organización del proyecto tiene como Owner principal a `lesiuuluette@gmail.com` (cuenta corporativa), lo que garantiza que toda la base de datos e infraestructura pertenecen de forma íntegra a la empresa. Diego utiliza su correo `disago2002@gmail.com` únicamente para pruebas de pedidos y desarrollo en el entorno test local (donde posee rol de administrador). Las cuentas personales adicionales de los propietarios de Supabase (como la de Diego y de un compañero anterior) se pueden retirar con total seguridad de la organización de Supabase; la base de datos no sufrirá ningún impacto y el control completo quedará en la cuenta corporativa `lesiuuluette@gmail.com`.
+
+---
+
+## 🔑 Control y Accesos del Proyecto
+
+Para la administración integral de la infraestructura del proyecto, la empresa debe utilizar las siguientes cuentas oficiales. **Esta lista describe de quién es la propiedad de cada plataforma para garantizar la continuidad del proyecto**:
+
+*   **Servidor y Alojamiento (Hostinger)**: Acceso gestionado mediante la cuenta corporativa `lesiuuluette@gmail.com`. Aquí se configuran las variables de entorno de producción (`STRIPE_SECRET_KEY`, `SUPABASE_URL`, etc.) y se controla el estado del servidor Node.js.
+*   **Base de Datos y Almacenamiento (Supabase)**: Acceso mediante el Gmail corporativo `lesiuuluette@gmail.com`.
+*   **Pasarela de Pagos (Stripe)**: Acceso mediante el Gmail corporativo `lesiuuluette@gmail.com`.
+*   **Emails Transaccionales (Resend)**: Acceso mediante la cuenta `webregladoac1@gmail.com`.
+*   **Código Fuente (GitHub)**: El repositorio y el histórico de cambios se encuentran en la cuenta/organización de `practicasreglado` (`practicasreglado-wq/Siuuluette`).
+    *   **Rama de Producción (`diego`)**: La rama **`diego`** de GitHub está conectada con el despliegue automático de Hostinger. Cada `git push` en esta rama compilará y actualizará el dominio en producción (`https://lesiuuluette.com`) de manera automática.
+    *   **Entorno Local (`localhost`)**: Para hacer pruebas locales completamente aisladas y seguras sin pagos reales (utilizando las tarjetas y claves `test`), se utiliza el entorno local en `localhost` (puertos `3000` y `5173`).
+
+---
+
+## 🛡️ Gestión Segura de Administradores (Desarrolladores)
+
+El sistema cuenta con un modelo de seguridad estricto. **El rol de administrador no se puede solicitar desde el frontend ni manipular con peticiones HTTP públicas en la API por seguridad**. Para otorgar permisos de administrador de manera totalmente segura a un desarrollador o persona del equipo, se debe proceder de forma excepcional y manual directamente en la base de datos:
+
+1.  **Registro del usuario**: El desarrollador debe registrarse normalmente desde la web `https://lesiuuluette.com` con su correo y contraseña elegida. Por defecto, su cuenta se creará con el rol de cliente `'user'`.
+2.  **Acceso a la DB**: Un propietario del proyecto debe iniciar sesión en el panel de **Supabase** (`https://supabase.com`) con la cuenta de Gmail corporativa `lesiuuluette@gmail.com`.
+3.  **Localizar la tabla**: En la barra lateral izquierda, entrar en el **Table Editor** (Editor de tablas) y seleccionar la tabla `profiles`.
+4.  **Otorgar rol**:
+    *   Buscar la fila correspondiente al correo del desarrollador recién registrado.
+    *   Hacer doble clic sobre el valor de la columna `role` (que inicialmente contendrá `'user'`).
+    *   Escribir el valor **`'admin'`** de manera exacta (todo en minúsculas y sin espacios).
+    *   Confirmar y pulsar en guardar cambios en la base de datos.
+5.  **Resultado**: Al volver a iniciar sesión, el desarrollador tendrá acceso inmediato al panel exclusivo `/admin` en la web.
 
 ---
 
@@ -29,25 +59,18 @@ Se han completado y auditado con éxito las siguientes defensas y optimizaciones
 
 ## ⚠️ Pendientes antes del Lanzamiento (En Producción)
 
-### Bloqueantes (Seguridad y cobros)
-- [ ] **Activar Stripe en producción.** Las claves `live` ya están disponibles. Pasos:
-  1. Sustituir en el panel de variables de Hostinger `STRIPE_SECRET_KEY` por `sk_live_...` y `VITE_STRIPE_PUBLISHABLE_KEY` por `pk_live_...`.
-  2. Crear el webhook en **Stripe live mode** → Developers → Webhooks → Add endpoint, URL `https://lesiuuluette.com/api/checkout/webhook`, eventos `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`.
-  3. Copiar el `whsec_...` resultante a `STRIPE_WEBHOOK_SECRET` en Hostinger.
-  4. Confirmar el IBAN del payout (a nombre de la SL).
-  5. Hacer una compra real de 1 € con tarjeta propia para validar el flujo end-to-end.
-- [ ] **Rotar las claves antes del lanzamiento** como higiene de seguridad estándar: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_KEY`, las nuevas `STRIPE_SECRET_KEY` live y `RESEND_API_KEY`.
+### Bloqueantes (Seguridad y configuración)
+- [ ] **SMTP propio de Resend en Supabase (urgente)**: Ir a Supabase -> Authentication -> SMTP Settings y meter las credenciales SMTP de tu cuenta de Resend. El SMTP por defecto de Supabase tiene un límite estricto de ≈3-4 correos/hora; sin esto, los registros de nuevos clientes fallarán cuando haya tráfico.
+- [ ] **Rotar las claves antes del lanzamiento (opcional)**: Como medida estándar de higiene de seguridad, puedes rotar en el panel de Hostinger y en local: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_KEY` y `RESEND_API_KEY`.
 
-### Hardening de Base de Datos (Supabase)
-- [ ] **SMTP propio de Resend en Supabase (urgente)**: Authentication → SMTP Settings, meter credenciales de Resend. "Confirm email" está activado y el SMTP por defecto de Supabase tiene un límite de ≈3-4 correos/hora; sin esto, los registros nuevos no recibirán el correo de confirmación cuando haya tráfico.
-- [ ] **(Opcional) Transferir el proyecto Supabase** a una organización propiedad únicamente de la empresa. Ya hay dos Owners en la organización actual (la cuenta personal con la que se creó y `lesiuuluette@gmail.com` de la empresa), así que el riesgo de continuidad ya está resuelto: ambas cuentas pueden gestionar todo. La transferencia es polish extra para que la propiedad estructural recaiga 100% en la empresa, pero no es bloqueante.
+> ⚠️ **Importante sobre las secret keys de Stripe**: La clave secreta `STRIPE_SECRET_KEY` ya se encuentra configurada en Hostinger y, por seguridad, ya no es visible en el panel de Stripe. Si se pierde o borra de Hostinger, será necesario generar una nueva clave en Stripe y volver a pegarla en el panel de Hostinger. Lo mismo aplica al `STRIPE_WEBHOOK_SECRET` (`whsec_...`) del webhook que procesa facturas y correos transaccionales. Se recomienda archivar copias seguras en un gestor de contraseñas de equipo (ej: Bitwarden/1Password) si en el futuro decides rotarlas o generar nuevas claves.
 
 ### Optimización y Código
-- [ ] **Paginación de Catálogo**: Modificar `/api/products` para paginar la respuesta de la DB (evita el cuello de botella actual N+1 en catálogos grandes).
-- [ ] **GDPR mínimo**: añadir "derecho al olvido" — borrado de cuenta con cascade de datos personales.
+- [ ] **Paginación de Catálogo**: Modificar `/api/products` para paginar la respuesta de la base de datos (evita el cuello de botella actual N+1 en catálogos grandes).
+- [ ] **GDPR mínimo**: Añadir "derecho al olvido" (borrado definitivo de cuenta con eliminación en cascada de los datos personales).
 
 ### Recomendación a futuro
-- [ ] **Plan Pro de Supabase (~25 €/mes)**: opcional pero recomendado para producción. Desbloquea backups diarios + point-in-time recovery, Leaked Password Protection (HaveIBeenPwned) y cuotas más altas de email/auth. Cuando se acerque el lanzamiento real es razonable subirlo solo por los backups.
+- [ ] **Plan Pro de Supabase (~25 €/mes)**: Opcional para producción. Desbloquea copias de seguridad diarias, recuperación punto en el tiempo (PITR) y cuotas de transferencia y base de datos más altas. Recomendado de cara al lanzamiento real.
 
 ---
 
@@ -116,12 +139,29 @@ El hosting de Hostinger Node.js espera que los puntos de ejecución residan en l
 
 ---
 
-## 🔒 Seguridad Activa
-*   **CSRF**: Requerido (`x-csrf-token`) en todas las peticiones POST, PATCH, PUT y DELETE.
-*   **Helmet**: Configurado sin `unsafe-inline` en scripts. El iframe de Stripe está permitido explícitamente.
-*   **Rate Limits**: Global de 200 req/min, 20/min en intents de cobro y 5/min en login/registro.
-*   **JWT**: Administrado enteramente vía **cookies HttpOnly** (`Secure`, `SameSite=Lax`).
-*   **Control Admin**: El rol `admin` se valida en tiempo real en la tabla `profiles` de Supabase en cada consulta del panel interno (`/api/admin/*`), protegiendo el panel ante revocaciones instantáneas.
+## 💳 Guía de Pruebas de Pago (Local vs Producción)
+
+Para garantizar la seguridad de la pasarela y no mezclar entornos, sigue estas directrices para probar el flujo de checkout:
+
+### 1. Pruebas en Entorno Local (Desarrollo)
+*   **Estado**: **Modo Test (Prueba)**.
+*   **Tarjeta de prueba**: Utiliza siempre el número `4242 4242 4242 4242` con cualquier fecha de caducidad futura y cualquier código CVC.
+*   **Verificación**: Las transacciones aparecerán reflejadas únicamente en el apartado "Test Mode" de tu panel de Stripe. No se moverá dinero real.
+*   **Cómo probar**: Levanta el backend y frontend locales, añade cualquier artículo del catálogo al carrito y realiza la compra de prueba normal.
+
+### 2. Pruebas en el Dominio Real (Producción)
+*   **Estado**: **Modo Live (Real)**.
+*   *⚠️ Importante*: La tarjeta de prueba `4242` **NO** funcionará en producción; Stripe la rechazará.
+*   **Cómo validar un flujo de dinero real por solo 1 €**:
+    1.  **Cambiar precio temporalmente**: Accede al panel de administración en producción (`/admin/products` o directamente en la tabla `products` de Supabase) y edita temporalmente el precio de un producto específico, cambiándolo a exactamente **`1.00` €**.
+    2.  **Realizar la Compra**: Accede a `https://lesiuuluette.com`, añade ese producto de 1 € al carrito y completa la compra en el formulario utilizando tu **tarjeta de crédito real**.
+    3.  **Comprobaciones de Éxito**:
+        *   Verifica que el banco te cargue 1 € correctamente.
+        *   Confirma que se ha creado el pedido en Supabase con estado `paid`.
+        *   Verifica que el PDF de la factura se ha generado y subido a Supabase Storage.
+        *   Comprueba que te ha llegado el email de confirmación transaccional (vía Resend) con el PDF de la factura adjunto.
+    4.  **Hacer el Reembolso**: Accede al Dashboard de Stripe en modo Live, busca el cobro real de 1 € y realiza un **Reembolso completo** (Refund) de inmediato para recuperar el dinero.
+    5.  **Restaurar el precio**: Vuelve al panel de administración y restablece el precio original del producto específico.
 
 ---
 *Siuuluette Brand · Make It Real · 2026*
